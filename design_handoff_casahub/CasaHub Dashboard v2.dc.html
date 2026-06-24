@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: 'Hanken Grotesk', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+  .casa-scroll::-webkit-scrollbar { display: none; }
+</style>
+</helmet>
+
+<!-- ============ HEADER ============ -->
+<div style="position:absolute; left:80px; top:48px; width:760px;">
+  <div style="display:flex; align-items:center; gap:14px;">
+    <div style="width:46px; height:46px; border-radius:14px; background:#C2603F; display:flex; align-items:center; justify-content:center; font-size:24px; box-shadow:0 6px 16px -6px rgba(194,96,63,.7);">🏠</div>
+    <div style="font-family:'Bricolage Grotesque'; font-weight:800; font-size:34px; color:#2C2622; letter-spacing:-.02em;">CasaHub <span style="font-size:18px; color:#9A9088; font-weight:600;">· direction retenue</span></div>
+  </div>
+  <div style="margin-top:14px; font-size:16px; line-height:1.55; color:#6B6258; max-width:700px;">
+    On part sur la <b style="color:#2C2622;">B « Bento »</b> comme accueil, et <b style="color:#C2603F;">« La journée »</b> (la timeline de la C) devient une destination à part entière — onglet dédié dans la barre du bas en mobile, et dans le menu en desktop.
+  </div>
+</div>
+
+<div style="position:absolute; left:870px; top:48px; width:280px; background:#FBE9A7; padding:16px 18px; border-radius:4px; box-shadow:0 8px 22px -10px rgba(80,60,20,.4); transform:rotate(1.2deg); font-size:12.5px; line-height:1.65; color:#5A4A1E;">
+  <b style="font-family:'Bricolage Grotesque'; font-size:13.5px;">Nav mobile</b><br>
+  🏡 Foyer · 📆 Journée · <b>＋</b> · 📅 Agenda · 👤 Profil.<br>
+  « Foyer » = vue d'ensemble en tuiles. « Journée » = ce qui se passe aujourd'hui.
+</div>
+
+<!-- ============ MOBILE · FOYER (accueil bento) ============ -->
+<div data-screen-label="Mobile · Foyer" style="position:absolute; left:80px; top:330px; width:414px;">
+  <div data-drags-parent="1" style="position:absolute; top:-26px; left:2px; font:600 12px 'Hanken Grotesk'; color:#9A9088;">📱 Foyer — l'accueil en bento</div>
+  <div style="background:#211D1A; border-radius:46px; padding:12px; box-shadow:0 40px 70px -28px rgba(40,30,20,.55);">
+    <div class="casa-scroll" style="width:390px; height:812px; background:#F7F0E6; border-radius:36px; overflow:hidden; display:flex; flex-direction:column; position:relative;">
+      <div style="display:flex; justify-content:space-between; align-items:center; padding:14px 26px 6px; font-size:13px; font-weight:700; color:#2C2622;"><span>9:41</span><span style="font-size:12px;">􀙇 􀛨 􀋨</span></div>
+      <div style="padding:8px 22px 12px; display:flex; justify-content:space-between; align-items:center;">
+        <div><div style="font-family:'Bricolage Grotesque'; font-weight:800; font-size:25px; color:#2C2622; letter-spacing:-.02em;">Le Foyer 🏡</div><div style="font-size:13px; color:#9A9088; font-weight:600; margin-top:1px;">Mardi 24 juin · 6 choses à voir</div></div>
+        <div style="display:flex;"><div style="width:32px; height:32px; border-radius:50%; background:#C2603F; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:12px; border:2px solid #F7F0E6;">L</div><div style="width:32px; height:32px; border-radius:50%; background:#6E8BA6; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:12px; margin-left:-9px; border:2px solid #F7F0E6;">T</div></div>
+      </div>
+      <div class="casa-scroll" style="flex:1; overflow:auto; padding:4px 18px 14px;">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:13px;">
+          <div style="grid-column:span 2; background:#F6E2D8; border-radius:24px; padding:18px;">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start;"><span style="font-size:30px;">🛒</span><span style="background:#C2603F; color:#fff; font-size:12px; font-weight:700; padding:4px 10px; border-radius:20px;">8</span></div>
+            <div style="font-family:'Bricolage Grotesque'; font-weight:800; font-size:20px; color:#7A3A23; margin-top:12px;">Courses</div>
+            <div style="font-size:13px; color:#A8623F; margin-top:3px;">Lait · Café · Éponges · +5</div>
+          </div>
+          <div style="background:#E7EDDF; border-radius:24px; padding:16px;"><div style="display:flex; justify-content:space-between; align-items:flex-start;"><span style="font-size:26px;">✅</span><span style="background:#7E9B6E; color:#fff; font-size:11px; font-weight:700; padding:3px 9px; border-radius:20px;">2</span></div><div style="font-family:'Bricolage Grotesque'; font-weight:800; font-size:17px; color:#465938; margin-top:10px;">Tâches</div><div style="font-size:12px; color:#6E8456; margin-top:2px;">à faire aujourd'hui</div></div>
+          <div style="background:#E2E8EE; border-radius:24px; padding:16px;"><span style="font-size:26px;">📅</span><div style="font-family:'Bricolage Grotesque'; font-weight:800; font-size:17px; color:#3D5266; margin-top:10px;">Agenda</div><div style="font-size:12px; color:#5E7790; margin-top:2px;">Médecin · 14:00</div></div>
+          <div style="background:#F2E7CC; border-radius:24px; padding:16px;"><div style="font-size:26px;">📝</div><div style="font-family:'Bricolage Grotesque'; font-weight:800; font-size:17px; color:#6B5320; margin-top:10px;">Notes</div><div style="font-size:12px; color:#8A7536; margin-top:2px;">WiFi · codes · infos</div></div>
+          <div style="background:#EADDE6; border-radius:24px; padding:16px;"><div style="font-size:26px;">🔗</div><div style="font-family:'Bricolage Grotesque'; font-weight:800; font-size:17px; color:#6E4D63; margin-top:10px;">Liens</div><div style="font-size:12px; color:#8A6A82; margin-top:2px;">Drive · assurances</div></div>
+        </div>
+      </div>
+      <!-- bottom nav w/ Journée -->
+      <div style="display:flex; justify-content:space-around; align-items:center; padding:9px 8px 24px; background:#FFFDFA; border-top:1px solid rgba(44,38,34,.06);">
+        <div style="display:flex; flex-direction:column; align-items:center; gap:3px; color:#C2603F;"><span style="font-size:19px;">🏡</span><span style="font-size:9.5px; font-weight:700;">Foyer</span></div>
+        <div style="display:flex; flex-direction:column; align-items:center; gap:3px; color:#A89E92;"><span style="font-size:19px;">📆</span><span style="font-size:9.5px; font-weight:600;">Journée</span></div>
+        <div style="width:46px; height:46px; border-radius:15px; background:#C2603F; color:#fff; display:flex; align-items:center; justify-content:center; font-size:25px; box-shadow:0 8px 18px -6px rgba(194,96,63,.7); margin-top:-8px;">+</div>
+        <div style="display:flex; flex-direction:column; align-items:center; gap:3px; color:#A89E92;"><span style="font-size:19px;">📅</span><span style="font-size:9.5px; font-weight:600;">Agenda</span></div>
+        <div style="display:flex; flex-direction:column; align-items:center; gap:3px; color:#A89E92;"><span style="width:21px; height:21px; border-radius:50%; background:#6E8BA6; color:#fff; font-size:10px; font-weight:700; display:flex; align-items:center; justify-content:center;">T</span><span style="font-size:9.5px; font-weight:600;">Profil</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MOBILE · LA JOURNÉE ============ -->
+<div data-screen-label="Mobile · La journée" style="position:absolute; left:540px; top:330px; width:414px;">
+  <div data-drags-parent="1" style="position:absolute; top:-26px; left:2px; font:600 12px 'Hanken Grotesk'; color:#9A9088;">📱 La journée — onglet 📆</div>
+  <div style="background:#211D1A; border-radius:46px; padding:12px; box-shadow:0 40px 70px -28px rgba(40,30,20,.55);">
+    <div class="casa-scroll" style="width:390px; height:812px; background:#F7F0E6; border-radius:36px; overflow:hidden; display:flex; flex-direction:column; position:relative;">
+      <div style="display:flex; justify-content:space-between; align-items:center; padding:14px 26px 6px; font-size:13px; font-weight:700; color:#2C2622;"><span>9:41</span><span style="font-size:12px;">􀙇 􀛨 􀋨</span></div>
+      <div style="padding:8px 22px 12px;">
+        <div style="font-size:13px; color:#9A9088; font-weight:600;">Mardi 24 juin · il fait beau ☀️</div>
+        <div style="font-family:'Bricolage Grotesque'; font-weight:800; font-size:25px; color:#2C2622; letter-spacing:-.02em; margin-top:2px;">La journée du foyer</div>
+        <div style="display:flex; gap:7px; margin-top:12px;"><span style="background:#2C2622; color:#fff; padding:7px 14px; border-radius:11px; font-size:13px; font-weight:700;">Aujourd'hui</span><span style="background:#FFFDFA; color:#8A8178; padding:7px 14px; border-radius:11px; font-size:13px; font-weight:600;">Demain</span><span style="background:#FFFDFA; color:#8A8178; padding:7px 14px; border-radius:11px; font-size:13px; font-weight:600;">Semaine</span></div>
+      </div>
+      <div class="casa-scroll" style="flex:1; overflow:auto; padding:4px 22px 14px;">
+        <div style="position:relative; padding-left:24px;">
+          <div style="position:absolute; left:6px; top:8px; bottom:8px; width:2px; background:#E4DACB;"></div>
+          <div style="position:relative; margin-bottom:14px;">
+            <div style="position:absolute; left:-24px; top:14px; width:12px; height:12px; border-radius:50%; background:#6E8BA6; border:2px solid #F7F0E6;"></div>
+            <div style="font-size:11px; font-weight:700; color:#6E8BA6; text-transform:uppercase; letter-spacing:.04em; margin-bottom:5px;">14:00 · Événement</div>
+            <div style="background:#FFFDFA; border-radius:16px; padding:13px 15px; box-shadow:0 4px 14px -10px rgba(60,40,20,.35); display:flex; align-items:center; gap:11px;"><span style="font-size:19px;">🩺</span><div style="flex:1;"><div style="font-size:14.5px; font-weight:600; color:#2C2622;">Médecin — Léa</div><div style="font-size:12px; color:#9A9088;">Cabinet Dr. Roche</div></div></div>
+          </div>
+          <div style="position:relative; margin-bottom:14px;">
+            <div style="position:absolute; left:-24px; top:14px; width:12px; height:12px; border-radius:50%; background:#C2603F; border:2px solid #F7F0E6;"></div>
+            <div style="font-size:11px; font-weight:700; color:#C2603F; text-transform:uppercase; letter-spacing:.04em; margin-bottom:5px;">Avant de sortir · Courses</div>
+            <div style="background:#FFFDFA; border-radius:16px; padding:13px 15px; box-shadow:0 4px 14px -10px rgba(60,40,20,.35);"><div style="display:flex; align-items:center; gap:11px;"><span style="font-size:19px;">🛒</span><div style="flex:1; font-size:14.5px; font-weight:600; color:#2C2622;">3 articles pour le dîner</div></div><div style="display:flex; gap:6px; margin-top:9px;"><span style="background:#F6E2D8; color:#A8623F; padding:4px 9px; border-radius:8px; font-size:12px; font-weight:600;">Lait</span><span style="background:#F6E2D8; color:#A8623F; padding:4px 9px; border-radius:8px; font-size:12px; font-weight:600;">Pâtes</span><span style="background:#F6E2D8; color:#A8623F; padding:4px 9px; border-radius:8px; font-size:12px; font-weight:600;">Café</span></div></div>
+          </div>
+          <div style="position:relative; margin-bottom:14px;">
+            <div style="position:absolute; left:-24px; top:14px; width:12px; height:12px; border-radius:50%; background:#7E9B6E; border:2px solid #F7F0E6;"></div>
+            <div style="font-size:11px; font-weight:700; color:#7E9B6E; text-transform:uppercase; letter-spacing:.04em; margin-bottom:5px;">Ce soir · Tâche</div>
+            <div style="background:#FFFDFA; border-radius:16px; padding:13px 15px; box-shadow:0 4px 14px -10px rgba(60,40,20,.35); display:flex; align-items:center; gap:11px;"><span style="width:20px; height:20px; border-radius:50%; border:2px solid #D8CFC2;"></span><div style="flex:1; font-size:14.5px; font-weight:600; color:#2C2622;">Sortir les poubelles</div><span style="width:24px; height:24px; border-radius:50%; background:#6E8BA6; color:#fff; font-size:11px; font-weight:700; display:flex; align-items:center; justify-content:center;">T</span></div>
+          </div>
+          <div style="position:relative;">
+            <div style="position:absolute; left:-24px; top:14px; width:12px; height:12px; border-radius:50%; background:#9B6E8B; border:2px solid #F7F0E6;"></div>
+            <div style="font-size:11px; font-weight:700; color:#9B6E8B; text-transform:uppercase; letter-spacing:.04em; margin-bottom:5px;">Cette semaine · Rappel</div>
+            <div style="background:#FFFDFA; border-radius:16px; padding:13px 15px; box-shadow:0 4px 14px -10px rgba(60,40,20,.35); display:flex; align-items:center; gap:11px;"><span style="font-size:19px;">💸</span><div style="flex:1;"><div style="font-size:14.5px; font-weight:600; color:#2C2622;">Loyer à payer</div><div style="font-size:12px; color:#9A9088;">Avant le 30 juin</div></div></div>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex; justify-content:space-around; align-items:center; padding:9px 8px 24px; background:#FFFDFA; border-top:1px solid rgba(44,38,34,.06);">
+        <div style="display:flex; flex-direction:column; align-items:center; gap:3px; color:#A89E92;"><span style="font-size:19px;">🏡</span><span style="font-size:9.5px; font-weight:600;">Foyer</span></div>
+        <div style="display:flex; flex-direction:column; align-items:center; gap:3px; color:#C2603F;"><span style="font-size:19px;">📆</span><span style="font-size:9.5px; font-weight:700;">Journée</span></div>
+        <div style="width:46px; height:46px; border-radius:15px; background:#C2603F; color:#fff; display:flex; align-items:center; justify-content:center; font-size:25px; box-shadow:0 8px 18px -6px rgba(194,96,63,.7); margin-top:-8px;">+</div>
+        <div style="display:flex; flex-direction:column; align-items:center; gap:3px; color:#A89E92;"><span style="font-size:19px;">📅</span><span style="font-size:9.5px; font-weight:600;">Agenda</span></div>
+        <div style="display:flex; flex-direction:column; align-items:center; gap:3px; color:#A89E92;"><span style="width:21px; height:21px; border-radius:50%; background:#6E8BA6; color:#fff; font-size:10px; font-weight:700; display:flex; align-items:center; justify-content:center;">T</span><span style="font-size:9.5px; font-weight:600;">Profil</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ DESKTOP · FOYER ============ -->
+<div data-screen-label="Desktop · Foyer" style="position:absolute; left:80px; top:1250px; width:1180px;">
+  <div data-drags-parent="1" style="position:absolute; top:-26px; left:2px; font:600 12px 'Hanken Grotesk'; color:#9A9088;">🖥 Foyer — desktop (menu à gauche)</div>
+  <div style="background:#fff; border-radius:16px; overflow:hidden; box-shadow:0 40px 70px -30px rgba(40,30,20,.5); border:1px solid rgba(44,38,34,.08);">
+    <div style="display:flex; align-items:center; gap:8px; padding:13px 16px; background:#F1EADF; border-bottom:1px solid rgba(44,38,34,.06);">
+      <div style="width:11px; height:11px; border-radius:50%; background:#E0876F;"></div><div style="width:11px; height:11px; border-radius:50%; background:#E8C16B;"></div><div style="width:11px; height:11px; border-radius:50%; background:#9BBE86;"></div>
+      <div style="margin-left:14px; background:#fff; border-radius:8px; padding:5px 14px; font-size:12px; color:#9A9088; flex:1; max-width:300px;">casahub.app/foyer</div>
+    </div>
+    <div style="display:flex; height:712px; background:#F7F0E6;">
+      <div style="width:236px; background:#FFFDFA; border-right:1px solid rgba(44,38,34,.06); padding:22px 14px; display:flex; flex-direction:column;">
+        <div style="display:flex; align-items:center; gap:11px; padding:0 8px 18px;"><div style="width:36px; height:36px; border-radius:11px; background:#C2603F; display:flex; align-items:center; justify-content:center; font-size:19px;">🏠</div><div style="font-family:'Bricolage Grotesque'; font-weight:800; font-size:20px; color:#2C2622;">CasaHub</div></div>
+        <div style="display:flex; flex-direction:column; gap:3px;">
+          <div style="display:flex; align-items:center; gap:12px; padding:10px 13px; border-radius:12px; background:#F6E2D8; color:#C2603F; font-weight:700; font-size:14px;"><span>🏡</span>Foyer</div>
+          <div style="display:flex; align-items:center; gap:12px; padding:10px 13px; border-radius:12px; color:#5A524A; font-weight:500; font-size:14px;"><span>📆</span>La journée</div>
+          <div style="display:flex; align-items:center; gap:12px; padding:10px 13px; border-radius:12px; color:#5A524A; font-weight:500; font-size:14px;"><span>🛒</span>Courses</div>
+          <div style="display:flex; align-items:center; gap:12px; padding:10px 13px; border-radius:12px; color:#5A524A; font-weight:500; font-size:14px;"><span>✅</span>Tâches</div>
+          <div style="display:flex; align-items:center; gap:12px; padding:10px 13px; border-radius:12px; color:#5A524A; font-weight:500; font-size:14px;"><span>📅</span>Calendrier</div>
+          <div style="display:flex; align-items:center; gap:12px; padding:10px 13px; border-radius:12px; color:#5A524A; font-weight:500; font-size:14px;"><span>📝</span>Notes</div>
+          <div style="display:flex; align-items:center; gap:12px; padding:10px 13px; border-radius:12px; color:#5A524A; font-weight:500; font-size:14px;"><span>🔗</span>Liens utiles</div>
+        </div>
+        <div style="margin-top:auto; display:flex; align-items:center; gap:9px; padding:10px 8px; border-top:1px solid rgba(44,38,34,.06);"><div style="width:30px; height:30px; border-radius:50%; background:#C2603F; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:12px;">L</div><div style="font-size:13px; font-weight:600; color:#2C2622;">Léa & Tom</div></div>
+      </div>
+      <div class="casa-scroll" style="flex:1; overflow:auto; padding:28px 32px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:22px;">
+          <div><div style="font-size:13px; color:#9A9088; font-weight:600;">Mardi 24 juin</div><div style="font-family:'Bricolage Grotesque'; font-weight:800; font-size:28px; color:#2C2622; letter-spacing:-.02em;">Le Foyer 🏡</div></div>
+          <div style="background:#C2603F; color:#fff; padding:11px 18px; border-radius:13px; font-weight:700; font-size:14px; box-shadow:0 8px 18px -8px rgba(194,96,63,.7);">+ Ajouter</div>
+        </div>
+        <div style="display:grid; grid-template-columns:repeat(4,1fr); grid-auto-rows:158px; gap:18px;">
+          <div style="grid-column:span 2; grid-row:span 2; background:#F6E2D8; border-radius:24px; padding:24px; display:flex; flex-direction:column;">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start;"><span style="font-size:34px;">🛒</span><span style="background:#C2603F; color:#fff; font-size:13px; font-weight:700; padding:4px 12px; border-radius:20px;">8 articles</span></div>
+            <div style="font-family:'Bricolage Grotesque'; font-weight:800; font-size:24px; color:#7A3A23; margin-top:14px;">Courses</div>
+            <div style="margin-top:12px; display:flex; flex-direction:column; gap:9px;">
+              <div style="display:flex; align-items:center; gap:10px; font-size:14px; color:#7A3A23;"><span style="width:17px; height:17px; border-radius:5px; border:2px solid #C99176;"></span>Lait demi-écrémé</div>
+              <div style="display:flex; align-items:center; gap:10px; font-size:14px; color:#7A3A23;"><span style="width:17px; height:17px; border-radius:5px; border:2px solid #C99176;"></span>Café en grains</div>
+              <div style="display:flex; align-items:center; gap:10px; font-size:14px; color:#B79A8B; text-decoration:line-through;"><span style="width:17px; height:17px; border-radius:5px; background:#C2603F; color:#fff; display:flex; align-items:center; justify-content:center; font-size:10px;">✓</span>Pâtes</div>
+            </div>
+            <div style="margin-top:auto; font-size:13px; color:#A8623F; font-weight:600;">Voir la liste →</div>
+          </div>
+          <div style="grid-column:span 2; background:#E7EDDF; border-radius:24px; padding:22px; display:flex; flex-direction:column;"><div style="display:flex; justify-content:space-between; align-items:flex-start;"><span style="font-size:30px;">✅</span><span style="background:#7E9B6E; color:#fff; font-size:12px; font-weight:700; padding:3px 11px; border-radius:20px;">2 à faire</span></div><div style="font-family:'Bricolage Grotesque'; font-weight:800; font-size:20px; color:#465938; margin-top:10px;">Tâches</div><div style="font-size:13.5px; color:#5E7448; margin-top:6px;">Poubelles · Tom &nbsp;·&nbsp; Syndic · Léa</div></div>
+          <div style="background:#E2E8EE; border-radius:24px; padding:20px;"><span style="font-size:28px;">📅</span><div style="font-family:'Bricolage Grotesque'; font-weight:800; font-size:18px; color:#3D5266; margin-top:8px;">Agenda</div><div style="font-size:12.5px; color:#5E7790; margin-top:3px;">Médecin · 14h</div></div>
+          <div style="background:#F2E7CC; border-radius:24px; padding:20px;"><span style="font-size:28px;">📝</span><div style="font-family:'Bricolage Grotesque'; font-weight:800; font-size:18px; color:#6B5320; margin-top:8px;">Notes</div><div style="font-size:12.5px; color:#8A7536; margin-top:3px;">WiFi · codes</div></div>
+          <div style="grid-column:span 2; background:#EADDE6; border-radius:24px; padding:20px; display:flex; align-items:center; gap:16px;"><span style="font-size:28px;">🔗</span><div style="flex:1;"><div style="font-family:'Bricolage Grotesque'; font-weight:800; font-size:18px; color:#6E4D63;">Liens utiles</div><div style="display:flex; gap:7px; margin-top:7px; flex-wrap:wrap;"><span style="background:#fff; padding:5px 10px; border-radius:8px; font-size:12px; color:#6E4D63; font-weight:600;">📁 Drive</span><span style="background:#fff; padding:5px 10px; border-radius:8px; font-size:12px; color:#6E4D63; font-weight:600;">🛡 Assurance</span><span style="background:#fff; padding:5px 10px; border-radius:8px; font-size:12px; color:#6E4D63; font-weight:600;">🚗 Voiture</span></div></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ DESKTOP · LA JOURNÉE ============ -->
+<div data-screen-label="Desktop · La journée" style="position:absolute; left:80px; top:2090px; width:1180px;">
+  <div data-drags-parent="1" style="position:absolute; top:-26px; left:2px; font:600 12px 'Hanken Grotesk'; color:#9A9088;">🖥 La journée — desktop</div>
+  <div style="background:#fff; border-radius:16px; overflow:hidden; box-shadow:0 40px 70px -30px rgba(40,30,20,.5); border:1px solid rgba(44,38,34,.08);">
+    <div style="display:flex; align-items:center; gap:8px; padding:13px 16px; background:#F1EADF; border-bottom:1px solid rgba(44,38,34,.06);">
+      <div style="width:11px; height:11px; border-radius:50%; background:#E0876F;"></div><div style="width:11px; height:11px; border-radius:50%; background:#E8C16B;"></div><div style="width:11px; height:11px; border-radius:50%; background:#9BBE86;"></div>
+      <div style="margin-left:14px; background:#fff; border-radius:8px; padding:5px 14px; font-size:12px; color:#9A9088; flex:1; max-width:300px;">casahub.app/la-journee</div>
+    </div>
+    <div style="display:flex; height:712px; background:#F7F0E6;">
+      <div style="width:236px; background:#FFFDFA; border-right:1px solid rgba(44,38,34,.06); padding:22px 14px; display:flex; flex-direction:column;">
+        <div style="display:flex; align-items:center; gap:11px; padding:0 8px 18px;"><div style="width:36px; height:36px; border-radius:11px; background:#C2603F; display:flex; align-items:center; justify-content:center; font-size:19px;">🏠</div><div style="font-family:'Bricolage Grotesque'; font-weight:800; font-size:20px; color:#2C2622;">CasaHub</div></div>
+        <div style="display:flex; flex-direction:column; gap:3px;">
+          <div style="display:flex; align-items:center; gap:12px; padding:10px 13px; border-radius:12px; color:#5A524A; font-weight:500; font-size:14px;"><span>🏡</span>Foyer</div>
+          <div style="display:flex; align-items:center; gap:12px; padding:10px 13px; border-radius:12px; background:#F6E2D8; color:#C2603F; font-weight:700; font-size:14px;"><span>📆</span>La journée</div>
+          <div style="display:flex; align-items:center; gap:12px; padding:10px 13px; border-radius:12px; color:#5A524A; font-weight:500; font-size:14px;"><span>🛒</span>Courses</div>
+          <div style="display:flex; align-items:center; gap:12px; padding:10px 13px; border-radius:12px; color:#5A524A; font-weight:500; font-size:14px;"><span>✅</span>Tâches</div>
+          <div style="display:flex; align-items:center; gap:12px; padding:10px 13px; border-radius:12px; color:#5A524A; font-weight:500; font-size:14px;"><span>📅</span>Calendrier</div>
+          <div style="display:flex; align-items:center; gap:12px; padding:10px 13px; border-radius:12px; color:#5A524A; font-weight:500; font-size:14px;"><span>📝</span>Notes</div>
+          <div style="display:flex; align-items:center; gap:12px; padding:10px 13px; border-radius:12px; color:#5A524A; font-weight:500; font-size:14px;"><span>🔗</span>Liens utiles</div>
+        </div>
+        <div style="margin-top:auto; display:flex; align-items:center; gap:9px; padding:10px 8px; border-top:1px solid rgba(44,38,34,.06);"><div style="width:30px; height:30px; border-radius:50%; background:#C2603F; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:12px;">L</div><div style="font-size:13px; font-weight:600; color:#2C2622;">Léa & Tom</div></div>
+      </div>
+      <div class="casa-scroll" style="flex:1; overflow:auto; padding:28px 32px;">
+        <div style="font-size:14px; color:#9A9088; font-weight:600;">Mardi 24 juin · il fait beau ☀️</div>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:3px; margin-bottom:22px;">
+          <div style="font-family:'Bricolage Grotesque'; font-weight:800; font-size:28px; color:#2C2622; letter-spacing:-.02em;">La journée du foyer</div>
+          <div style="display:flex; gap:8px;"><span style="background:#2C2622; color:#fff; padding:8px 15px; border-radius:11px; font-size:13px; font-weight:700;">Aujourd'hui</span><span style="background:#FFFDFA; color:#8A8178; padding:8px 15px; border-radius:11px; font-size:13px; font-weight:600;">Demain</span><span style="background:#FFFDFA; color:#8A8178; padding:8px 15px; border-radius:11px; font-size:13px; font-weight:600;">Semaine</span></div>
+        </div>
+        <div style="position:relative; padding-left:26px; max-width:640px;">
+          <div style="position:absolute; left:6px; top:8px; bottom:8px; width:2px; background:#E4DACB;"></div>
+          <div style="position:relative; margin-bottom:16px;">
+            <div style="position:absolute; left:-26px; top:16px; width:13px; height:13px; border-radius:50%; background:#6E8BA6; border:2px solid #F7F0E6;"></div>
+            <div style="font-size:11px; font-weight:700; color:#6E8BA6; text-transform:uppercase; letter-spacing:.04em; margin-bottom:6px;">14:00 · Événement</div>
+            <div style="background:#FFFDFA; border-radius:16px; padding:15px 17px; box-shadow:0 4px 16px -11px rgba(60,40,20,.4); display:flex; align-items:center; gap:13px;"><span style="font-size:21px;">🩺</span><div style="flex:1;"><div style="font-size:15px; font-weight:600; color:#2C2622;">Médecin — Léa</div><div style="font-size:12.5px; color:#9A9088;">Cabinet Dr. Roche</div></div></div>
+          </div>
+          <div style="position:relative; margin-bottom:16px;">
+            <div style="position:absolute; left:-26px; top:16px; width:13px; height:13px; border-radius:50%; background:#C2603F; border:2px solid #F7F0E6;"></div>
+            <div style="font-size:11px; font-weight:700; color:#C2603F; text-transform:uppercase; letter-spacing:.04em; margin-bottom:6px;">Avant de sortir · Courses</div>
+            <div style="background:#FFFDFA; border-radius:16px; padding:15px 17px; box-shadow:0 4px 16px -11px rgba(60,40,20,.4);"><div style="display:flex; align-items:center; gap:13px;"><span style="font-size:21px;">🛒</span><div style="flex:1; font-size:15px; font-weight:600; color:#2C2622;">3 articles pour le dîner</div></div><div style="display:flex; gap:7px; margin-top:11px;"><span style="background:#F6E2D8; color:#A8623F; padding:5px 11px; border-radius:9px; font-size:13px; font-weight:600;">Lait</span><span style="background:#F6E2D8; color:#A8623F; padding:5px 11px; border-radius:9px; font-size:13px; font-weight:600;">Pâtes</span><span style="background:#F6E2D8; color:#A8623F; padding:5px 11px; border-radius:9px; font-size:13px; font-weight:600;">Café</span></div></div>
+          </div>
+          <div style="position:relative; margin-bottom:16px;">
+            <div style="position:absolute; left:-26px; top:16px; width:13px; height:13px; border-radius:50%; background:#7E9B6E; border:2px solid #F7F0E6;"></div>
+            <div style="font-size:11px; font-weight:700; color:#7E9B6E; text-transform:uppercase; letter-spacing:.04em; margin-bottom:6px;">Ce soir · Tâche</div>
+            <div style="background:#FFFDFA; border-radius:16px; padding:15px 17px; box-shadow:0 4px 16px -11px rgba(60,40,20,.4); display:flex; align-items:center; gap:13px;"><span style="width:21px; height:21px; border-radius:50%; border:2px solid #D8CFC2;"></span><div style="flex:1; font-size:15px; font-weight:600; color:#2C2622;">Sortir les poubelles</div><span style="width:26px; height:26px; border-radius:50%; background:#6E8BA6; color:#fff; font-size:11px; font-weight:700; display:flex; align-items:center; justify-content:center;">T</span></div>
+          </div>
+          <div style="position:relative;">
+            <div style="position:absolute; left:-26px; top:16px; width:13px; height:13px; border-radius:50%; background:#9B6E8B; border:2px solid #F7F0E6;"></div>
+            <div style="font-size:11px; font-weight:700; color:#9B6E8B; text-transform:uppercase; letter-spacing:.04em; margin-bottom:6px;">Cette semaine · Rappel</div>
+            <div style="background:#FFFDFA; border-radius:16px; padding:15px 17px; box-shadow:0 4px 16px -11px rgba(60,40,20,.4); display:flex; align-items:center; gap:13px;"><span style="font-size:21px;">💸</span><div style="flex:1;"><div style="font-size:15px; font-weight:600; color:#2C2622;">Loyer à payer</div><div style="font-size:12.5px; color:#9A9088;">Avant le 30 juin</div></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

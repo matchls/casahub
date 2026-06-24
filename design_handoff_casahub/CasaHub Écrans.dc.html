@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: 'Hanken Grotesk', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+  .casa-scroll::-webkit-scrollbar { display: none; }
+</style>
+</helmet>
+
+<!-- HEADER -->
+<div style="position:absolute; left:80px; top:48px; width:820px;">
+  <div style="display:flex; align-items:center; gap:14px;">
+    <div style="width:46px; height:46px; border-radius:14px; background:#C2603F; display:flex; align-items:center; justify-content:center; font-size:24px; box-shadow:0 6px 16px -6px rgba(194,96,63,.7);">🏠</div>
+    <div style="font-family:'Bricolage Grotesque'; font-weight:800; font-size:34px; color:#2C2622; letter-spacing:-.02em;">CasaHub <span style="font-size:18px; color:#9A9088; font-weight:600;">· tous les écrans (mobile)</span></div>
+  </div>
+  <div style="margin-top:14px; font-size:16px; line-height:1.55; color:#6B6258; max-width:760px;">
+    Les écrans secondaires dans le style bento retenu : <b style="color:#2C2622;">auth, onboarding, courses, tâches, notes, calendrier, liens utiles</b>. Les écrans de détail s'ouvrent depuis les tuiles du Foyer (en-tête avec retour « ‹ »).
+  </div>
+</div>
+
+<!-- ===== AUTH ===== -->
+<div data-screen-label="Connexion" style="position:absolute; left:80px; top:330px; width:414px;">
+  <div data-drags-parent="1" style="position:absolute; top:-26px; left:2px; font:600 12px 'Hanken Grotesk'; color:#9A9088;">📱 Connexion / Création de compte</div>
+  <div style="background:#211D1A; border-radius:46px; padding:12px; box-shadow:0 40px 70px -28px rgba(40,30,20,.55);">
+    <div style="width:390px; height:812px; background:#F7F0E6; border-radius:36px; overflow:hidden; display:flex; flex-direction:column;">
+      <div style="display:flex; justify-content:space-between; align-items:center; padding:14px 26px 6px; font-size:13px; font-weight:700; color:#2C2622;"><span>9:41</span><span style="font-size:12px;">􀙇 􀛨 􀋨</span></div>
+      <div style="flex:1; display:flex; flex-direction:column; padding:0 28px;">
+        <div style="flex:1; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center;">
+          <div style="width:74px; height:74px; border-radius:22px; background:#C2603F; display:flex; align-items:center; justify-content:center; font-size:38px; box-shadow:0 14px 30px -10px rgba(194,96,63,.6);">🏠</div>
+          <div style="font-family:'Bricolage Grotesque'; font-weight:800; font-size:32px; color:#2C2622; letter-spacing:-.02em; margin-top:20px;">CasaHub</div>
+          <div style="font-size:15px; color:#8A8178; margin-top:6px;">Le hub partagé de votre foyer.</div>
+        </div>
+        <div style="flex:1.1; display:flex; flex-direction:column; gap:12px; justify-content:flex-start;">
+          <div style="font-size:12px; font-weight:700; color:#9A9088; text-transform:uppercase; letter-spacing:.05em;">E-mail</div>
+          <div style="background:#FFFDFA; border:1.5px solid rgba(44,38,34,.1); border-radius:14px; padding:15px 16px; font-size:15px; color:#3A332D; margin-top:-6px;">lea@exemple.fr</div>
+          <div style="font-size:12px; font-weight:700; color:#9A9088; text-transform:uppercase; letter-spacing:.05em; margin-top:4px;">Mot de passe</div>
+          <div style="background:#FFFDFA; border:1.5px solid rgba(44,38,34,.1); border-radius:14px; padding:15px 16px; font-size:15px; color:#C7BEB2; margin-top:-6px; display:flex; justify-content:space-between; align-items:center;"><span>••••••••</span><span style="font-size:15px;">👁</span></div>
+          <div style="background:#C2603F; color:#fff; border-radius:14px; padding:16px; text-align:center; font-weight:700; font-size:16px; margin-top:6px; box-shadow:0 10px 22px -8px rgba(194,96,63,.7);">Se connecter</div>
+          <div style="display:flex; align-items:center; gap:12px; margin:4px 0;"><div style="flex:1; height:1px; background:rgba(44,38,34,.1);"></div><span style="font-size:12px; color:#A89E92;">ou</span><div style="flex:1; height:1px; background:rgba(44,38,34,.1);"></div></div>
+          <div style="background:#FFFDFA; border:1.5px solid rgba(44,38,34,.1); border-radius:14px; padding:14px; text-align:center; font-weight:600; font-size:15px; color:#3A332D;">Continuer avec Google</div>
+        </div>
+        <div style="text-align:center; padding:20px 0 28px; font-size:14px; color:#8A8178;">Pas encore de foyer ? <b style="color:#C2603F;">Créer un compte</b></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== ONBOARDING ===== -->
+<div data-screen-label="Créer un foyer" style="position:absolute; left:560px; top:330px; width:414px;">
+  <div data-drags-parent="1" style="position:absolute; top:-26px; left:2px; font:600 12px 'Hanken Grotesk'; color:#9A9088;">📱 Onboarding — créer le foyer</div>
+  <div style="background:#211D1A; border-radius:46px; padding:12px; box-shadow:0 40px 70px -28px rgba(40,30,20,.55);">
+    <div class="casa-scroll" style="width:390px; height:812px; background:#F7F0E6; border-radius:36px; overflow:hidden; display:flex; flex-direction:column;">
+      <div style="display:flex; justify-content:space-between; align-items:center; padding:14px 26px 6px; font-size:13px; font-weight:700; color:#2C2622;"><span>9:41</span><span style="font-size:12px;">􀙇 􀛨 􀋨</span></div>
+      <div style="padding:6px 24px 0; display:flex; align-items:center; gap:10px;"><div style="width:34px; height:34px; border-radius:50%; background:#FFFDFA; display:flex; align-items:center; justify-content:center; font-size:20px; color:#8A8178;">‹</div><div style="flex:1; height:5px; background:#E4DACB; border-radius:3px; overflow:hidden;"><div style="width:66%; height:100%; background:#C2603F;"></div></div><span style="font-size:12px; font-weight:700; color:#9A9088;">2/3</span></div>
+      <div style="flex:1; overflow:auto; padding:18px 28px 24px;">
+        <div style="font-family:'Bricolage Grotesque'; font-weight:800; font-size:28px; color:#2C2622; letter-spacing:-.02em; line-height:1.15;">Créez votre foyer 🏡</div>
+        <div style="font-size:14.5px; color:#8A8178; margin-top:8px; line-height:1.5;">Donnez-lui un nom et invitez les personnes qui vivent avec vous.</div>
+
+        <div style="font-size:12px; font-weight:700; color:#9A9088; text-transform:uppercase; letter-spacing:.05em; margin-top:26px;">Nom du foyer</div>
+        <div style="display:flex; gap:10px; margin-top:8px;"><div style="width:54px; height:54px; border-radius:14px; background:#F6E2D8; display:flex; align-items:center; justify-content:center; font-size:26px;">🏡</div><div style="flex:1; background:#FFFDFA; border:1.5px solid rgba(44,38,34,.1); border-radius:14px; padding:0 16px; display:flex; align-items:center; font-size:16px; font-weight:600; color:#2C2622;">Le Foyer</div></div>
+
+        <div style="font-size:12px; font-weight:700; color:#9A9088; text-transform:uppercase; letter-spacing:.05em; margin-top:22px;">Type</div>
+        <div style="display:flex; gap:8px; margin-top:8px;"><span style="flex:1; text-align:center; background:#2C2622; color:#fff; padding:11px; border-radius:12px; font-size:13.5px; font-weight:700;">💑 Couple</span><span style="flex:1; text-align:center; background:#FFFDFA; color:#8A8178; padding:11px; border-radius:12px; font-size:13.5px; font-weight:600;">🧑‍🤝‍🧑 Coloc</span><span style="flex:1; text-align:center; background:#FFFDFA; color:#8A8178; padding:11px; border-radius:12px; font-size:13.5px; font-weight:600;">👨‍👩‍👧 Famille</span></div>
+
+        <div style="font-size:12px; font-weight:700; color:#9A9088; text-transform:uppercase; letter-spacing:.05em; margin-top:22px;">Membres</div>
+        <div style="display:flex; align-items:center; gap:11px; margin-top:8px; background:#FFFDFA; border-radius:14px; padding:11px 13px;"><div style="width:36px; height:36px; border-radius:50%; background:#C2603F; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:14px;">L</div><div style="flex:1;"><div style="font-size:14.5px; font-weight:600; color:#2C2622;">Léa <span style="font-size:12px; color:#9A9088; font-weight:500;">· vous</span></div></div></div>
+        <div style="display:flex; align-items:center; gap:11px; margin-top:8px; background:#FFFDFA; border-radius:14px; padding:11px 13px;"><div style="width:36px; height:36px; border-radius:50%; background:#6E8BA6; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:14px;">T</div><div style="flex:1;"><div style="font-size:14.5px; font-weight:600; color:#2C2622;">tom@exemple.fr</div><div style="font-size:12px; color:#C2603F; font-weight:600;">Invitation en attente</div></div></div>
+        <div style="display:flex; align-items:center; gap:10px; margin-top:8px; border:1.5px dashed #D8CFC2; border-radius:14px; padding:13px; color:#A8623F; font-weight:600; font-size:14.5px;"><span style="font-size:18px;">＋</span>Inviter par e-mail ou lien</div>
+      </div>
+      <div style="padding:8px 28px 28px;"><div style="background:#C2603F; color:#fff; border-radius:14px; padding:16px; text-align:center; font-weight:700; font-size:16px; box-shadow:0 10px 22px -8px rgba(194,96,63,.7);">Continuer</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== COURSES ===== -->
+<div data-screen-label="Courses" style="position:absolute; left:1040px; top:330px; width:414px;">
+  <div data-drags-parent="1" style="position:absolute; top:-26px; left:2px; font:600 12px 'Hanken Grotesk'; color:#9A9088;">📱 Liste de courses</div>
+  <div style="background:#211D1A; border-radius:46px; padding:12px; box-shadow:0 40px 70px -28px rgba(40,30,20,.55);">
+    <div class="casa-scroll" style="width:390px; height:812px; background:#F7F0E6; border-radius:36px; overflow:hidden; display:flex; flex-direction:column;">
+      <div style="display:flex; justify-content:space-between; align-items:center; padding:14px 26px 6px; font-size:13px; font-weight:700; color:#2C2622;"><span>9:41</span><span style="font-size:12px;">􀙇 􀛨 􀋨</span></div>
+      <div style="padding:6px 20px 10px; display:flex; align-items:center; gap:12px;"><div style="width:36px; height:36px; border-radius:50%; background:#FFFDFA; display:flex; align-items:center; justify-content:center; font-size:21px; color:#8A8178;">‹</div><div style="flex:1;"><div style="font-family:'Bricolage Grotesque'; font-weight:800; font-size:23px; color:#2C2622;">🛒 Courses</div></div><div style="font-size:12px; font-weight:700; color:#C2603F; background:#F6E2D8; padding:5px 11px; border-radius:20px;">8 à prendre</div></div>
+      <div style="padding:0 20px 12px;"><div style="display:flex; align-items:center; gap:10px; background:#FFFDFA; border-radius:14px; padding:13px 15px; box-shadow:0 4px 14px -10px rgba(60,40,20,.3);"><span style="font-size:18px; color:#C2603F;">＋</span><span style="flex:1; font-size:15px; color:#B6ADA2;">Ajouter un article…</span></div></div>
+      <div class="casa-scroll" style="flex:1; overflow:auto; padding:0 20px 18px;">
+        <div style="background:#FFFDFA; border-radius:18px; padding:6px 14px; box-shadow:0 4px 16px -12px rgba(60,40,20,.35);">
+          <div style="display:flex; align-items:center; gap:12px; padding:12px 0; border-bottom:1px solid rgba(44,38,34,.05);"><span style="width:21px; height:21px; border-radius:6px; border:2px solid #D8CFC2;"></span><span style="flex:1; font-size:15px; color:#3A332D;">Lait demi-écrémé <span style="color:#A89E92; font-size:13px;">×2</span></span><span style="width:22px; height:22px; border-radius:50%; background:#C2603F; color:#fff; font-size:10px; font-weight:700; display:flex; align-items:center; justify-content:center;">L</span></div>
+          <div style="display:flex; align-items:center; gap:12px; padding:12px 0; border-bottom:1px solid rgba(44,38,34,.05);"><span style="width:21px; height:21px; border-radius:6px; border:2px solid #D8CFC2;"></span><span style="flex:1; font-size:15px; color:#3A332D;">Café en grains</span><span style="width:22px; height:22px; border-radius:50%; background:#6E8BA6; color:#fff; font-size:10px; font-weight:700; display:flex; align-items:center; justify-content:center;">T</span></div>
+          <div style="display:flex; align-items:center; gap:12px; padding:12px 0; border-bottom:1px solid rgba(44,38,34,.05);"><span style="width:21px; height:21px; border-radius:6px; border:2px solid #D8CFC2;"></span><span style="flex:1; font-size:15px; color:#3A332D;">Éponges</span><span style="width:22px; height:22px; border-radius:50%; background:#C2603F; color:#fff; font-size:10px; font-weight:700; display:flex; align-items:center; justify-content:center;">L</span></div>
+          <div style="display:flex; align-items:center; gap:12px; padding:12px 0; border-bottom:1px solid rgba(44,38,34,.05);"><span style="width:21px; height:21px; border-radius:6px; border:2px solid #D8CFC2;"></span><span style="flex:1; font-size:15px; color:#3A332D;">Pommes <span style="color:#A89E92; font-size:13px;">×6</span></span><span style="width:22px; height:22px; border-radius:50%; background:#6E8BA6; color:#fff; font-size:10px; font-weight:700; display:flex; align-items:center; justify-content:center;">T</span></div>
+          <div style="display:flex; align-items:center; gap:12px; padding:12px 0; border-bottom:1px solid rgba(44,38,34,.05);"><span style="width:21px; height:21px; border-radius:6px; border:2px solid #D8CFC2;"></span><span style="flex:1; font-size:15px; color:#3A332D;">Pain de mie</span><span style="width:22px; height:22px; border-radius:50%; background:#C2603F; color:#fff; font-size:10px; font-weight:700; display:flex; align-items:center; justify-content:center;">L</span></div>
+          <div style="display:flex; align-items:center; gap:12px; padding:12px 0;"><span style="width:21px; height:21px; border-radius:6px; border:2px solid #D8CFC2;"></span><span style="flex:1; font-size:15px; color:#3A332D;">Yaourts nature</span><span style="width:22px; height:22px; border-radius:50%; background:#6E8BA6; color:#fff; font-size:10px; font-weight:700; display:flex; align-items:center; justify-content:center;">T</span></div>
+        </div>
+        <div style="font-size:12px; font-weight:700; color:#9A9088; text-transform:uppercase; letter-spacing:.05em; margin:16px 4px 8px;">Déjà pris · 3</div>
+        <div style="background:#FBF6EE; border-radius:18px; padding:6px 14px;">
+          <div style="display:flex; align-items:center; gap:12px; padding:11px 0; border-bottom:1px solid rgba(44,38,34,.04);"><span style="width:21px; height:21px; border-radius:6px; background:#7E9B6E; color:#fff; display:flex; align-items:center; justify-content:center; font-size:12px;">✓</span><span style="flex:1; font-size:15px; color:#B6ADA2; text-decoration:line-through;">Pâtes</span></div>
+          <div style="display:flex; align-items:center; gap:12px; padding:11px 0; border-bottom:1px solid rgba(44,38,34,.04);"><span style="width:21px; height:21px; border-radius:6px; background:#7E9B6E; color:#fff; display:flex; align-items:center; justify-content:center; font-size:12px;">✓</span><span style="flex:1; font-size:15px; color:#B6ADA2; text-decoration:line-through;">Sel</span></div>
+          <div style="display:flex; align-items:center; gap:12px; padding:11px 0;"><span style="width:21px; height:21px; border-radius:6px; background:#7E9B6E; color:#fff; display:flex; align-items:center; justify-content:center; font-size:12px;">✓</span><span style="flex:1; font-size:15px; color:#B6ADA2; text-decoration:line-through;">Beurre</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== TÂCHES ===== -->
+<div data-screen-label="Tâches" style="position:absolute; left:80px; top:1250px; width:414px;">
+  <div data-drags-parent="1" style="position:absolute; top:-26px; left:2px; font:600 12px 'Hanken Grotesk'; color:#9A9088;">📱 Todo-list du foyer</div>
+  <div style="background:#211D1A; border-radius:46px; padding:12px; box-shadow:0 40px 70px -28px rgba(40,30,20,.55);">
+    <div class="casa-scroll" style="width:390px; height:812px; background:#F7F0E6; border-radius:36px; overflow:hidden; display:flex; flex-direction:column;">
+      <div style="display:flex; justify-content:space-between; align-items:center; padding:14px 26px 6px; font-size:13px; font-weight:700; color:#2C2622;"><span>9:41</span><span style="font-size:12px;">􀙇 􀛨 􀋨</span></div>
+      <div style="padding:6px 20px 8px; display:flex; align-items:center; gap:12px;"><div style="width:36px; height:36px; border-radius:50%; background:#FFFDFA; display:flex; align-items:center; justify-content:center; font-size:21px; color:#8A8178;">‹</div><div style="flex:1;"><div style="font-family:'Bricolage Grotesque'; font-weight:800; font-size:23px; color:#2C2622;">✅ Tâches</div></div></div>
+      <div style="padding:0 20px 10px; display:flex; gap:7px;"><span style="background:#2C2622; color:#fff; padding:7px 13px; border-radius:11px; font-size:13px; font-weight:700;">Toutes</span><span style="background:#FFFDFA; color:#8A8178; padding:7px 13px; border-radius:11px; font-size:13px; font-weight:600;">À moi</span><span style="background:#FFFDFA; color:#8A8178; padding:7px 13px; border-radius:11px; font-size:13px; font-weight:600;">Aujourd'hui</span></div>
+      <div style="padding:0 20px 10px;"><div style="display:flex; align-items:center; gap:10px; background:#FFFDFA; border-radius:14px; padding:13px 15px; box-shadow:0 4px 14px -10px rgba(60,40,20,.3);"><span style="font-size:18px; color:#7E9B6E;">＋</span><span style="flex:1; font-size:15px; color:#B6ADA2;">Nouvelle tâche…</span></div></div>
+      <div class="casa-scroll" style="flex:1; overflow:auto; padding:0 20px 18px; display:flex; flex-direction:column; gap:10px;">
+        <div style="background:#FFFDFA; border-radius:16px; padding:14px 15px; box-shadow:0 4px 16px -12px rgba(60,40,20,.35); display:flex; align-items:center; gap:12px;"><span style="width:21px; height:21px; border-radius:50%; border:2px solid #D8CFC2;"></span><div style="flex:1;"><div style="font-size:15px; font-weight:600; color:#2C2622;">Sortir les poubelles</div><div style="font-size:12.5px; color:#C2603F; font-weight:600; margin-top:2px;">📅 Ce soir</div></div><span style="width:26px; height:26px; border-radius:50%; background:#6E8BA6; color:#fff; font-size:11px; font-weight:700; display:flex; align-items:center; justify-content:center;">T</span></div>
+        <div style="background:#FFFDFA; border-radius:16px; padding:14px 15px; box-shadow:0 4px 16px -12px rgba(60,40,20,.35); display:flex; align-items:center; gap:12px;"><span style="width:21px; height:21px; border-radius:50%; border:2px solid #D8CFC2;"></span><div style="flex:1;"><div style="font-size:15px; font-weight:600; color:#2C2622;">Appeler le syndic</div><div style="font-size:12.5px; color:#9A9088; margin-top:2px;">📅 Demain</div></div><span style="width:26px; height:26px; border-radius:50%; background:#C2603F; color:#fff; font-size:11px; font-weight:700; display:flex; align-items:center; justify-content:center;">L</span></div>
+        <div style="background:#FFFDFA; border-radius:16px; padding:14px 15px; box-shadow:0 4px 16px -12px rgba(60,40,20,.35); display:flex; align-items:center; gap:12px;"><span style="width:21px; height:21px; border-radius:50%; border:2px solid #D8CFC2;"></span><div style="flex:1;"><div style="font-size:15px; font-weight:600; color:#2C2622;">Réserver le resto 🎂</div><div style="font-size:12.5px; color:#9A9088; margin-top:2px;">Sans date</div></div><span style="width:26px; height:26px; border-radius:50%; background:#6E8BA6; color:#fff; font-size:11px; font-weight:700; display:flex; align-items:center; justify-content:center;">T</span></div>
+        <div style="background:#FFFDFA; border-radius:16px; padding:14px 15px; box-shadow:0 4px 16px -12px rgba(60,40,20,.35); display:flex; align-items:center; gap:12px;"><span style="width:21px; height:21px; border-radius:50%; border:2px solid #D8CFC2;"></span><div style="flex:1;"><div style="font-size:15px; font-weight:600; color:#2C2622;">Arroser les plantes</div><div style="font-size:12.5px; color:#9A9088; margin-top:2px;">🔁 Tous les 3 jours</div></div><span style="width:26px; height:26px; border-radius:50%; background:#C2603F; color:#fff; font-size:11px; font-weight:700; display:flex; align-items:center; justify-content:center;">L</span></div>
+        <div style="font-size:12px; font-weight:700; color:#9A9088; text-transform:uppercase; letter-spacing:.05em; margin:6px 4px 2px;">Terminé · 2</div>
+        <div style="background:#FBF6EE; border-radius:16px; padding:13px 15px; display:flex; align-items:center; gap:12px;"><span style="width:21px; height:21px; border-radius:50%; background:#7E9B6E; color:#fff; font-size:12px; display:flex; align-items:center; justify-content:center;">✓</span><div style="flex:1; font-size:15px; color:#B6ADA2; text-decoration:line-through;">Payer internet</div></div>
+        <div style="background:#FBF6EE; border-radius:16px; padding:13px 15px; display:flex; align-items:center; gap:12px;"><span style="width:21px; height:21px; border-radius:50%; background:#7E9B6E; color:#fff; font-size:12px; display:flex; align-items:center; justify-content:center;">✓</span><div style="flex:1; font-size:15px; color:#B6ADA2; text-decoration:line-through;">Ranger le garage</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== NOTES ===== -->
+<div data-screen-label="Notes" style="position:absolute; left:560px; top:1250px; width:414px;">
+  <div data-drags-parent="1" style="position:absolute; top:-26px; left:2px; font:600 12px 'Hanken Grotesk'; color:#9A9088;">📱 Notes partagées</div>
+  <div style="background:#211D1A; border-radius:46px; padding:12px; box-shadow:0 40px 70px -28px rgba(40,30,20,.55);">
+    <div class="casa-scroll" style="width:390px; height:812px; background:#F7F0E6; border-radius:36px; overflow:hidden; display:flex; flex-direction:column;">
+      <div style="display:flex; justify-content:space-between; align-items:center; padding:14px 26px 6px; font-size:13px; font-weight:700; color:#2C2622;"><span>9:41</span><span style="font-size:12px;">􀙇 􀛨 􀋨</span></div>
+      <div style="padding:6px 20px 12px; display:flex; align-items:center; gap:12px;"><div style="width:36px; height:36px; border-radius:50%; background:#FFFDFA; display:flex; align-items:center; justify-content:center; font-size:21px; color:#8A8178;">‹</div><div style="flex:1;"><div style="font-family:'Bricolage Grotesque'; font-weight:800; font-size:23px; color:#2C2622;">📝 Notes</div></div><div style="width:36px; height:36px; border-radius:50%; background:#F2E7CC; display:flex; align-items:center; justify-content:center; font-size:18px; color:#8A7536;">＋</div></div>
+      <div class="casa-scroll" style="flex:1; overflow:auto; padding:0 20px 18px; display:flex; flex-direction:column; gap:12px;">
+        <div style="background:#F2E7CC; border-radius:18px; padding:16px;"><div style="display:flex; align-items:center; gap:9px;"><span style="font-size:19px;">📶</span><span style="font-family:'Bricolage Grotesque'; font-weight:700; font-size:16px; color:#6B5320;">Wi-Fi maison</span></div><div style="margin-top:10px; font-size:14px; color:#7C6326; line-height:1.7;">Réseau&nbsp;: <b>MaisonZen</b><br>Mot de passe&nbsp;: <b>MaisonZen2024!</b></div></div>
+        <div style="background:#FFFDFA; border-radius:18px; padding:16px; box-shadow:0 4px 16px -12px rgba(60,40,20,.35);"><div style="display:flex; align-items:center; gap:9px;"><span style="font-size:19px;">🔑</span><span style="font-family:'Bricolage Grotesque'; font-weight:700; font-size:16px; color:#2C2622;">Codes</span></div><div style="margin-top:10px; font-size:14px; color:#5A524A; line-height:1.7;">Porte immeuble&nbsp;: <b>4521B</b><br>Boîte aux lettres&nbsp;: <b>n°12</b><br>Local vélos&nbsp;: <b>3300#</b></div></div>
+        <div style="background:#FFFDFA; border-radius:18px; padding:16px; box-shadow:0 4px 16px -12px rgba(60,40,20,.35);"><div style="display:flex; align-items:center; gap:9px;"><span style="font-size:19px;">📞</span><span style="font-family:'Bricolage Grotesque'; font-weight:700; font-size:16px; color:#2C2622;">Numéros utiles</span></div><div style="margin-top:10px; font-size:14px; color:#5A524A; line-height:1.7;">Médecin Dr. Roche · 01 23 45 67 89<br>Gardien · 06 12 34 56 78</div></div>
+        <div style="background:#FFFDFA; border-radius:18px; padding:16px; box-shadow:0 4px 16px -12px rgba(60,40,20,.35);"><div style="display:flex; align-items:center; gap:9px;"><span style="font-size:19px;">💡</span><span style="font-family:'Bricolage Grotesque'; font-weight:700; font-size:16px; color:#2C2622;">Idées</span></div><div style="margin-top:8px; display:flex; gap:7px; flex-wrap:wrap;"><span style="background:#F4EEE4; padding:6px 11px; border-radius:9px; font-size:13px; color:#5A524A;">🍽 Resto japonais à tester</span><span style="background:#F4EEE4; padding:6px 11px; border-radius:9px; font-size:13px; color:#5A524A;">🎬 Film samedi</span></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== CALENDRIER ===== -->
+<div data-screen-label="Calendrier" style="position:absolute; left:1040px; top:1250px; width:414px;">
+  <div data-drags-parent="1" style="position:absolute; top:-26px; left:2px; font:600 12px 'Hanken Grotesk'; color:#9A9088;">📱 Calendrier (liste)</div>
+  <div style="background:#211D1A; border-radius:46px; padding:12px; box-shadow:0 40px 70px -28px rgba(40,30,20,.55);">
+    <div class="casa-scroll" style="width:390px; height:812px; background:#F7F0E6; border-radius:36px; overflow:hidden; display:flex; flex-direction:column;">
+      <div style="display:flex; justify-content:space-between; align-items:center; padding:14px 26px 6px; font-size:13px; font-weight:700; color:#2C2622;"><span>9:41</span><span style="font-size:12px;">􀙇 􀛨 􀋨</span></div>
+      <div style="padding:6px 20px 12px; display:flex; align-items:center; gap:12px;"><div style="width:36px; height:36px; border-radius:50%; background:#FFFDFA; display:flex; align-items:center; justify-content:center; font-size:21px; color:#8A8178;">‹</div><div style="flex:1;"><div style="font-family:'Bricolage Grotesque'; font-weight:800; font-size:23px; color:#2C2622;">📅 Agenda</div></div><div style="font-size:13px; font-weight:700; color:#3D5266; background:#E2E8EE; padding:6px 12px; border-radius:20px;">Juin</div></div>
+      <div class="casa-scroll" style="flex:1; overflow:auto; padding:0 20px 18px;">
+        <div style="font-size:12px; font-weight:700; color:#9A9088; text-transform:uppercase; letter-spacing:.05em; margin:2px 4px 10px;">Cette semaine</div>
+        <div style="display:flex; flex-direction:column; gap:11px;">
+          <div style="background:#FFFDFA; border-radius:16px; padding:14px; box-shadow:0 4px 16px -12px rgba(60,40,20,.35); display:flex; gap:14px; align-items:center;"><div style="width:46px; text-align:center;"><div style="font-size:11px; color:#6E8BA6; font-weight:700;">MAR</div><div style="font-family:'Bricolage Grotesque'; font-weight:800; font-size:22px; color:#2C2622;">24</div></div><div style="flex:1; border-left:3px solid #6E8BA6; padding-left:13px;"><div style="font-size:15px; font-weight:600; color:#2C2622;">Médecin — Léa</div><div style="font-size:12.5px; color:#9A9088;">14:00 · Cabinet Dr. Roche</div></div></div>
+          <div style="background:#FFFDFA; border-radius:16px; padding:14px; box-shadow:0 4px 16px -12px rgba(60,40,20,.35); display:flex; gap:14px; align-items:center;"><div style="width:46px; text-align:center;"><div style="font-size:11px; color:#7E9B6E; font-weight:700;">VEN</div><div style="font-family:'Bricolage Grotesque'; font-weight:800; font-size:22px; color:#2C2622;">27</div></div><div style="flex:1; border-left:3px solid #7E9B6E; padding-left:13px;"><div style="font-size:15px; font-weight:600; color:#2C2622;">Apéro chez Sarah 🍷</div><div style="font-size:12.5px; color:#9A9088;">19:00 · Léa & Tom</div></div></div>
+          <div style="background:#FFFDFA; border-radius:16px; padding:14px; box-shadow:0 4px 16px -12px rgba(60,40,20,.35); display:flex; gap:14px; align-items:center;"><div style="width:46px; text-align:center;"><div style="font-size:11px; color:#C2603F; font-weight:700;">DIM</div><div style="font-family:'Bricolage Grotesque'; font-weight:800; font-size:22px; color:#2C2622;">29</div></div><div style="flex:1; border-left:3px solid #C2603F; padding-left:13px;"><div style="font-size:15px; font-weight:600; color:#2C2622;">Brunch famille 🥐</div><div style="font-size:12.5px; color:#9A9088;">11:00 · chez les parents</div></div></div>
+        </div>
+        <div style="font-size:12px; font-weight:700; color:#9A9088; text-transform:uppercase; letter-spacing:.05em; margin:18px 4px 10px;">La semaine prochaine</div>
+        <div style="display:flex; flex-direction:column; gap:11px;">
+          <div style="background:#FFFDFA; border-radius:16px; padding:14px; box-shadow:0 4px 16px -12px rgba(60,40,20,.35); display:flex; gap:14px; align-items:center;"><div style="width:46px; text-align:center;"><div style="font-size:11px; color:#9B6E8B; font-weight:700;">LUN</div><div style="font-family:'Bricolage Grotesque'; font-weight:800; font-size:22px; color:#2C2622;">30</div></div><div style="flex:1; border-left:3px solid #9B6E8B; padding-left:13px;"><div style="font-size:15px; font-weight:600; color:#2C2622;">💸 Loyer à payer</div><div style="font-size:12.5px; color:#9A9088;">Rappel · toute la journée</div></div></div>
+          <div style="background:#FFFDFA; border-radius:16px; padding:14px; box-shadow:0 4px 16px -12px rgba(60,40,20,.35); display:flex; gap:14px; align-items:center;"><div style="width:46px; text-align:center;"><div style="font-size:11px; color:#6E8BA6; font-weight:700;">MER</div><div style="font-family:'Bricolage Grotesque'; font-weight:800; font-size:22px; color:#2C2622;">02</div></div><div style="flex:1; border-left:3px solid #6E8BA6; padding-left:13px;"><div style="font-size:15px; font-weight:600; color:#2C2622;">Contrôle technique 🚗</div><div style="font-size:12.5px; color:#9A9088;">09:30 · Garage Centre</div></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== LIENS ===== -->
+<div data-screen-label="Liens utiles" style="position:absolute; left:80px; top:2170px; width:414px;">
+  <div data-drags-parent="1" style="position:absolute; top:-26px; left:2px; font:600 12px 'Hanken Grotesk'; color:#9A9088;">📱 Liens utiles</div>
+  <div style="background:#211D1A; border-radius:46px; padding:12px; box-shadow:0 40px 70px -28px rgba(40,30,20,.55);">
+    <div class="casa-scroll" style="width:390px; height:812px; background:#F7F0E6; border-radius:36px; overflow:hidden; display:flex; flex-direction:column;">
+      <div style="display:flex; justify-content:space-between; align-items:center; padding:14px 26px 6px; font-size:13px; font-weight:700; color:#2C2622;"><span>9:41</span><span style="font-size:12px;">􀙇 􀛨 􀋨</span></div>
+      <div style="padding:6px 20px 12px; display:flex; align-items:center; gap:12px;"><div style="width:36px; height:36px; border-radius:50%; background:#FFFDFA; display:flex; align-items:center; justify-content:center; font-size:21px; color:#8A8178;">‹</div><div style="flex:1;"><div style="font-family:'Bricolage Grotesque'; font-weight:800; font-size:23px; color:#2C2622;">🔗 Liens utiles</div></div><div style="width:36px; height:36px; border-radius:50%; background:#EADDE6; display:flex; align-items:center; justify-content:center; font-size:18px; color:#8A6A82;">＋</div></div>
+      <div class="casa-scroll" style="flex:1; overflow:auto; padding:0 20px 18px;">
+        <div style="font-size:12px; font-weight:700; color:#9A9088; text-transform:uppercase; letter-spacing:.05em; margin:2px 4px 8px;">🏠 Logement</div>
+        <div style="background:#FFFDFA; border-radius:16px; padding:4px 14px; box-shadow:0 4px 16px -12px rgba(60,40,20,.35); margin-bottom:14px;">
+          <div style="display:flex; align-items:center; gap:12px; padding:13px 0; border-bottom:1px solid rgba(44,38,34,.05);"><span style="font-size:18px;">🛡</span><span style="flex:1; font-size:15px; color:#2C2622; font-weight:500;">Assurance habitation</span><span style="color:#C7BEB2; font-size:16px;">↗</span></div>
+          <div style="display:flex; align-items:center; gap:12px; padding:13px 0;"><span style="font-size:18px;">📄</span><span style="flex:1; font-size:15px; color:#2C2622; font-weight:500;">Bail & état des lieux</span><span style="color:#C7BEB2; font-size:16px;">↗</span></div>
+        </div>
+        <div style="font-size:12px; font-weight:700; color:#9A9088; text-transform:uppercase; letter-spacing:.05em; margin:2px 4px 8px;">❤️ Santé</div>
+        <div style="background:#FFFDFA; border-radius:16px; padding:4px 14px; box-shadow:0 4px 16px -12px rgba(60,40,20,.35); margin-bottom:14px;">
+          <div style="display:flex; align-items:center; gap:12px; padding:13px 0; border-bottom:1px solid rgba(44,38,34,.05);"><span style="font-size:18px;">🩺</span><span style="flex:1; font-size:15px; color:#2C2622; font-weight:500;">Espace Ameli</span><span style="color:#C7BEB2; font-size:16px;">↗</span></div>
+          <div style="display:flex; align-items:center; gap:12px; padding:13px 0;"><span style="font-size:18px;">💊</span><span style="flex:1; font-size:15px; color:#2C2622; font-weight:500;">Mutuelle</span><span style="color:#C7BEB2; font-size:16px;">↗</span></div>
+        </div>
+        <div style="font-size:12px; font-weight:700; color:#9A9088; text-transform:uppercase; letter-spacing:.05em; margin:2px 4px 8px;">🗂 Documents</div>
+        <div style="background:#FFFDFA; border-radius:16px; padding:4px 14px; box-shadow:0 4px 16px -12px rgba(60,40,20,.35);">
+          <div style="display:flex; align-items:center; gap:12px; padding:13px 0; border-bottom:1px solid rgba(44,38,34,.05);"><span style="font-size:18px;">📁</span><span style="flex:1; font-size:15px; color:#2C2622; font-weight:500;">Drive partagé du foyer</span><span style="color:#C7BEB2; font-size:16px;">↗</span></div>
+          <div style="display:flex; align-items:center; gap:12px; padding:13px 0;"><span style="font-size:18px;">🚗</span><span style="flex:1; font-size:15px; color:#2C2622; font-weight:500;">Assurance voiture</span><span style="color:#C7BEB2; font-size:16px;">↗</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>
