@@ -47,6 +47,14 @@
   --links-bg:     #EADDE6;
   --links-text:   #6E4D63;
   --links-accent: #9B6E8B;
+
+  /* Borders */
+  --border:       rgba(44,38,34,0.06);
+  --border-input: rgba(44,38,34,0.10);
+
+  /* Shadows */
+  --shadow-card:   0 4px 16px -12px rgba(60,40,20,.35);
+  --shadow-accent: 0 8px 18px -8px rgba(194,96,63,.7);
 }
 
 body {

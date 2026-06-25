@@ -10,17 +10,17 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 
 const variantStyles: Record<Variant, string> = {
   primary:
-    "bg-[var(--primary)] text-white hover:opacity-90",
+    "bg-[var(--primary)] text-white font-bold hover:opacity-90 shadow-[var(--shadow-accent)]",
   secondary:
-    "bg-[var(--surface)] border border-[var(--text-muted)] text-[var(--text-primary)] hover:bg-[var(--surface-muted)]",
+    "bg-[var(--surface)] border-[1.5px] border-[var(--border-input)] text-[var(--text-primary)] font-semibold hover:bg-[var(--surface-muted)]",
   ghost:
-    "bg-transparent text-[var(--text-secondary)] hover:bg-[var(--surface-muted)]",
+    "bg-transparent text-[var(--text-secondary)] font-semibold hover:bg-[var(--surface-muted)]",
 };
 
 const sizeStyles: Record<Size, string> = {
-  sm: "px-3 py-1.5 text-sm",
-  md: "px-4 py-2 text-sm",
-  lg: "px-6 py-3 text-base",
+  sm: "px-4 py-2.5 text-[13px]",
+  md: "px-4 py-3 text-[14.5px]",
+  lg: "px-5 py-4 text-base",
 };
 
 export function Button({
@@ -33,7 +33,8 @@ export function Button({
   return (
     <button
       className={cn(
-        "inline-flex items-center justify-center rounded-lg font-medium transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed",
+        "inline-flex items-center justify-center rounded-[14px] transition-all cursor-pointer",
+        "disabled:opacity-50 disabled:cursor-not-allowed",
         variantStyles[variant],
         sizeStyles[size],
         className

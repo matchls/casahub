@@ -8,18 +8,18 @@ interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
 
 const variantStyles: Record<BadgeVariant, string> = {
   default:  "bg-[var(--surface-muted)] text-[var(--text-secondary)]",
-  shopping: "bg-[var(--shopping-bg)] text-[var(--shopping-text)]",
-  tasks:    "bg-[var(--tasks-bg)] text-[var(--tasks-text)]",
-  agenda:   "bg-[var(--agenda-bg)] text-[var(--agenda-text)]",
-  notes:    "bg-[var(--notes-bg)] text-[var(--notes-text)]",
-  links:    "bg-[var(--links-bg)] text-[var(--links-text)]",
+  shopping: "bg-[var(--shopping-accent)] text-white",
+  tasks:    "bg-[var(--tasks-accent)] text-white",
+  agenda:   "bg-[var(--agenda-accent)] text-white",
+  notes:    "bg-[var(--notes-accent)] text-white",
+  links:    "bg-[var(--links-accent)] text-white",
 };
 
 export function Badge({ variant = "default", className, children, ...props }: BadgeProps) {
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium",
+        "inline-flex items-center rounded-full px-3 py-1 text-[13px] font-bold",
         variantStyles[variant],
         className
       )}

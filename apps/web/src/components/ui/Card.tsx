@@ -8,7 +8,8 @@ export function Card({ className, children, ...props }: CardProps) {
   return (
     <div
       className={cn(
-        "rounded-xl bg-[var(--surface)] p-4 shadow-sm",
+        "rounded-[16px] bg-[var(--surface)] p-[15px]",
+        "shadow-[var(--shadow-card)]",
         className
       )}
       {...props}
@@ -30,7 +31,7 @@ export function CardTitle({ className, children, ...props }: CardProps) {
   return (
     <h3
       className={cn(
-        "font-semibold text-[var(--text-primary)] leading-tight",
+        "font-extrabold text-[var(--text-primary)] leading-tight tracking-[-0.02em]",
         className
       )}
       style={{ fontFamily: "var(--font-display)" }}
@@ -44,7 +45,7 @@ export function CardTitle({ className, children, ...props }: CardProps) {
 export function CardContent({ className, children, ...props }: CardProps) {
   return (
     <div
-      className={cn("text-sm text-[var(--text-secondary)]", className)}
+      className={cn("text-[13.5px] text-[var(--text-secondary)]", className)}
       {...props}
     >
       {children}

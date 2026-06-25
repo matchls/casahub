@@ -10,9 +10,9 @@ interface AvatarProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 const sizeStyles: Record<AvatarSize, string> = {
-  sm: "h-8 w-8 text-xs",
-  md: "h-10 w-10 text-sm",
-  lg: "h-14 w-14 text-base",
+  sm: "h-8 w-8 text-[11px]",
+  md: "h-9 w-9 text-[13px]",
+  lg: "h-[38px] w-[38px] text-[14px]",
 };
 
 export function Avatar({
@@ -27,7 +27,7 @@ export function Avatar({
     <div
       className={cn(
         "relative inline-flex shrink-0 items-center justify-center rounded-full",
-        "bg-[var(--surface-muted)] text-[var(--text-secondary)] font-medium overflow-hidden",
+        "bg-[var(--surface-muted)] text-[var(--text-secondary)] font-bold overflow-hidden",
         sizeStyles[size],
         className
       )}
