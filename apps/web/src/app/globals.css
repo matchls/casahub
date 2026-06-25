@@ -1,26 +1,62 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
+/* ── Typography ─────────────────────────────────────────────── */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-display: var(--font-display);
+  --font-ui: var(--font-ui);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* ── Design tokens ───────────────────────────────────────────── */
+:root {
+  /* Backgrounds */
+  --background:    #F7F0E6;
+  --surface:       #FFFDFA;
+  --surface-muted: #FBF6EE;
+
+  /* Text */
+  --text-primary:   #2C2622;
+  --text-secondary: #5A524A;
+  --text-muted:     #9A9088;
+  --text-soft:      #8A8178;
+  --placeholder:    #B6ADA2;
+
+  /* Brand */
+  --primary: #C2603F;
+
+  /* Courses / Shopping */
+  --shopping-bg:     #F6E2D8;
+  --shopping-text:   #7A3A23;
+  --shopping-accent: #C2603F;
+
+  /* Tâches / Tasks */
+  --tasks-bg:     #E7EDDF;
+  --tasks-text:   #465938;
+  --tasks-accent: #7E9B6E;
+
+  /* Agenda */
+  --agenda-bg:     #E2E8EE;
+  --agenda-text:   #3D5266;
+  --agenda-accent: #6E8BA6;
+
+  /* Notes */
+  --notes-bg:     #F2E7CC;
+  --notes-text:   #6B5320;
+  --notes-accent: #C99A3F;
+
+  /* Liens / Links */
+  --links-bg:     #EADDE6;
+  --links-text:   #6E4D63;
+  --links-accent: #9B6E8B;
+
+  /* Borders */
+  --border:       rgba(44,38,34,0.06);
+  --border-input: rgba(44,38,34,0.10);
+
+  /* Shadows */
+  --shadow-card:   0 4px 16px -12px rgba(60,40,20,.35);
+  --shadow-accent: 0 8px 18px -8px rgba(194,96,63,.7);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-ui, system-ui, sans-serif);
 }
