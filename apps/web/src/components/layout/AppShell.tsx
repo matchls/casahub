@@ -5,9 +5,11 @@ import { MobileBottomNav } from "./MobileBottomNav";
 import { AppHeader } from "./AppHeader";
 import { AddDrawer } from "./AddDrawer";
 import { HomeDashboard } from "@/features/dashboard/HomeDashboard";
+import { ShoppingListScreen } from "@/features/shopping/ShoppingListScreen";
+import { initialShoppingItems } from "@/features/shopping/shoppingData";
 import type { View } from "./types";
 
-/* Simple placeholder for non-home views */
+/* Simple placeholder for non-implemented views */
 function ViewPlaceholder({ view }: { view: View }) {
   const meta: Record<View, { emoji: string; label: string; color: string }> = {
     home:     { emoji: "🏡", label: "Foyer",          color: "var(--shopping-text)" },
@@ -35,6 +37,24 @@ function ViewPlaceholder({ view }: { view: View }) {
 export function AppShell() {
   const [activeView, setActiveView] = useState<View>("home");
   const [addOpen, setAddOpen] = useState(false);
+  const [shoppingPendingCount, setShoppingPendingCount] = useState(
+    initialShoppingItems.filter((i) => !i.done).length
+  );
+
+  const shoppingSubtitle =
+    activeView === "shopping"
+      ? shoppingPendingCount === 0
+        ? "Liste vide"
+        : `${shoppingPendingCount} article${shoppingPendingCount > 1 ? "s" : ""} à prendre`
+      : undefined;
+
+  function renderView() {
+    if (activeView === "home") return <HomeDashboard onNavigate={setActiveView} />;
+    if (activeView === "shopping") {
+      return <ShoppingListScreen onPendingCountChange={setShoppingPendingCount} />;
+    }
+    return <ViewPlaceholder view={activeView} />;
+  }
 
   return (
     <div className="flex h-screen overflow-hidden bg-[var(--background)]">
@@ -47,16 +67,14 @@ export function AppShell() {
 
       {/* Main column */}
       <div className="flex flex-1 flex-col min-w-0 overflow-hidden">
-        <AppHeader activeView={activeView} onAdd={() => setAddOpen(true)} />
+        <AppHeader
+          activeView={activeView}
+          onAdd={() => setAddOpen(true)}
+          subtitle={shoppingSubtitle}
+        />
 
         <main className="flex-1 overflow-auto px-4 py-5 min-[880px]:px-8 min-[880px]:py-7">
-          <div className="max-w-[1060px] mx-auto">
-            {activeView === "home" ? (
-              <HomeDashboard onNavigate={setActiveView} />
-            ) : (
-              <ViewPlaceholder view={activeView} />
-            )}
-          </div>
+          <div className="max-w-[1060px] mx-auto">{renderView()}</div>
         </main>
 
         {/* Mobile bottom nav — hidden on desktop via MobileBottomNav's CSS */}

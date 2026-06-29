@@ -15,10 +15,12 @@ const VIEW_META: Record<View, { title: string; subtitle?: string }> = {
 interface AppHeaderProps {
   activeView: View;
   onAdd: () => void;
+  subtitle?: string;
 }
 
-export function AppHeader({ activeView, onAdd }: AppHeaderProps) {
+export function AppHeader({ activeView, onAdd, subtitle }: AppHeaderProps) {
   const meta = VIEW_META[activeView];
+  const resolvedSubtitle = subtitle ?? meta.subtitle;
 
   return (
     <header
@@ -33,9 +35,9 @@ export function AppHeader({ activeView, onAdd }: AppHeaderProps) {
         >
           {meta.title}
         </h1>
-        {meta.subtitle && (
+        {resolvedSubtitle && (
           <p className="text-[13px] text-[var(--text-muted)] font-semibold mt-[2px]">
-            {meta.subtitle}
+            {resolvedSubtitle}
           </p>
         )}
       </div>
