@@ -7,6 +7,8 @@ import { AddDrawer } from "./AddDrawer";
 import { HomeDashboard } from "@/features/dashboard/HomeDashboard";
 import { ShoppingListScreen } from "@/features/shopping/ShoppingListScreen";
 import { initialShoppingItems } from "@/features/shopping/shoppingData";
+import { TasksScreen } from "@/features/tasks/TasksScreen";
+import { initialTasks } from "@/features/tasks/tasksData";
 import type { View } from "./types";
 
 /* Simple placeholder for non-implemented views */
@@ -40,6 +42,9 @@ export function AppShell() {
   const [shoppingPendingCount, setShoppingPendingCount] = useState(
     initialShoppingItems.filter((i) => !i.done).length
   );
+  const [tasksPendingCount, setTasksPendingCount] = useState(
+    initialTasks.filter((t) => !t.done).length
+  );
 
   const shoppingSubtitle =
     activeView === "shopping"
@@ -48,10 +53,22 @@ export function AppShell() {
         : `${shoppingPendingCount} article${shoppingPendingCount > 1 ? "s" : ""} à prendre`
       : undefined;
 
+  const tasksSubtitle =
+    activeView === "tasks"
+      ? tasksPendingCount === 0
+        ? "Aucune tâche à faire"
+        : `${tasksPendingCount} à faire`
+      : undefined;
+
+  const activeSubtitle = shoppingSubtitle ?? tasksSubtitle;
+
   function renderView() {
     if (activeView === "home") return <HomeDashboard onNavigate={setActiveView} />;
     if (activeView === "shopping") {
       return <ShoppingListScreen onPendingCountChange={setShoppingPendingCount} />;
+    }
+    if (activeView === "tasks") {
+      return <TasksScreen onPendingCountChange={setTasksPendingCount} />;
     }
     return <ViewPlaceholder view={activeView} />;
   }
@@ -70,7 +87,7 @@ export function AppShell() {
         <AppHeader
           activeView={activeView}
           onAdd={() => setAddOpen(true)}
-          subtitle={shoppingSubtitle}
+          subtitle={activeSubtitle}
         />
 
         <main className="flex-1 overflow-auto px-4 py-5 min-[880px]:px-8 min-[880px]:py-7">
