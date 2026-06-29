@@ -14,6 +14,8 @@ import { AgendaScreen } from "@/features/agenda/AgendaScreen";
 import { dayTimelineItems, agendaEvents } from "@/features/agenda/agendaData";
 import { NotesScreen } from "@/features/notes/NotesScreen";
 import { initialNotes } from "@/features/notes/notesData";
+import { UsefulLinksScreen } from "@/features/links/UsefulLinksScreen";
+import { initialLinks } from "@/features/links/linksData";
 import type { View } from "./types";
 
 /* Simple placeholder for non-implemented views */
@@ -51,6 +53,7 @@ export function AppShell() {
     initialTasks.filter((t) => !t.done).length
   );
   const [notesCount, setNotesCount] = useState(initialNotes.length);
+  const [linksCount, setLinksCount] = useState(initialLinks.length);
 
   const shoppingSubtitle =
     activeView === "shopping"
@@ -83,7 +86,14 @@ export function AppShell() {
         : `${notesCount} note${notesCount > 1 ? "s" : ""} partagée${notesCount > 1 ? "s" : ""}`
       : undefined;
 
-  const activeSubtitle = shoppingSubtitle ?? tasksSubtitle ?? daySubtitle ?? agendaSubtitle ?? notesSubtitle;
+  const linksSubtitle =
+    activeView === "links"
+      ? linksCount === 0
+        ? "Aucun lien partagé"
+        : `${linksCount} lien${linksCount > 1 ? "s" : ""} partagé${linksCount > 1 ? "s" : ""}`
+      : undefined;
+
+  const activeSubtitle = shoppingSubtitle ?? tasksSubtitle ?? daySubtitle ?? agendaSubtitle ?? notesSubtitle ?? linksSubtitle;
 
   function renderView() {
     if (activeView === "home") return <HomeDashboard onNavigate={setActiveView} />;
@@ -96,6 +106,7 @@ export function AppShell() {
     if (activeView === "day") return <DayViewScreen />;
     if (activeView === "calendar") return <AgendaScreen />;
     if (activeView === "notes") return <NotesScreen onNotesCountChange={setNotesCount} />;
+    if (activeView === "links") return <UsefulLinksScreen onLinksCountChange={setLinksCount} />;
     return <ViewPlaceholder view={activeView} />;
   }
 
