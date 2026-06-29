@@ -9,7 +9,7 @@ const VIEW_META: Record<View, { title: string; subtitle?: string }> = {
   calendar: { title: "Agenda 📅" },
   notes:    { title: "Notes 📝" },
   links:    { title: "Liens utiles 🔗" },
-  profile:  { title: "Profil" },
+  profile:  { title: "Profil & foyer 👤" },
 };
 
 interface AppHeaderProps {
