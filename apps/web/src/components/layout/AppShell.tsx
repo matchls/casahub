@@ -16,6 +16,8 @@ import { NotesScreen } from "@/features/notes/NotesScreen";
 import { initialNotes } from "@/features/notes/notesData";
 import { UsefulLinksScreen } from "@/features/links/UsefulLinksScreen";
 import { initialLinks } from "@/features/links/linksData";
+import { ProfileScreen } from "@/features/profile/ProfileScreen";
+import { householdProfile } from "@/features/profile/profileData";
 import type { View } from "./types";
 
 /* Simple placeholder for non-implemented views */
@@ -93,7 +95,12 @@ export function AppShell() {
         : `${linksCount} lien${linksCount > 1 ? "s" : ""} partagé${linksCount > 1 ? "s" : ""}`
       : undefined;
 
-  const activeSubtitle = shoppingSubtitle ?? tasksSubtitle ?? daySubtitle ?? agendaSubtitle ?? notesSubtitle ?? linksSubtitle;
+  const profileSubtitle =
+    activeView === "profile"
+      ? `${householdProfile.name} · ${householdProfile.members.length} membres`
+      : undefined;
+
+  const activeSubtitle = shoppingSubtitle ?? tasksSubtitle ?? daySubtitle ?? agendaSubtitle ?? notesSubtitle ?? linksSubtitle ?? profileSubtitle;
 
   function renderView() {
     if (activeView === "home") return <HomeDashboard onNavigate={setActiveView} />;
@@ -107,6 +114,7 @@ export function AppShell() {
     if (activeView === "calendar") return <AgendaScreen />;
     if (activeView === "notes") return <NotesScreen onNotesCountChange={setNotesCount} />;
     if (activeView === "links") return <UsefulLinksScreen onLinksCountChange={setLinksCount} />;
+    if (activeView === "profile") return <ProfileScreen />;
     return <ViewPlaceholder view={activeView} />;
   }
 
