@@ -27,8 +27,8 @@ export const events = [
 ];
 
 export const notes = [
-  { id: 1, label: "Wi-Fi : CasaHub5G / casa2024" },
-  { id: 2, label: "Code alarme : 2810" },
+  { id: 1, label: "Wi-Fi : Nom du réseau / mot de passe masqué" },
+  { id: 2, label: "Code alarme : enregistré dans les documents" },
 ];
 
 export const links = [
