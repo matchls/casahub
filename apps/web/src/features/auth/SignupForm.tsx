@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 const inputClass =
   "w-full rounded-[14px] border-[1.5px] border-[rgba(44,38,34,.10)] bg-[var(--surface)] px-4 py-[15px] text-[15px] text-[var(--text-primary)] placeholder:text-[var(--placeholder)] focus:outline-none focus:border-[var(--primary)] transition-colors";
@@ -9,6 +10,7 @@ const labelClass =
   "text-[12px] font-bold uppercase tracking-[.05em] text-[var(--text-muted)]";
 
 export function SignupForm() {
+  const router = useRouter();
   const [firstName, setFirstName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -16,7 +18,8 @@ export function SignupForm() {
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    // TODO: brancher Supabase auth
+    // Mock submit — redirect to onboarding; Supabase auth will be added later
+    router.push("/onboarding");
   }
 
   return (
