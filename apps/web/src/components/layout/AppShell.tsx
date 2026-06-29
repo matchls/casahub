@@ -12,6 +12,8 @@ import { initialTasks } from "@/features/tasks/tasksData";
 import { DayViewScreen } from "@/features/agenda/DayViewScreen";
 import { AgendaScreen } from "@/features/agenda/AgendaScreen";
 import { dayTimelineItems, agendaEvents } from "@/features/agenda/agendaData";
+import { NotesScreen } from "@/features/notes/NotesScreen";
+import { initialNotes } from "@/features/notes/notesData";
 import type { View } from "./types";
 
 /* Simple placeholder for non-implemented views */
@@ -48,6 +50,7 @@ export function AppShell() {
   const [tasksPendingCount, setTasksPendingCount] = useState(
     initialTasks.filter((t) => !t.done).length
   );
+  const [notesCount, setNotesCount] = useState(initialNotes.length);
 
   const shoppingSubtitle =
     activeView === "shopping"
@@ -73,7 +76,14 @@ export function AppShell() {
       ? `${agendaEvents.length} événement${agendaEvents.length > 1 ? "s" : ""} à venir`
       : undefined;
 
-  const activeSubtitle = shoppingSubtitle ?? tasksSubtitle ?? daySubtitle ?? agendaSubtitle;
+  const notesSubtitle =
+    activeView === "notes"
+      ? notesCount === 0
+        ? "Aucune note partagée"
+        : `${notesCount} note${notesCount > 1 ? "s" : ""} partagée${notesCount > 1 ? "s" : ""}`
+      : undefined;
+
+  const activeSubtitle = shoppingSubtitle ?? tasksSubtitle ?? daySubtitle ?? agendaSubtitle ?? notesSubtitle;
 
   function renderView() {
     if (activeView === "home") return <HomeDashboard onNavigate={setActiveView} />;
@@ -85,6 +95,7 @@ export function AppShell() {
     }
     if (activeView === "day") return <DayViewScreen />;
     if (activeView === "calendar") return <AgendaScreen />;
+    if (activeView === "notes") return <NotesScreen onNotesCountChange={setNotesCount} />;
     return <ViewPlaceholder view={activeView} />;
   }
 
