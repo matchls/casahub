@@ -3,10 +3,10 @@ import type { View } from "./types";
 
 const VIEW_META: Record<View, { title: string; subtitle?: string }> = {
   home:     { title: "Le Foyer 🏡", subtitle: "Mardi 24 juin · 12 choses à voir" },
-  day:      { title: "La journée 📆" },
+  day:      { title: "La journée ☀️" },
   shopping: { title: "Courses 🛒" },
   tasks:    { title: "Tâches ✅" },
-  calendar: { title: "Calendrier 📅" },
+  calendar: { title: "Agenda 📅" },
   notes:    { title: "Notes 📝" },
   links:    { title: "Liens utiles 🔗" },
   profile:  { title: "Profil" },
