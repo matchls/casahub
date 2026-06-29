@@ -13,23 +13,6 @@ const HOUSEHOLD_TYPES = [
   { value: "famille" as HouseholdType,    label: "Famille",     emoji: "👨‍👩‍👧" },
 ];
 
-// ─── Contribution request ────────────────────────────────────────────────────
-// Design the visual style of a single household type card.
-// Parameters:
-//   emoji    — icon displayed in the card (e.g. "💑")
-//   label    — text label (e.g. "Couple")
-//   selected — true when this option is the active choice
-//   onClick  — callback to select this option
-//
-// Design decision: how should selected vs. unselected states look?
-//   Option A: terracotta fill (--primary) + white text when selected
-//   Option B: strong border (--primary) with no fill when selected
-//   Option C: checkmark overlay + subtle tint when selected
-//
-// Available CSS variables: --primary, --surface, --surface-muted,
-//   --border-input, --text-primary, --text-muted
-// Use cn() for conditional classes, aria-pressed for accessibility.
-// ─────────────────────────────────────────────────────────────────────────────
 function HouseholdTypeButton({
   emoji,
   label,
@@ -49,9 +32,18 @@ function HouseholdTypeButton({
       className={cn(
         "flex flex-col items-center justify-center gap-[6px] py-[14px] rounded-[14px]",
         "border-[1.5px] transition-all cursor-pointer font-semibold text-[14px] w-full",
-        // TODO: remplacez ce style par votre propre design (voir la section ci-dessus)
-        "border-[var(--border-input)] bg-[var(--surface)] text-[var(--text-primary)]"
+        selected
+          ? "border-[var(--primary)] text-[var(--primary)] hover:opacity-90"
+          : "border-[var(--border-input)] bg-[var(--surface)] text-[var(--text-primary)] hover:bg-[var(--surface-muted)]"
       )}
+      style={
+        selected
+          ? {
+              background: "rgba(194,96,63,.10)",
+              boxShadow: "0 4px 12px -6px rgba(194,96,63,.30)",
+            }
+          : undefined
+      }
     >
       <span className="text-[22px]">{emoji}</span>
       {label}
