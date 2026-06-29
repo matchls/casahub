@@ -9,6 +9,9 @@ import { ShoppingListScreen } from "@/features/shopping/ShoppingListScreen";
 import { initialShoppingItems } from "@/features/shopping/shoppingData";
 import { TasksScreen } from "@/features/tasks/TasksScreen";
 import { initialTasks } from "@/features/tasks/tasksData";
+import { DayViewScreen } from "@/features/agenda/DayViewScreen";
+import { AgendaScreen } from "@/features/agenda/AgendaScreen";
+import { dayTimelineItems, agendaEvents } from "@/features/agenda/agendaData";
 import type { View } from "./types";
 
 /* Simple placeholder for non-implemented views */
@@ -60,7 +63,17 @@ export function AppShell() {
         : `${tasksPendingCount} à faire`
       : undefined;
 
-  const activeSubtitle = shoppingSubtitle ?? tasksSubtitle;
+  const daySubtitle =
+    activeView === "day"
+      ? `${dayTimelineItems.length} chose${dayTimelineItems.length > 1 ? "s" : ""} aujourd'hui`
+      : undefined;
+
+  const agendaSubtitle =
+    activeView === "calendar"
+      ? `${agendaEvents.length} événement${agendaEvents.length > 1 ? "s" : ""} à venir`
+      : undefined;
+
+  const activeSubtitle = shoppingSubtitle ?? tasksSubtitle ?? daySubtitle ?? agendaSubtitle;
 
   function renderView() {
     if (activeView === "home") return <HomeDashboard onNavigate={setActiveView} />;
@@ -70,6 +83,8 @@ export function AppShell() {
     if (activeView === "tasks") {
       return <TasksScreen onPendingCountChange={setTasksPendingCount} />;
     }
+    if (activeView === "day") return <DayViewScreen />;
+    if (activeView === "calendar") return <AgendaScreen />;
     return <ViewPlaceholder view={activeView} />;
   }
 
