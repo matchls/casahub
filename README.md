@@ -62,3 +62,7 @@ The app is available at [http://localhost:3000](http://localhost:3000).
 - **Styling**: Tailwind CSS
 - **Database**: Supabase *(coming soon)*
 - **Deployment**: Vercel *(coming soon)*
+
+## Development workflow & agent instructions
+
+See [AGENTS.md](AGENTS.md) for the full contribution workflow, design handoff references, and project constraints.
