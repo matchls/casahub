@@ -12,7 +12,7 @@ Read it before opening any issue or writing any code.
 
   ```bash
   git checkout main
-  git pull origin main
+  git pull --ff-only
   ```
 
 - Branch naming: `type/issue-number-short-description`
@@ -36,8 +36,9 @@ Read it before opening any issue or writing any code.
 
   ```bash
   git checkout main
-  git pull origin main
-  git branch -d docs/21-root-project-instructions   # replace with actual branch name
+  git pull --ff-only
+  git branch -d <branch-name>
+  git push origin --delete <branch-name>
   ```
 
 ---
