@@ -1,48 +1,27 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/Card";
-import { initialTasks } from "./tasksData";
-import type { Task } from "./tasksData";
+import type { Task } from "@/lib/domain/types";
 import { TaskItemRow } from "./TaskItemRow";
 
 interface TasksScreenProps {
-  onPendingCountChange?: (count: number) => void;
+  tasks: Task[];
+  onToggle: (id: number) => void;
+  onAdd: (title: string) => void;
 }
 
-export function TasksScreen({ onPendingCountChange }: TasksScreenProps) {
-  const [tasks, setTasks] = useState<Task[]>(initialTasks);
+export function TasksScreen({ tasks, onToggle, onAdd }: TasksScreenProps) {
   const [draft, setDraft] = useState("");
-  const nextIdRef = useRef(initialTasks.length + 1);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const pendingTasks = tasks.filter((t) => !t.done);
   const doneTasks = tasks.filter((t) => t.done);
 
-  useEffect(() => {
-    onPendingCountChange?.(pendingTasks.length);
-  }, [pendingTasks.length, onPendingCountChange]);
-
-  function handleToggle(id: number) {
-    setTasks((prev) =>
-      prev.map((task) => (task.id === id ? { ...task, done: !task.done } : task))
-    );
-  }
-
   function handleAdd() {
     const trimmed = draft.trim();
     if (!trimmed) return;
-
-    const newTask: Task = {
-      id: nextIdRef.current++,
-      title: trimmed,
-      dueLabel: "Sans date",
-      dueType: "none",
-      done: false,
-      assignedTo: "lea",
-    };
-
-    setTasks((prev) => [newTask, ...prev]);
+    onAdd(trimmed);
     setDraft("");
     inputRef.current?.focus();
   }
@@ -106,7 +85,7 @@ export function TasksScreen({ onPendingCountChange }: TasksScreenProps) {
                 key={task.id}
                 className={index > 0 ? "border-t border-[rgba(44,38,34,0.06)]" : ""}
               >
-                <TaskItemRow task={task} onToggle={handleToggle} />
+                <TaskItemRow task={task} onToggle={onToggle} />
               </div>
             ))}
           </div>
@@ -125,7 +104,7 @@ export function TasksScreen({ onPendingCountChange }: TasksScreenProps) {
                 key={task.id}
                 className={index > 0 ? "border-t border-[rgba(44,38,34,0.06)]" : ""}
               >
-                <TaskItemRow task={task} onToggle={handleToggle} />
+                <TaskItemRow task={task} onToggle={onToggle} />
               </div>
             ))}
           </div>

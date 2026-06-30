@@ -1,19 +1,22 @@
 import { cn } from "@/lib/utils";
 import {
-  agendaEvents,
   GROUP_LABELS,
   GROUP_ORDER,
   MEMBERS,
   TYPE_META,
 } from "./agendaData";
-import type { AgendaEvent, AgendaGroup } from "./agendaData";
+import type { AgendaEvent, AgendaGroup } from "@/lib/domain/types";
 
-export function AgendaScreen() {
+interface AgendaScreenProps {
+  events: AgendaEvent[];
+}
+
+export function AgendaScreen({ events }: AgendaScreenProps) {
   return (
     <div className="max-w-[720px] flex flex-col gap-8">
       {GROUP_ORDER.map((group) => {
-        const events = agendaEvents.filter((e) => e.group === group);
-        if (events.length === 0) return null;
+        const groupEvents = events.filter((e) => e.group === group);
+        if (groupEvents.length === 0) return null;
 
         return (
           <section key={group}>
@@ -21,7 +24,7 @@ export function AgendaScreen() {
               {GROUP_LABELS[group]}
             </h2>
             <div className="rounded-[16px] bg-[var(--surface)] shadow-[var(--shadow-card)] overflow-hidden">
-              {events.map((event, index) => (
+              {groupEvents.map((event, index) => (
                 <div
                   key={event.id}
                   className={index > 0 ? "border-t border-[rgba(44,38,34,0.06)]" : ""}

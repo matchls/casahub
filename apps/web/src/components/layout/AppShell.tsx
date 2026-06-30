@@ -1,23 +1,17 @@
 "use client";
-import { useState } from "react";
+import { useCasaHubState } from "@/lib/state/useCasaHubState";
 import { Sidebar } from "./Sidebar";
 import { MobileBottomNav } from "./MobileBottomNav";
 import { AppHeader } from "./AppHeader";
 import { AddDrawer } from "./AddDrawer";
 import { HomeDashboard } from "@/features/dashboard/HomeDashboard";
 import { ShoppingListScreen } from "@/features/shopping/ShoppingListScreen";
-import { initialShoppingItems } from "@/features/shopping/shoppingData";
 import { TasksScreen } from "@/features/tasks/TasksScreen";
-import { initialTasks } from "@/features/tasks/tasksData";
 import { DayViewScreen } from "@/features/agenda/DayViewScreen";
 import { AgendaScreen } from "@/features/agenda/AgendaScreen";
-import { dayTimelineItems, agendaEvents } from "@/features/agenda/agendaData";
 import { NotesScreen } from "@/features/notes/NotesScreen";
-import { initialNotes } from "@/features/notes/notesData";
 import { UsefulLinksScreen } from "@/features/links/UsefulLinksScreen";
-import { initialLinks } from "@/features/links/linksData";
 import { ProfileScreen } from "@/features/profile/ProfileScreen";
-import { householdProfile } from "@/features/profile/profileData";
 import type { View } from "./types";
 
 /* Simple placeholder for non-implemented views */
@@ -46,16 +40,33 @@ function ViewPlaceholder({ view }: { view: View }) {
 }
 
 export function AppShell() {
-  const [activeView, setActiveView] = useState<View>("home");
-  const [addOpen, setAddOpen] = useState(false);
-  const [shoppingPendingCount, setShoppingPendingCount] = useState(
-    initialShoppingItems.filter((i) => !i.done).length
-  );
-  const [tasksPendingCount, setTasksPendingCount] = useState(
-    initialTasks.filter((t) => !t.done).length
-  );
-  const [notesCount, setNotesCount] = useState(initialNotes.length);
-  const [linksCount, setLinksCount] = useState(initialLinks.length);
+  const {
+    activeView,
+    setActiveView,
+    addOpen,
+    openAddDrawer,
+    closeAddDrawer,
+    shoppingItems,
+    tasks,
+    notes,
+    links,
+    events,
+    dayItems,
+    profile,
+    accountEmail,
+    shoppingPendingCount,
+    tasksPendingCount,
+    notesCount,
+    linksCount,
+    dayItemsCount,
+    agendaEventsCount,
+    toggleShoppingItem,
+    addShoppingItem,
+    toggleTask,
+    addTask,
+    addNote,
+    addUsefulLink,
+  } = useCasaHubState();
 
   const shoppingSubtitle =
     activeView === "shopping"
@@ -73,12 +84,12 @@ export function AppShell() {
 
   const daySubtitle =
     activeView === "day"
-      ? `${dayTimelineItems.length} chose${dayTimelineItems.length > 1 ? "s" : ""} aujourd'hui`
+      ? `${dayItemsCount} chose${dayItemsCount > 1 ? "s" : ""} aujourd'hui`
       : undefined;
 
   const agendaSubtitle =
     activeView === "calendar"
-      ? `${agendaEvents.length} événement${agendaEvents.length > 1 ? "s" : ""} à venir`
+      ? `${agendaEventsCount} événement${agendaEventsCount > 1 ? "s" : ""} à venir`
       : undefined;
 
   const notesSubtitle =
@@ -97,24 +108,49 @@ export function AppShell() {
 
   const profileSubtitle =
     activeView === "profile"
-      ? `${householdProfile.name} · ${householdProfile.members.length} membres`
+      ? `${profile.name} · ${profile.members.length} membres`
       : undefined;
 
-  const activeSubtitle = shoppingSubtitle ?? tasksSubtitle ?? daySubtitle ?? agendaSubtitle ?? notesSubtitle ?? linksSubtitle ?? profileSubtitle;
+  const activeSubtitle =
+    shoppingSubtitle ??
+    tasksSubtitle ??
+    daySubtitle ??
+    agendaSubtitle ??
+    notesSubtitle ??
+    linksSubtitle ??
+    profileSubtitle;
 
   function renderView() {
     if (activeView === "home") return <HomeDashboard onNavigate={setActiveView} />;
     if (activeView === "shopping") {
-      return <ShoppingListScreen onPendingCountChange={setShoppingPendingCount} />;
+      return (
+        <ShoppingListScreen
+          items={shoppingItems}
+          onToggle={toggleShoppingItem}
+          onAdd={addShoppingItem}
+        />
+      );
     }
     if (activeView === "tasks") {
-      return <TasksScreen onPendingCountChange={setTasksPendingCount} />;
+      return (
+        <TasksScreen
+          tasks={tasks}
+          onToggle={toggleTask}
+          onAdd={addTask}
+        />
+      );
     }
-    if (activeView === "day") return <DayViewScreen />;
-    if (activeView === "calendar") return <AgendaScreen />;
-    if (activeView === "notes") return <NotesScreen onNotesCountChange={setNotesCount} />;
-    if (activeView === "links") return <UsefulLinksScreen onLinksCountChange={setLinksCount} />;
-    if (activeView === "profile") return <ProfileScreen />;
+    if (activeView === "day") return <DayViewScreen items={dayItems} />;
+    if (activeView === "calendar") return <AgendaScreen events={events} />;
+    if (activeView === "notes") {
+      return <NotesScreen notes={notes} onAdd={addNote} />;
+    }
+    if (activeView === "links") {
+      return <UsefulLinksScreen links={links} onAdd={addUsefulLink} />;
+    }
+    if (activeView === "profile") {
+      return <ProfileScreen profile={profile} accountEmail={accountEmail} />;
+    }
     return <ViewPlaceholder view={activeView} />;
   }
 
@@ -124,14 +160,14 @@ export function AppShell() {
       <Sidebar
         activeView={activeView}
         onNavigate={setActiveView}
-        onAdd={() => setAddOpen(true)}
+        onAdd={openAddDrawer}
       />
 
       {/* Main column */}
       <div className="flex flex-1 flex-col min-w-0 overflow-hidden">
         <AppHeader
           activeView={activeView}
-          onAdd={() => setAddOpen(true)}
+          onAdd={openAddDrawer}
           subtitle={activeSubtitle}
         />
 
@@ -143,12 +179,12 @@ export function AppShell() {
         <MobileBottomNav
           activeView={activeView}
           onNavigate={setActiveView}
-          onAdd={() => setAddOpen(true)}
+          onAdd={openAddDrawer}
         />
       </div>
 
       {/* Add drawer (modal/sheet) */}
-      {addOpen && <AddDrawer onClose={() => setAddOpen(false)} />}
+      {addOpen && <AddDrawer onClose={closeAddDrawer} />}
     </div>
   );
 }

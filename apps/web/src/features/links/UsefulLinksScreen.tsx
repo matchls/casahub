@@ -1,44 +1,25 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/Card";
 import { UsefulLinkCard } from "./UsefulLinkCard";
-import { initialLinks, CATEGORY_ORDER } from "./linksData";
-import type { UsefulLink } from "./linksData";
+import { CATEGORY_ORDER } from "./linksData";
+import type { UsefulLink } from "@/lib/domain/types";
 
 interface UsefulLinksScreenProps {
-  onLinksCountChange?: (count: number) => void;
+  links: UsefulLink[];
+  onAdd: (title: string, url: string) => void;
 }
 
-export function UsefulLinksScreen({ onLinksCountChange }: UsefulLinksScreenProps) {
-  const [links, setLinks] = useState<UsefulLink[]>(initialLinks);
+export function UsefulLinksScreen({ links, onAdd }: UsefulLinksScreenProps) {
   const [draftTitle, setDraftTitle] = useState("");
   const [draftUrl, setDraftUrl] = useState("");
-  const nextIdRef = useRef(initialLinks.length + 1);
   const titleInputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    onLinksCountChange?.(links.length);
-  }, [links.length, onLinksCountChange]);
 
   function handleAdd() {
     const trimmedTitle = draftTitle.trim();
     if (!trimmedTitle) return;
-
-    const rawUrl = draftUrl.trim();
-    const url =
-      rawUrl && !rawUrl.startsWith("http") ? `https://${rawUrl}` : rawUrl || "#";
-
-    const newLink: UsefulLink = {
-      id: nextIdRef.current++,
-      title: trimmedTitle,
-      url,
-      category: "ideas",
-      icon: "🔗",
-      createdBy: "lea",
-    };
-
-    setLinks((prev) => [...prev, newLink]);
+    onAdd(trimmedTitle, draftUrl.trim());
     setDraftTitle("");
     setDraftUrl("");
     titleInputRef.current?.focus();

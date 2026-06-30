@@ -1,38 +1,24 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/Card";
 import { NoteCard } from "./NoteCard";
-import { initialNotes, CATEGORY_ORDER } from "./notesData";
-import type { Note } from "./notesData";
+import { CATEGORY_ORDER } from "./notesData";
+import type { Note } from "@/lib/domain/types";
 
 interface NotesScreenProps {
-  onNotesCountChange?: (count: number) => void;
+  notes: Note[];
+  onAdd: (title: string) => void;
 }
 
-export function NotesScreen({ onNotesCountChange }: NotesScreenProps) {
-  const [notes, setNotes] = useState<Note[]>(initialNotes);
+export function NotesScreen({ notes, onAdd }: NotesScreenProps) {
   const [draft, setDraft] = useState("");
-  const nextIdRef = useRef(initialNotes.length + 1);
   const inputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    onNotesCountChange?.(notes.length);
-  }, [notes.length, onNotesCountChange]);
 
   function handleAdd() {
     const trimmed = draft.trim();
     if (!trimmed) return;
-
-    const newNote: Note = {
-      id: nextIdRef.current++,
-      title: trimmed,
-      content: "",
-      category: "ideas",
-      createdBy: "lea",
-    };
-
-    setNotes((prev) => [...prev, newNote]);
+    onAdd(trimmed);
     setDraft("");
     inputRef.current?.focus();
   }
