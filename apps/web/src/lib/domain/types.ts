@@ -8,6 +8,9 @@ export interface ShoppingItem {
   assignedTo: MemberId;
 }
 
+/** Alias matching the issue's domain language. */
+export type CourseItem = ShoppingItem;
+
 export type DueType = "date" | "recurrence" | "none";
 
 export interface Task {

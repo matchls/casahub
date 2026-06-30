@@ -1,5 +1,11 @@
 "use client";
 import { useMemo, useState } from "react";
+
+// Monotonic counter for new item IDs — avoids Date.now() collisions on rapid adds.
+let _idCounter = 1000;
+function nextId() {
+  return ++_idCounter;
+}
 import type { View } from "@/components/layout/types";
 import type {
   AgendaEvent,
@@ -65,7 +71,7 @@ export function useCasaHubState() {
   }
   function addShoppingItem(label: string) {
     const newItem: ShoppingItem = {
-      id: Date.now(),
+      id: nextId(),
       label,
       done: false,
       assignedTo: "lea",
@@ -81,7 +87,7 @@ export function useCasaHubState() {
   }
   function addTask(title: string) {
     const newTask: Task = {
-      id: Date.now(),
+      id: nextId(),
       title,
       dueLabel: "Sans date",
       dueType: "none",
@@ -94,7 +100,7 @@ export function useCasaHubState() {
   // Actions — notes
   function addNote(title: string) {
     const newNote: Note = {
-      id: Date.now(),
+      id: nextId(),
       title,
       content: "",
       category: "ideas",
@@ -109,7 +115,7 @@ export function useCasaHubState() {
     const normalizedUrl =
       trimmed && !trimmed.startsWith("http") ? `https://${trimmed}` : trimmed || "#";
     const newLink: UsefulLink = {
-      id: Date.now(),
+      id: nextId(),
       title,
       url: normalizedUrl,
       category: "ideas",
