@@ -1,46 +1,27 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/Card";
-import { initialShoppingItems } from "./shoppingData";
-import type { ShoppingItem } from "./shoppingData";
+import type { ShoppingItem } from "@/lib/domain/types";
 import { ShoppingItemRow } from "./ShoppingItemRow";
 
 interface ShoppingListScreenProps {
-  onPendingCountChange?: (count: number) => void;
+  items: ShoppingItem[];
+  onToggle: (id: number) => void;
+  onAdd: (label: string) => void;
 }
 
-export function ShoppingListScreen({ onPendingCountChange }: ShoppingListScreenProps) {
-  const [items, setItems] = useState<ShoppingItem[]>(initialShoppingItems);
+export function ShoppingListScreen({ items, onToggle, onAdd }: ShoppingListScreenProps) {
   const [draft, setDraft] = useState("");
-  const nextIdRef = useRef(initialShoppingItems.length + 1);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const pendingItems = items.filter((i) => !i.done);
   const doneItems = items.filter((i) => i.done);
 
-  useEffect(() => {
-    onPendingCountChange?.(pendingItems.length);
-  }, [pendingItems.length, onPendingCountChange]);
-
-  function handleToggle(id: number) {
-    setItems((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, done: !item.done } : item))
-    );
-  }
-
   function handleAdd() {
     const trimmed = draft.trim();
     if (!trimmed) return;
-
-    const newItem: ShoppingItem = {
-      id: nextIdRef.current++,
-      label: trimmed,
-      done: false,
-      assignedTo: "lea",
-    };
-
-    setItems((prev) => [newItem, ...prev]);
+    onAdd(trimmed);
     setDraft("");
     inputRef.current?.focus();
   }
@@ -106,7 +87,7 @@ export function ShoppingListScreen({ onPendingCountChange }: ShoppingListScreenP
                 key={item.id}
                 className={index > 0 ? "border-t border-[rgba(44,38,34,0.06)]" : ""}
               >
-                <ShoppingItemRow item={item} onToggle={handleToggle} />
+                <ShoppingItemRow item={item} onToggle={onToggle} />
               </div>
             ))}
           </div>
@@ -125,7 +106,7 @@ export function ShoppingListScreen({ onPendingCountChange }: ShoppingListScreenP
                 key={item.id}
                 className={index > 0 ? "border-t border-[rgba(44,38,34,0.06)]" : ""}
               >
-                <ShoppingItemRow item={item} onToggle={handleToggle} />
+                <ShoppingItemRow item={item} onToggle={onToggle} />
               </div>
             ))}
           </div>

@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Card } from "@/components/ui/Card";
 import { HouseholdMemberCard } from "./HouseholdMemberCard";
-import { householdProfile, mockAccountEmail } from "./profileData";
+import type { HouseholdProfile } from "@/lib/domain/types";
 
 function Toggle({ checked, onChange }: { checked: boolean; onChange: () => void }) {
   return (
@@ -49,12 +49,17 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function ProfileScreen() {
-  const [notifs, setNotifs]    = useState(true);
+interface ProfileScreenProps {
+  profile: HouseholdProfile;
+  accountEmail: string;
+}
+
+export function ProfileScreen({ profile, accountEmail }: ProfileScreenProps) {
+  const [notifs, setNotifs]     = useState(true);
   const [darkMode, setDarkMode] = useState(false);
   const [dailyMsg, setDailyMsg] = useState(true);
 
-  const { name, type, createdAtLabel, members } = householdProfile;
+  const { name, type, createdAtLabel, members } = profile;
 
   return (
     <div className="max-w-[720px] flex flex-col gap-5">
@@ -123,7 +128,7 @@ export function ProfileScreen() {
       <div>
         <SectionLabel>Compte</SectionLabel>
         <Card className="!p-4">
-          <RowItem icon="✉️" label={mockAccountEmail}>
+          <RowItem icon="✉️" label={accountEmail}>
             <span className="text-[12px] font-bold px-[10px] py-[4px] rounded-full bg-[var(--tasks-bg)] text-[var(--tasks-text)] shrink-0">
               Connecté
             </span>
