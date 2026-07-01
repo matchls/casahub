@@ -240,6 +240,27 @@ AS $$
   WHERE  user_id = auth.uid();
 $$;
 
+-- Helper: returns true when the target household has no members yet.
+--
+-- Used by the household_members INSERT policy to gate the "create first member"
+-- path. SECURITY DEFINER is required for the same reason as get_user_household_ids():
+-- at INSERT time the calling user has no membership row yet, so their
+-- get_user_household_ids() returns nothing — a plain subquery under normal RLS
+-- would always appear empty, defeating the check entirely.
+CREATE OR REPLACE FUNCTION is_household_empty(target_household_id uuid)
+RETURNS boolean
+LANGUAGE sql
+SECURITY DEFINER
+STABLE
+SET search_path = public
+AS $$
+  SELECT NOT EXISTS (
+    SELECT 1
+    FROM   household_members
+    WHERE  household_id = target_household_id
+  );
+$$;
+
 
 -- =============================================================================
 -- POLICIES: households
@@ -262,10 +283,21 @@ CREATE POLICY "authenticated_can_insert_household"
 -- Only admin members may update household details (name, type…).
 -- The EXISTS check is safe here: it resolves through the household_members
 -- SELECT policy, which calls get_user_household_ids() (SECURITY DEFINER).
+-- WITH CHECK mirrors USING so the updated row stays within an admin-owned
+-- household (guards against edge cases where the id could theoretically change).
 CREATE POLICY "admin_can_update_household"
   ON households
   FOR UPDATE TO authenticated
   USING (
+    EXISTS (
+      SELECT 1
+      FROM   household_members hm
+      WHERE  hm.household_id = households.id
+        AND  hm.user_id      = auth.uid()
+        AND  hm.role         = 'admin'
+    )
+  )
+  WITH CHECK (
     EXISTS (
       SELECT 1
       FROM   household_members hm
@@ -302,20 +334,30 @@ CREATE POLICY "members_can_select_household_members"
   FOR SELECT TO authenticated
   USING (household_id = ANY(get_user_household_ids()));
 
--- A user may only insert a membership for themselves.
--- V1 simplification: any authenticated user who knows a household UUID can
--- join it. An invitation / token system should gate this in a future version.
-CREATE POLICY "user_can_insert_own_membership"
+-- Only the creator of a brand-new (empty) household may insert themselves as
+-- its first admin member. Once any member exists, this INSERT path is closed:
+-- further members require an invitation flow (V2).
+--
+-- The three WITH CHECK conditions together enforce:
+--   1. user_id = auth.uid()   — you can only add yourself, never a third party
+--   2. role = 'admin'         — first member must be admin (no orphaned households)
+--   3. is_household_empty()   — target household must have zero existing members
+--
+-- is_household_empty() is SECURITY DEFINER so the count is accurate even
+-- before the current user has any membership row (see function comment above).
+CREATE POLICY "user_can_join_empty_household"
   ON household_members
   FOR INSERT TO authenticated
-  WITH CHECK (user_id = auth.uid());
+  WITH CHECK (
+    user_id  = auth.uid()
+    AND role = 'admin'
+    AND is_household_empty(household_id)
+  );
 
--- A member may update only their own profile row (display_name, color, etc.).
--- Admin role-changes are a V2 concern.
-CREATE POLICY "member_can_update_own_row"
-  ON household_members
-  FOR UPDATE TO authenticated
-  USING (user_id = auth.uid());
+-- Self-update is intentionally omitted in V1.
+-- Allowing arbitrary column updates on one's own row would permit self-promotion
+-- from 'member' to 'admin'. Profile edits (display_name, color…) should be
+-- handled via a server-side RPC that explicitly excludes the role column.
 
 -- A member may remove themselves from a household (leave).
 CREATE POLICY "member_can_delete_own_row"
@@ -340,10 +382,14 @@ CREATE POLICY "members_can_insert_shopping_items"
   -- WITH CHECK verifies the NEW row's household_id is one the user belongs to
   WITH CHECK (household_id = ANY(get_user_household_ids()));
 
+-- WITH CHECK ensures the updated row's household_id still belongs to the user,
+-- preventing a member from moving a row into a household they also belong to
+-- but that the row didn't originally belong to.
 CREATE POLICY "members_can_update_shopping_items"
   ON shopping_items
   FOR UPDATE TO authenticated
-  USING (household_id = ANY(get_user_household_ids()));
+  USING     (household_id = ANY(get_user_household_ids()))
+  WITH CHECK (household_id = ANY(get_user_household_ids()));
 
 CREATE POLICY "members_can_delete_shopping_items"
   ON shopping_items
@@ -368,7 +414,8 @@ CREATE POLICY "members_can_insert_tasks"
 CREATE POLICY "members_can_update_tasks"
   ON tasks
   FOR UPDATE TO authenticated
-  USING (household_id = ANY(get_user_household_ids()));
+  USING     (household_id = ANY(get_user_household_ids()))
+  WITH CHECK (household_id = ANY(get_user_household_ids()));
 
 CREATE POLICY "members_can_delete_tasks"
   ON tasks
@@ -393,7 +440,8 @@ CREATE POLICY "members_can_insert_events"
 CREATE POLICY "members_can_update_events"
   ON events
   FOR UPDATE TO authenticated
-  USING (household_id = ANY(get_user_household_ids()));
+  USING     (household_id = ANY(get_user_household_ids()))
+  WITH CHECK (household_id = ANY(get_user_household_ids()));
 
 CREATE POLICY "members_can_delete_events"
   ON events
@@ -418,7 +466,8 @@ CREATE POLICY "members_can_insert_notes"
 CREATE POLICY "members_can_update_notes"
   ON notes
   FOR UPDATE TO authenticated
-  USING (household_id = ANY(get_user_household_ids()));
+  USING     (household_id = ANY(get_user_household_ids()))
+  WITH CHECK (household_id = ANY(get_user_household_ids()));
 
 CREATE POLICY "members_can_delete_notes"
   ON notes
@@ -443,7 +492,8 @@ CREATE POLICY "members_can_insert_useful_links"
 CREATE POLICY "members_can_update_useful_links"
   ON useful_links
   FOR UPDATE TO authenticated
-  USING (household_id = ANY(get_user_household_ids()));
+  USING     (household_id = ANY(get_user_household_ids()))
+  WITH CHECK (household_id = ANY(get_user_household_ids()));
 
 CREATE POLICY "members_can_delete_useful_links"
   ON useful_links
