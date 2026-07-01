@@ -7,7 +7,7 @@ import { ShoppingItemRow } from "./ShoppingItemRow";
 
 interface ShoppingListScreenProps {
   items: ShoppingItem[];
-  onToggle: (id: number) => void;
+  onToggle: (id: string) => void;
   onAdd: (label: string) => void;
 }
 
