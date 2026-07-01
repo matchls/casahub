@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
 import { AuthBrandHeader } from "./AuthBrandHeader";
 import { AuthSeparator } from "./AuthSeparator";
 import { GoogleAuthButton } from "./GoogleAuthButton";
@@ -14,11 +15,42 @@ export function SignupForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [info, setInfo] = useState<string | null>(null);
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    // Mock submit — redirect to onboarding; Supabase auth will be added later
-    router.push("/onboarding");
+    setError(null);
+    setInfo(null);
+
+    if (password !== confirm) {
+      setError("Les mots de passe ne correspondent pas.");
+      return;
+    }
+
+    setLoading(true);
+    const supabase = createClient();
+    const { data, error: authError } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { data: { first_name: firstName } },
+    });
+
+    if (authError) {
+      setError(authError.message);
+      setLoading(false);
+      return;
+    }
+
+    if (data.session) {
+      router.push("/onboarding");
+      return;
+    }
+
+    // Email confirmation is enabled — account created but no active session yet
+    setInfo("Compte créé. Vérifiez vos e-mails pour confirmer votre adresse avant de vous connecter.");
+    setLoading(false);
   }
 
   return (
@@ -37,6 +69,7 @@ export function SignupForm() {
           autoComplete="given-name"
           value={firstName}
           onChange={setFirstName}
+          disabled={loading}
         />
         <AuthTextInput
           id="signup-email"
@@ -46,6 +79,7 @@ export function SignupForm() {
           autoComplete="email"
           value={email}
           onChange={setEmail}
+          disabled={loading}
         />
         <AuthTextInput
           id="signup-password"
@@ -55,6 +89,7 @@ export function SignupForm() {
           autoComplete="new-password"
           value={password}
           onChange={setPassword}
+          disabled={loading}
         />
         <AuthTextInput
           id="signup-confirm"
@@ -64,9 +99,21 @@ export function SignupForm() {
           autoComplete="new-password"
           value={confirm}
           onChange={setConfirm}
+          disabled={loading}
         />
-        <button type="submit" className={primaryButtonClass} style={primaryButtonStyle}>
-          Créer mon compte
+        {error && (
+          <p className="text-[13px] text-red-500 text-center">{error}</p>
+        )}
+        {info && (
+          <p className="text-[13px] text-[var(--primary)] text-center">{info}</p>
+        )}
+        <button
+          type="submit"
+          className={primaryButtonClass}
+          style={primaryButtonStyle}
+          disabled={loading}
+        >
+          {loading ? "Création…" : "Créer mon compte"}
         </button>
       </form>
 
