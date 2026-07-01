@@ -62,7 +62,7 @@ CREATE TABLE household_members (
   UNIQUE (household_id, user_id)
 );
 
--- Speed up the membership lookup used in get_user_household_ids()
+-- Speed up the membership lookups used by the SECURITY DEFINER helpers below
 CREATE INDEX idx_household_members_user_id      ON household_members (user_id);
 CREATE INDEX idx_household_members_household_id ON household_members (household_id);
 
@@ -214,39 +214,61 @@ ALTER TABLE notes             ENABLE ROW LEVEL SECURITY;
 ALTER TABLE useful_links      ENABLE ROW LEVEL SECURITY;
 
 
--- -----------------------------------------------------------------------------
--- Helper: resolve the current user's household IDs without triggering RLS
--- recursion.
+-- =============================================================================
+-- SECURITY DEFINER HELPERS
+-- =============================================================================
 --
--- Why SECURITY DEFINER?
---   household_members itself has RLS. If a policy on household_members (or any
---   other table) contains a plain subquery like
---       SELECT household_id FROM household_members WHERE user_id = auth.uid()
---   PostgreSQL re-evaluates the RLS policies on household_members, leading to
---   infinite recursion. Running this function as its owner (postgres) bypasses
---   RLS on household_members entirely, breaking the cycle.
+-- PostgreSQL does not allow set-returning functions in policy expressions
+-- (ERROR: 0A000: set-returning functions are not allowed in policy expressions).
+-- All three helpers therefore return boolean so they can be used directly in
+-- USING / WITH CHECK clauses.
+--
+-- All three are SECURITY DEFINER: household_members has RLS enabled. A plain
+-- subquery against it inside another policy would cause PostgreSQL to re-evaluate
+-- those same policies — infinite recursion. Running as the function owner
+-- (postgres) bypasses RLS on household_members entirely, breaking the cycle.
 --
 -- SET search_path = public prevents search_path injection attacks.
--- -----------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION get_user_household_ids()
-RETURNS SETOF uuid
+-- =============================================================================
+
+-- Returns true if auth.uid() is a member of the given household.
+CREATE OR REPLACE FUNCTION is_household_member(target_household_id uuid)
+RETURNS boolean
 LANGUAGE sql
 SECURITY DEFINER
 STABLE
 SET search_path = public
 AS $$
-  SELECT household_id
-  FROM   household_members
-  WHERE  user_id = auth.uid();
+  SELECT EXISTS (
+    SELECT 1
+    FROM   household_members
+    WHERE  household_id = target_household_id
+      AND  user_id      = auth.uid()
+  );
 $$;
 
--- Helper: returns true when the target household has no members yet.
---
+-- Returns true if auth.uid() is an admin member of the given household.
+CREATE OR REPLACE FUNCTION is_household_admin(target_household_id uuid)
+RETURNS boolean
+LANGUAGE sql
+SECURITY DEFINER
+STABLE
+SET search_path = public
+AS $$
+  SELECT EXISTS (
+    SELECT 1
+    FROM   household_members
+    WHERE  household_id = target_household_id
+      AND  user_id      = auth.uid()
+      AND  role         = 'admin'
+  );
+$$;
+
+-- Returns true when the target household has no members yet.
 -- Used by the household_members INSERT policy to gate the "create first member"
--- path. SECURITY DEFINER is required for the same reason as get_user_household_ids():
--- at INSERT time the calling user has no membership row yet, so their
--- get_user_household_ids() returns nothing — a plain subquery under normal RLS
--- would always appear empty, defeating the check entirely.
+-- path. At INSERT time the calling user has no membership row yet, so a plain
+-- subquery under normal RLS would always look empty — SECURITY DEFINER ensures
+-- the count reflects the real table state.
 CREATE OR REPLACE FUNCTION is_household_empty(target_household_id uuid)
 RETURNS boolean
 LANGUAGE sql
@@ -270,7 +292,7 @@ $$;
 CREATE POLICY "household_members_can_select_household"
   ON households
   FOR SELECT TO authenticated
-  USING (id = ANY(get_user_household_ids()));
+  USING (is_household_member(id));
 
 -- Any authenticated user may create a household.
 -- The caller is responsible for immediately inserting a matching admin row
@@ -281,45 +303,19 @@ CREATE POLICY "authenticated_can_insert_household"
   WITH CHECK (true);
 
 -- Only admin members may update household details (name, type…).
--- The EXISTS check is safe here: it resolves through the household_members
--- SELECT policy, which calls get_user_household_ids() (SECURITY DEFINER).
--- WITH CHECK mirrors USING so the updated row stays within an admin-owned
--- household (guards against edge cases where the id could theoretically change).
+-- WITH CHECK mirrors USING so the resulting row stays within an admin-owned
+-- household, guarding against any attempt to change the household id.
 CREATE POLICY "admin_can_update_household"
   ON households
   FOR UPDATE TO authenticated
-  USING (
-    EXISTS (
-      SELECT 1
-      FROM   household_members hm
-      WHERE  hm.household_id = households.id
-        AND  hm.user_id      = auth.uid()
-        AND  hm.role         = 'admin'
-    )
-  )
-  WITH CHECK (
-    EXISTS (
-      SELECT 1
-      FROM   household_members hm
-      WHERE  hm.household_id = households.id
-        AND  hm.user_id      = auth.uid()
-        AND  hm.role         = 'admin'
-    )
-  );
+  USING     (is_household_admin(id))
+  WITH CHECK (is_household_admin(id));
 
 -- Only admin members may delete a household (and all its cascading content).
 CREATE POLICY "admin_can_delete_household"
   ON households
   FOR DELETE TO authenticated
-  USING (
-    EXISTS (
-      SELECT 1
-      FROM   household_members hm
-      WHERE  hm.household_id = households.id
-        AND  hm.user_id      = auth.uid()
-        AND  hm.role         = 'admin'
-    )
-  );
+  USING (is_household_admin(id));
 
 
 -- =============================================================================
@@ -327,12 +323,11 @@ CREATE POLICY "admin_can_delete_household"
 -- =============================================================================
 
 -- A member can see all other members of every household they belong to.
--- get_user_household_ids() is SECURITY DEFINER, so this lookup does NOT
--- recurse back into this same policy.
+-- is_household_member() is SECURITY DEFINER, so this does not recurse.
 CREATE POLICY "members_can_select_household_members"
   ON household_members
   FOR SELECT TO authenticated
-  USING (household_id = ANY(get_user_household_ids()));
+  USING (is_household_member(household_id));
 
 -- Only the creator of a brand-new (empty) household may insert themselves as
 -- its first admin member. Once any member exists, this INSERT path is closed:
@@ -342,9 +337,6 @@ CREATE POLICY "members_can_select_household_members"
 --   1. user_id = auth.uid()   — you can only add yourself, never a third party
 --   2. role = 'admin'         — first member must be admin (no orphaned households)
 --   3. is_household_empty()   — target household must have zero existing members
---
--- is_household_empty() is SECURITY DEFINER so the count is accurate even
--- before the current user has any membership row (see function comment above).
 CREATE POLICY "user_can_join_empty_household"
   ON household_members
   FOR INSERT TO authenticated
@@ -374,27 +366,26 @@ CREATE POLICY "member_can_delete_own_row"
 CREATE POLICY "members_can_select_shopping_items"
   ON shopping_items
   FOR SELECT TO authenticated
-  USING (household_id = ANY(get_user_household_ids()));
+  USING (is_household_member(household_id));
 
+-- WITH CHECK verifies the NEW row's household_id is one the user belongs to.
 CREATE POLICY "members_can_insert_shopping_items"
   ON shopping_items
   FOR INSERT TO authenticated
-  -- WITH CHECK verifies the NEW row's household_id is one the user belongs to
-  WITH CHECK (household_id = ANY(get_user_household_ids()));
+  WITH CHECK (is_household_member(household_id));
 
--- WITH CHECK ensures the updated row's household_id still belongs to the user,
--- preventing a member from moving a row into a household they also belong to
--- but that the row didn't originally belong to.
+-- USING checks the existing row; WITH CHECK ensures the updated row still
+-- belongs to the same household, preventing cross-household row moves.
 CREATE POLICY "members_can_update_shopping_items"
   ON shopping_items
   FOR UPDATE TO authenticated
-  USING     (household_id = ANY(get_user_household_ids()))
-  WITH CHECK (household_id = ANY(get_user_household_ids()));
+  USING     (is_household_member(household_id))
+  WITH CHECK (is_household_member(household_id));
 
 CREATE POLICY "members_can_delete_shopping_items"
   ON shopping_items
   FOR DELETE TO authenticated
-  USING (household_id = ANY(get_user_household_ids()));
+  USING (is_household_member(household_id));
 
 
 -- =============================================================================
@@ -404,23 +395,23 @@ CREATE POLICY "members_can_delete_shopping_items"
 CREATE POLICY "members_can_select_tasks"
   ON tasks
   FOR SELECT TO authenticated
-  USING (household_id = ANY(get_user_household_ids()));
+  USING (is_household_member(household_id));
 
 CREATE POLICY "members_can_insert_tasks"
   ON tasks
   FOR INSERT TO authenticated
-  WITH CHECK (household_id = ANY(get_user_household_ids()));
+  WITH CHECK (is_household_member(household_id));
 
 CREATE POLICY "members_can_update_tasks"
   ON tasks
   FOR UPDATE TO authenticated
-  USING     (household_id = ANY(get_user_household_ids()))
-  WITH CHECK (household_id = ANY(get_user_household_ids()));
+  USING     (is_household_member(household_id))
+  WITH CHECK (is_household_member(household_id));
 
 CREATE POLICY "members_can_delete_tasks"
   ON tasks
   FOR DELETE TO authenticated
-  USING (household_id = ANY(get_user_household_ids()));
+  USING (is_household_member(household_id));
 
 
 -- =============================================================================
@@ -430,23 +421,23 @@ CREATE POLICY "members_can_delete_tasks"
 CREATE POLICY "members_can_select_events"
   ON events
   FOR SELECT TO authenticated
-  USING (household_id = ANY(get_user_household_ids()));
+  USING (is_household_member(household_id));
 
 CREATE POLICY "members_can_insert_events"
   ON events
   FOR INSERT TO authenticated
-  WITH CHECK (household_id = ANY(get_user_household_ids()));
+  WITH CHECK (is_household_member(household_id));
 
 CREATE POLICY "members_can_update_events"
   ON events
   FOR UPDATE TO authenticated
-  USING     (household_id = ANY(get_user_household_ids()))
-  WITH CHECK (household_id = ANY(get_user_household_ids()));
+  USING     (is_household_member(household_id))
+  WITH CHECK (is_household_member(household_id));
 
 CREATE POLICY "members_can_delete_events"
   ON events
   FOR DELETE TO authenticated
-  USING (household_id = ANY(get_user_household_ids()));
+  USING (is_household_member(household_id));
 
 
 -- =============================================================================
@@ -456,23 +447,23 @@ CREATE POLICY "members_can_delete_events"
 CREATE POLICY "members_can_select_notes"
   ON notes
   FOR SELECT TO authenticated
-  USING (household_id = ANY(get_user_household_ids()));
+  USING (is_household_member(household_id));
 
 CREATE POLICY "members_can_insert_notes"
   ON notes
   FOR INSERT TO authenticated
-  WITH CHECK (household_id = ANY(get_user_household_ids()));
+  WITH CHECK (is_household_member(household_id));
 
 CREATE POLICY "members_can_update_notes"
   ON notes
   FOR UPDATE TO authenticated
-  USING     (household_id = ANY(get_user_household_ids()))
-  WITH CHECK (household_id = ANY(get_user_household_ids()));
+  USING     (is_household_member(household_id))
+  WITH CHECK (is_household_member(household_id));
 
 CREATE POLICY "members_can_delete_notes"
   ON notes
   FOR DELETE TO authenticated
-  USING (household_id = ANY(get_user_household_ids()));
+  USING (is_household_member(household_id));
 
 
 -- =============================================================================
@@ -482,20 +473,20 @@ CREATE POLICY "members_can_delete_notes"
 CREATE POLICY "members_can_select_useful_links"
   ON useful_links
   FOR SELECT TO authenticated
-  USING (household_id = ANY(get_user_household_ids()));
+  USING (is_household_member(household_id));
 
 CREATE POLICY "members_can_insert_useful_links"
   ON useful_links
   FOR INSERT TO authenticated
-  WITH CHECK (household_id = ANY(get_user_household_ids()));
+  WITH CHECK (is_household_member(household_id));
 
 CREATE POLICY "members_can_update_useful_links"
   ON useful_links
   FOR UPDATE TO authenticated
-  USING     (household_id = ANY(get_user_household_ids()))
-  WITH CHECK (household_id = ANY(get_user_household_ids()));
+  USING     (is_household_member(household_id))
+  WITH CHECK (is_household_member(household_id));
 
 CREATE POLICY "members_can_delete_useful_links"
   ON useful_links
   FOR DELETE TO authenticated
-  USING (household_id = ANY(get_user_household_ids()));
+  USING (is_household_member(household_id));
