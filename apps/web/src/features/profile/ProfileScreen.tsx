@@ -1,5 +1,7 @@
 "use client";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
 import { Card } from "@/components/ui/Card";
 import { HouseholdMemberCard } from "./HouseholdMemberCard";
 import type { HouseholdProfile } from "@/lib/domain/types";
@@ -55,9 +57,16 @@ interface ProfileScreenProps {
 }
 
 export function ProfileScreen({ profile, accountEmail }: ProfileScreenProps) {
+  const router = useRouter();
   const [notifs, setNotifs]     = useState(true);
   const [darkMode, setDarkMode] = useState(false);
   const [dailyMsg, setDailyMsg] = useState(true);
+
+  async function handleSignOut() {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.push("/login");
+  }
 
   const { name, type, createdAtLabel, members } = profile;
 
@@ -135,7 +144,10 @@ export function ProfileScreen({ profile, accountEmail }: ProfileScreenProps) {
           </RowItem>
 
           <div className="pt-4">
-            <button className="w-full flex items-center justify-center gap-2 py-[13px] px-4 rounded-[14px] border-[1.5px] border-[rgba(194,96,63,0.3)] text-[var(--primary)] font-semibold text-[15px] hover:bg-[var(--shopping-bg)] transition-colors cursor-pointer">
+            <button
+              onClick={handleSignOut}
+              className="w-full flex items-center justify-center gap-2 py-[13px] px-4 rounded-[14px] border-[1.5px] border-[rgba(194,96,63,0.3)] text-[var(--primary)] font-semibold text-[15px] hover:bg-[var(--shopping-bg)] transition-colors cursor-pointer"
+            >
               Se déconnecter
             </button>
           </div>

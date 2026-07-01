@@ -8,6 +8,7 @@ interface AuthTextInputProps {
   autoComplete?: string;
   value: string;
   onChange: (value: string) => void;
+  disabled?: boolean;
 }
 
 export function AuthTextInput({
@@ -18,6 +19,7 @@ export function AuthTextInput({
   autoComplete,
   value,
   onChange,
+  disabled,
 }: AuthTextInputProps) {
   return (
     <div className="flex flex-col gap-[6px]">
@@ -32,6 +34,7 @@ export function AuthTextInput({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         className={inputClass}
+        disabled={disabled}
       />
     </div>
   );
