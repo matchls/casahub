@@ -17,10 +17,12 @@ export function SignupForm() {
   const [confirm, setConfirm] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [info, setInfo] = useState<string | null>(null);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    setInfo(null);
 
     if (password !== confirm) {
       setError("Les mots de passe ne correspondent pas.");
@@ -29,7 +31,7 @@ export function SignupForm() {
 
     setLoading(true);
     const supabase = createClient();
-    const { error: authError } = await supabase.auth.signUp({
+    const { data, error: authError } = await supabase.auth.signUp({
       email,
       password,
       options: { data: { first_name: firstName } },
@@ -41,7 +43,14 @@ export function SignupForm() {
       return;
     }
 
-    router.push("/onboarding");
+    if (data.session) {
+      router.push("/onboarding");
+      return;
+    }
+
+    // Email confirmation is enabled — account created but no active session yet
+    setInfo("Compte créé. Vérifiez vos e-mails pour confirmer votre adresse avant de vous connecter.");
+    setLoading(false);
   }
 
   return (
@@ -94,6 +103,9 @@ export function SignupForm() {
         />
         {error && (
           <p className="text-[13px] text-red-500 text-center">{error}</p>
+        )}
+        {info && (
+          <p className="text-[13px] text-[var(--primary)] text-center">{info}</p>
         )}
         <button
           type="submit"
