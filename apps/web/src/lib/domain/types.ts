@@ -14,7 +14,7 @@ export type CourseItem = ShoppingItem;
 export type DueType = "date" | "recurrence" | "none";
 
 export interface Task {
-  id: number;
+  id: string;
   title: string;
   dueLabel: string;
   dueType: DueType;

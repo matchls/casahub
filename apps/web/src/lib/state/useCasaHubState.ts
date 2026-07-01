@@ -21,11 +21,14 @@ import {
   toggleShoppingItem as toggleShoppingItemDb,
 } from "@/lib/supabase/shopping";
 import {
+  addTask as addTaskDb,
+  toggleTask as toggleTaskDb,
+} from "@/lib/supabase/tasks";
+import {
   agendaEvents,
   dayTimelineItems,
   initialLinks,
   initialNotes,
-  initialTasks,
 } from "@/lib/mocks";
 
 interface CasaHubStateOptions {
@@ -33,6 +36,7 @@ interface CasaHubStateOptions {
   initialAccountEmail: string;
   householdId: string;
   initialShoppingItems: ShoppingItem[];
+  initialTasks: Task[];
 }
 
 export function useCasaHubState({
@@ -40,6 +44,7 @@ export function useCasaHubState({
   initialAccountEmail,
   householdId,
   initialShoppingItems,
+  initialTasks,
 }: CasaHubStateOptions) {
   // Navigation
   const [activeView, setActiveView] = useState<View>("home");
@@ -47,7 +52,7 @@ export function useCasaHubState({
 
   // Data
   const [shoppingItems, setShoppingItems] = useState<ShoppingItem[]>(initialShoppingItems);
-  const [tasks, setTasks] = useState<Task[]>(initialTasks);
+  const [tasks, setTasks] = useState<Task[]>(initialTasks ?? []);
   const [notes, setNotes] = useState<Note[]>(initialNotes);
   const [links, setLinks] = useState<UsefulLink[]>(initialLinks);
   const [events] = useState<AgendaEvent[]>(agendaEvents);
@@ -111,22 +116,39 @@ export function useCasaHubState({
     }
   }
 
-  // Actions — tasks
-  function toggleTask(id: number) {
+  // Actions — tasks (Supabase-backed with optimistic updates)
+  async function toggleTask(id: string) {
+    const prevTasks = tasks;
+    const task = prevTasks.find((t) => t.id === id);
+    if (!task) return;
     setTasks((prev) =>
-      prev.map((task) => (task.id === id ? { ...task, done: !task.done } : task))
+      prev.map((t) => (t.id === id ? { ...t, done: !t.done } : t))
     );
+    try {
+      await toggleTaskDb(id, !task.done);
+    } catch (err) {
+      console.error("[tasks] toggle failed:", err);
+      setTasks(prevTasks);
+    }
   }
-  function addTask(title: string) {
-    const newTask: Task = {
-      id: nextId(),
-      title,
-      dueLabel: "Sans date",
-      dueType: "none",
-      done: false,
-      assignedTo: "lea",
-    };
-    setTasks((prev) => [newTask, ...prev]);
+
+  async function addTask(title: string) {
+    const tempId = `temp-${Date.now()}`;
+    const tempTask: Task = { id: tempId, title, dueLabel: "Sans date", dueType: "none", done: false, assignedTo: "lea" };
+    setTasks((prev) => [tempTask, ...prev]);
+    try {
+      const row = await addTaskDb(householdId, title);
+      setTasks((prev) =>
+        prev.map((t) =>
+          t.id === tempId
+            ? { id: row.id, title: row.title, dueLabel: row.due_label ?? "Sans date", dueType: (row.due_type as Task["dueType"]) ?? "none", done: row.done, assignedTo: "lea" }
+            : t
+        )
+      );
+    } catch (err) {
+      console.error("[tasks] add failed:", err);
+      setTasks((prev) => prev.filter((t) => t.id !== tempId));
+    }
   }
 
   // Actions — notes

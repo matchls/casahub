@@ -7,7 +7,7 @@ import { TaskItemRow } from "./TaskItemRow";
 
 interface TasksScreenProps {
   tasks: Task[];
-  onToggle: (id: number) => void;
+  onToggle: (id: string) => void;
   onAdd: (title: string) => void;
 }
 
