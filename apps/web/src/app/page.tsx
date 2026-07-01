@@ -13,12 +13,18 @@ export default async function Home() {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { data: memberRow } = await supabase
+  const { data: memberRows, error: memberError } = await supabase
     .from("household_members")
     .select("household_id")
     .eq("user_id", user.id)
-    .maybeSingle();
+    .limit(1);
 
+  if (memberError) {
+    console.error("[page] household_members query failed:", memberError.message);
+    redirect("/onboarding");
+  }
+
+  const memberRow = memberRows?.[0] ?? null;
   if (!memberRow) redirect("/onboarding");
 
   const { data: household } = await supabase

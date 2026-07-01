@@ -3,6 +3,12 @@
 -- Atomic creation of a household + its first admin member.
 -- Apply in the Supabase SQL Editor after schema.sql.
 
+-- V1: enforce one household per user at the DB level.
+-- Safe to re-run (IF NOT EXISTS).
+CREATE UNIQUE INDEX IF NOT EXISTS idx_household_members_unique_user
+  ON household_members (user_id);
+
+
 CREATE OR REPLACE FUNCTION create_household_with_member(
   household_name      text,
   household_type      text,

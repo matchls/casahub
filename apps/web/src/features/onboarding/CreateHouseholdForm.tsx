@@ -106,7 +106,8 @@ export function CreateHouseholdForm() {
         initial,
         color: FIRST_MEMBER_COLOR,
       });
-      router.push("/");
+      router.refresh();
+      router.replace("/");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Une erreur est survenue.");
       setLoading(false);
