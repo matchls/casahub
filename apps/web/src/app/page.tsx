@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { AppShell } from "@/components/layout/AppShell";
-import type { HouseholdProfile } from "@/lib/domain/types";
+import type { HouseholdProfile, ShoppingItem } from "@/lib/domain/types";
 
 export const dynamic = "force-dynamic";
 
@@ -59,10 +59,30 @@ export default async function Home() {
     })),
   };
 
+  const { data: shoppingRows, error: shoppingError } = await supabase
+    .from("shopping_items")
+    .select("id, label, quantity, done, assigned_to")
+    .eq("household_id", household.id)
+    .order("created_at", { ascending: false });
+
+  if (shoppingError) {
+    console.error("[page] shopping_items query failed:", shoppingError.message);
+  }
+
+  const initialShoppingItems: ShoppingItem[] = (shoppingRows ?? []).map((row) => ({
+    id: row.id,
+    label: row.label,
+    quantity: row.quantity ?? undefined,
+    done: row.done,
+    assignedTo: "lea",
+  }));
+
   return (
     <AppShell
       initialProfile={profile}
       initialAccountEmail={user.email ?? ""}
+      householdId={household.id}
+      initialShoppingItems={initialShoppingItems}
     />
   );
 }

@@ -1,7 +1,7 @@
 "use client";
 import { useMemo, useState } from "react";
 
-// Monotonic counter for new item IDs — avoids Date.now() collisions on rapid adds.
+// Monotonic counter for non-shopping item IDs (tasks, notes, links).
 let _idCounter = 1000;
 function nextId() {
   return ++_idCounter;
@@ -17,20 +17,30 @@ import type {
   UsefulLink,
 } from "@/lib/domain/types";
 import {
+  addShoppingItem as addShoppingItemDb,
+  toggleShoppingItem as toggleShoppingItemDb,
+} from "@/lib/supabase/shopping";
+import {
   agendaEvents,
   dayTimelineItems,
   initialLinks,
   initialNotes,
-  initialShoppingItems,
   initialTasks,
 } from "@/lib/mocks";
 
 interface CasaHubStateOptions {
   initialProfile: HouseholdProfile;
   initialAccountEmail: string;
+  householdId: string;
+  initialShoppingItems: ShoppingItem[];
 }
 
-export function useCasaHubState({ initialProfile, initialAccountEmail }: CasaHubStateOptions) {
+export function useCasaHubState({
+  initialProfile,
+  initialAccountEmail,
+  householdId,
+  initialShoppingItems,
+}: CasaHubStateOptions) {
   // Navigation
   const [activeView, setActiveView] = useState<View>("home");
   const [addOpen, setAddOpen] = useState(false);
@@ -66,20 +76,39 @@ export function useCasaHubState({ initialProfile, initialAccountEmail }: CasaHub
     setAddOpen(false);
   }
 
-  // Actions — shopping
-  function toggleShoppingItem(id: number) {
-    setShoppingItems((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, done: !item.done } : item))
+  // Actions — shopping (Supabase-backed with optimistic updates)
+  async function toggleShoppingItem(id: string) {
+    const prevItems = shoppingItems;
+    const item = prevItems.find((i) => i.id === id);
+    if (!item) return;
+    setShoppingItems((items) =>
+      items.map((i) => (i.id === id ? { ...i, done: !i.done } : i))
     );
+    try {
+      await toggleShoppingItemDb(id, !item.done);
+    } catch (err) {
+      console.error("[shopping] toggle failed:", err);
+      setShoppingItems(prevItems);
+    }
   }
-  function addShoppingItem(label: string) {
-    const newItem: ShoppingItem = {
-      id: nextId(),
-      label,
-      done: false,
-      assignedTo: "lea",
-    };
-    setShoppingItems((prev) => [newItem, ...prev]);
+
+  async function addShoppingItem(label: string) {
+    const tempId = `temp-${Date.now()}`;
+    const tempItem: ShoppingItem = { id: tempId, label, done: false, assignedTo: "lea" };
+    setShoppingItems((prev) => [tempItem, ...prev]);
+    try {
+      const row = await addShoppingItemDb(householdId, label);
+      setShoppingItems((prev) =>
+        prev.map((i) =>
+          i.id === tempId
+            ? { id: row.id, label: row.label, quantity: row.quantity ?? undefined, done: row.done, assignedTo: "lea" }
+            : i
+        )
+      );
+    } catch (err) {
+      console.error("[shopping] add failed:", err);
+      setShoppingItems((prev) => prev.filter((i) => i.id !== tempId));
+    }
   }
 
   // Actions — tasks

@@ -1,7 +1,7 @@
 export type MemberId = "lea" | "tom";
 
 export interface ShoppingItem {
-  id: number;
+  id: string;
   label: string;
   quantity?: number;
   done: boolean;

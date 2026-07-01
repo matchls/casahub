@@ -4,7 +4,7 @@ import { MEMBERS } from "./shoppingData";
 
 interface ShoppingItemRowProps {
   item: ShoppingItem;
-  onToggle: (id: number) => void;
+  onToggle: (id: string) => void;
 }
 
 export function ShoppingItemRow({ item, onToggle }: ShoppingItemRowProps) {

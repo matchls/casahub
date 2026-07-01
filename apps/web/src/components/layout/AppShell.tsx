@@ -13,11 +13,13 @@ import { NotesScreen } from "@/features/notes/NotesScreen";
 import { UsefulLinksScreen } from "@/features/links/UsefulLinksScreen";
 import { ProfileScreen } from "@/features/profile/ProfileScreen";
 import type { View } from "./types";
-import type { HouseholdProfile } from "@/lib/domain/types";
+import type { HouseholdProfile, ShoppingItem } from "@/lib/domain/types";
 
 interface AppShellProps {
   initialProfile: HouseholdProfile;
   initialAccountEmail: string;
+  householdId: string;
+  initialShoppingItems: ShoppingItem[];
 }
 
 /* Simple placeholder for non-implemented views */
@@ -45,7 +47,7 @@ function ViewPlaceholder({ view }: { view: View }) {
   );
 }
 
-export function AppShell({ initialProfile, initialAccountEmail }: AppShellProps) {
+export function AppShell({ initialProfile, initialAccountEmail, householdId, initialShoppingItems }: AppShellProps) {
   const {
     activeView,
     setActiveView,
@@ -72,7 +74,7 @@ export function AppShell({ initialProfile, initialAccountEmail }: AppShellProps)
     addTask,
     addNote,
     addUsefulLink,
-  } = useCasaHubState({ initialProfile, initialAccountEmail });
+  } = useCasaHubState({ initialProfile, initialAccountEmail, householdId, initialShoppingItems });
 
   const shoppingSubtitle =
     activeView === "shopping"
