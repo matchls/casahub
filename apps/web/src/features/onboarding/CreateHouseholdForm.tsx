@@ -1,9 +1,12 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import type { User } from "@supabase/supabase-js";
 import { cn } from "@/lib/utils";
 import { Input, Avatar } from "@/components/ui";
+import { createClient } from "@/lib/supabase/client";
+import { createHouseholdWithMember } from "@/lib/supabase/households";
 
 type HouseholdType = "couple" | "colocation" | "famille";
 
@@ -12,6 +15,22 @@ const HOUSEHOLD_TYPES = [
   { value: "colocation" as HouseholdType, label: "Colocation",  emoji: "🏘️" },
   { value: "famille" as HouseholdType,    label: "Famille",     emoji: "👨‍👩‍👧" },
 ];
+
+const TYPE_MAP: Record<HouseholdType, "Couple" | "Colocation" | "Famille"> = {
+  couple: "Couple",
+  colocation: "Colocation",
+  famille: "Famille",
+};
+
+const FIRST_MEMBER_COLOR = "#C2603F";
+
+function deriveDisplayName(user: User): string {
+  const meta = user.user_metadata as Record<string, string | undefined>;
+  const fromMeta =
+    meta.first_name?.trim() || meta.full_name?.trim() || meta.name?.trim();
+  if (fromMeta) return fromMeta;
+  return user.email?.split("@")[0] ?? "Membre";
+}
 
 function HouseholdTypeButton({
   emoji,
@@ -55,11 +74,44 @@ export function CreateHouseholdForm() {
   const router = useRouter();
   const [householdName, setHouseholdName] = useState("");
   const [householdType, setHouseholdType] = useState<HouseholdType | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
 
-  function handleSubmit(e: React.FormEvent) {
+  useEffect(() => {
+    createClient()
+      .auth.getUser()
+      .then(({ data: { user } }) => setCurrentUser(user));
+  }, []);
+
+  const displayName = currentUser ? deriveDisplayName(currentUser) : "Vous";
+  const initial = displayName[0].toUpperCase();
+
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    // Mock submit — Supabase auth will be connected in a later issue
-    router.push("/");
+    if (!householdName.trim() || !householdType) return;
+    if (!currentUser) {
+      setError("Vous devez être connecté pour créer un foyer.");
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      await createHouseholdWithMember({
+        householdName: householdName.trim(),
+        householdType: TYPE_MAP[householdType],
+        displayName,
+        initial,
+        color: FIRST_MEMBER_COLOR,
+      });
+      router.refresh();
+      router.replace("/");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Une erreur est survenue.");
+      setLoading(false);
+    }
   }
 
   return (
@@ -131,12 +183,12 @@ export function CreateHouseholdForm() {
             Membres
           </span>
           <div className="flex flex-col gap-[10px] rounded-[16px] border-[1.5px] border-[var(--border-input)] bg-[var(--surface)] p-[14px]">
-            {/* Current user (mock) */}
+            {/* Current user */}
             <div className="flex items-center gap-[10px]">
-              <Avatar initials="L" size="md" />
+              <Avatar initials={initial} size="md" />
               <div className="flex-1">
                 <span className="text-[14px] font-semibold text-[var(--text-primary)]">
-                  Léa
+                  {displayName}
                 </span>
                 <span className="ml-[6px] text-[12px] text-[var(--text-muted)]">
                   · vous
@@ -164,13 +216,19 @@ export function CreateHouseholdForm() {
           </div>
         </div>
 
+        {/* Error */}
+        {error && (
+          <p className="text-[13px] text-red-500 text-center">{error}</p>
+        )}
+
         {/* Submit */}
         <button
           type="submit"
-          className="w-full mt-[3px] rounded-[14px] bg-[var(--primary)] text-white py-4 text-[16px] font-bold cursor-pointer hover:opacity-90 transition-opacity"
+          disabled={loading || !householdName.trim() || !householdType}
+          className="w-full mt-[3px] rounded-[14px] bg-[var(--primary)] text-white py-4 text-[16px] font-bold cursor-pointer hover:opacity-90 transition-opacity disabled:opacity-60 disabled:cursor-not-allowed"
           style={{ boxShadow: "0 10px 22px -8px rgba(194,96,63,.7)" }}
         >
-          Créer le foyer
+          {loading ? "Création en cours…" : "Créer le foyer"}
         </button>
       </form>
 

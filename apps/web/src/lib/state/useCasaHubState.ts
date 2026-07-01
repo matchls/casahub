@@ -19,15 +19,18 @@ import type {
 import {
   agendaEvents,
   dayTimelineItems,
-  householdProfile,
   initialLinks,
   initialNotes,
   initialShoppingItems,
   initialTasks,
-  mockAccountEmail,
 } from "@/lib/mocks";
 
-export function useCasaHubState() {
+interface CasaHubStateOptions {
+  initialProfile: HouseholdProfile;
+  initialAccountEmail: string;
+}
+
+export function useCasaHubState({ initialProfile, initialAccountEmail }: CasaHubStateOptions) {
   // Navigation
   const [activeView, setActiveView] = useState<View>("home");
   const [addOpen, setAddOpen] = useState(false);
@@ -39,7 +42,7 @@ export function useCasaHubState() {
   const [links, setLinks] = useState<UsefulLink[]>(initialLinks);
   const [events] = useState<AgendaEvent[]>(agendaEvents);
   const [dayItems] = useState<TimelineItem[]>(dayTimelineItems);
-  const [profile] = useState<HouseholdProfile>(householdProfile);
+  const [profile] = useState<HouseholdProfile>(initialProfile);
 
   // Computed counters
   const shoppingPendingCount = useMemo(
@@ -141,7 +144,7 @@ export function useCasaHubState() {
     events,
     dayItems,
     profile,
-    accountEmail: mockAccountEmail,
+    accountEmail: initialAccountEmail,
 
     // Computed counters
     shoppingPendingCount,
