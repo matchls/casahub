@@ -59,11 +59,15 @@ export default async function Home() {
     })),
   };
 
-  const { data: shoppingRows } = await supabase
+  const { data: shoppingRows, error: shoppingError } = await supabase
     .from("shopping_items")
     .select("id, label, quantity, done, assigned_to")
     .eq("household_id", household.id)
     .order("created_at", { ascending: false });
+
+  if (shoppingError) {
+    console.error("[page] shopping_items query failed:", shoppingError.message);
+  }
 
   const initialShoppingItems: ShoppingItem[] = (shoppingRows ?? []).map((row) => ({
     id: row.id,
