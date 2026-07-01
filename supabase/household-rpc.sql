@@ -24,6 +24,10 @@ BEGIN
     RAISE EXCEPTION 'Not authenticated';
   END IF;
 
+  IF EXISTS (SELECT 1 FROM household_members WHERE user_id = v_uid) THEN
+    RAISE EXCEPTION 'User already belongs to a household';
+  END IF;
+
   IF household_type NOT IN ('Couple', 'Colocation', 'Famille') THEN
     RAISE EXCEPTION 'Invalid household_type: %', household_type;
   END IF;
@@ -39,5 +43,5 @@ BEGIN
 END;
 $$;
 
-GRANT EXECUTE ON FUNCTION create_household_with_member(text, text, text, text, text)
-  TO authenticated;
+REVOKE ALL ON FUNCTION create_household_with_member(text, text, text, text, text) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION create_household_with_member(text, text, text, text, text) TO authenticated;

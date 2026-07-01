@@ -26,7 +26,8 @@ const FIRST_MEMBER_COLOR = "#C2603F";
 
 function deriveDisplayName(user: User): string {
   const meta = user.user_metadata as Record<string, string | undefined>;
-  const fromMeta = meta.full_name?.trim() || meta.name?.trim();
+  const fromMeta =
+    meta.first_name?.trim() || meta.full_name?.trim() || meta.name?.trim();
   if (fromMeta) return fromMeta;
   return user.email?.split("@")[0] ?? "Membre";
 }
