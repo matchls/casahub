@@ -44,5 +44,7 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
+  // `icon$` exempts the generated app icon (app/icon.tsx) — without it, the
+  // favicon request gets redirected to /login and browsers show a broken icon.
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|icon$).*)'],
 }
