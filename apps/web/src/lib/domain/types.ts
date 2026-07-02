@@ -35,7 +35,7 @@ export interface TimelineItem {
 }
 
 export interface AgendaEvent {
-  id: number;
+  id: string;
   type: ItemType;
   title: string;
   dayAbbr: string;

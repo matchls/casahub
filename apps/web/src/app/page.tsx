@@ -1,7 +1,8 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { AppShell } from "@/components/layout/AppShell";
-import type { HouseholdProfile, Note, ShoppingItem, Task, UsefulLink } from "@/lib/domain/types";
+import type { AgendaEvent, HouseholdProfile, Note, ShoppingItem, Task, UsefulLink } from "@/lib/domain/types";
+import { mapEventRow } from "@/lib/domain/agenda";
 
 export const dynamic = "force-dynamic";
 
@@ -133,6 +134,25 @@ export default async function Home() {
     createdBy: "lea",
   }));
 
+  const today = new Date();
+  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+
+  const { data: eventRows, error: eventsError } = await supabase
+    .from("events")
+    .select("id, title, event_date, event_time, location, assigned_to")
+    .eq("household_id", household.id)
+    .gte("event_date", todayStr)
+    .order("event_date", { ascending: true })
+    .order("event_time", { ascending: true, nullsFirst: true });
+
+  if (eventsError) {
+    console.error("[page] events query failed:", eventsError.message);
+  }
+
+  const initialEvents: AgendaEvent[] = (eventRows ?? [])
+    .map((row) => mapEventRow(row, today))
+    .filter((event): event is AgendaEvent => event !== null);
+
   return (
     <AppShell
       initialProfile={profile}
@@ -142,6 +162,7 @@ export default async function Home() {
       initialTasks={initialTasks}
       initialNotes={initialNotes}
       initialLinks={initialLinks}
+      initialEvents={initialEvents}
     />
   );
 }

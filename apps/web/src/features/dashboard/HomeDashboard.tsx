@@ -1,7 +1,6 @@
 import type { View } from "@/components/layout/types";
-import type { Note, ShoppingItem, Task, UsefulLink } from "@/lib/domain/types";
+import type { AgendaEvent, Note, ShoppingItem, Task, UsefulLink } from "@/lib/domain/types";
 import { DashboardTile } from "./DashboardTile";
-import { events } from "./dashboardData";
 
 interface HomeDashboardProps {
   onNavigate: (view: View) => void;
@@ -9,9 +8,10 @@ interface HomeDashboardProps {
   tasks: Task[];
   notes: Note[];
   links: UsefulLink[];
+  events: AgendaEvent[];
 }
 
-export function HomeDashboard({ onNavigate, shoppingItems, tasks, notes, links }: HomeDashboardProps) {
+export function HomeDashboard({ onNavigate, shoppingItems, tasks, notes, links, events }: HomeDashboardProps) {
   const pendingShoppingItems = shoppingItems.filter((i) => !i.done);
   const shoppingLabels = pendingShoppingItems.map((i) => i.label);
   const extraShopping = shoppingLabels.length - 3;
@@ -26,7 +26,9 @@ export function HomeDashboard({ onNavigate, shoppingItems, tasks, notes, links }
 
   const nextEvent = events[0];
   const agendaPreview = nextEvent
-    ? `${nextEvent.label} · ${nextEvent.time}`
+    ? nextEvent.time
+      ? `${nextEvent.title} · ${nextEvent.time}`
+      : nextEvent.title
     : "Aucun événement";
 
   // "Wi-Fi · Codes · +2"

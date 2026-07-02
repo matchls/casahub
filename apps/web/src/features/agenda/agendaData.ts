@@ -1,5 +1,6 @@
 import type { MemberId, ItemType, AgendaGroup, TimelineItem, AgendaEvent } from "@/lib/domain/types";
 export type { MemberId, ItemType, AgendaGroup, TimelineItem, AgendaEvent };
+export { GROUP_ORDER } from "@/lib/domain/agenda";
 
 export const MEMBERS: Record<MemberId, { initial: string; color: string; name: string }> = {
   lea: { initial: "L", color: "#C2603F", name: "Léa" },
@@ -19,5 +20,3 @@ export const GROUP_LABELS: Record<AgendaGroup, string> = {
   this_week: "CETTE SEMAINE",
   next_week: "LA SEMAINE PROCHAINE",
 };
-
-export const GROUP_ORDER: AgendaGroup[] = ["today", "tomorrow", "this_week", "next_week"];
