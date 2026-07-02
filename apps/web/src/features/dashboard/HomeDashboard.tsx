@@ -1,19 +1,25 @@
 import type { View } from "@/components/layout/types";
+import type { ShoppingItem, Task } from "@/lib/domain/types";
 import { DashboardTile } from "./DashboardTile";
-import { shoppingItems, tasks, events, notes, links } from "./dashboardData";
+import { events, notes, links } from "./dashboardData";
 
 interface HomeDashboardProps {
   onNavigate: (view: View) => void;
+  shoppingItems: ShoppingItem[];
+  tasks: Task[];
 }
 
-export function HomeDashboard({ onNavigate }: HomeDashboardProps) {
-  // Shopping preview: "Lait · Café · Éponges · +5"
-  const extraShopping = shoppingItems.length - 3;
+export function HomeDashboard({ onNavigate, shoppingItems, tasks }: HomeDashboardProps) {
+  const shoppingLabels = shoppingItems.map((i) => i.label);
+  const extraShopping = shoppingLabels.length - 3;
   const shoppingPreview =
-    shoppingItems.slice(0, 3).join(" · ") +
-    (extraShopping > 0 ? ` · +${extraShopping}` : "");
+    shoppingLabels.length === 0
+      ? "Liste vide"
+      : shoppingLabels.slice(0, 3).join(" · ") +
+        (extraShopping > 0 ? ` · +${extraShopping}` : "");
 
   const pendingTasks = tasks.filter((t) => !t.done).length;
+  const tasksSubtitle = pendingTasks === 0 ? "Aucune tâche à faire" : `${pendingTasks} à faire`;
 
   const nextEvent = events[0];
   const agendaPreview = nextEvent
@@ -46,7 +52,7 @@ export function HomeDashboard({ onNavigate }: HomeDashboardProps) {
         theme="tasks"
         emoji="✅"
         title="Tâches"
-        subtitle="à faire aujourd'hui"
+        subtitle={tasksSubtitle}
         badge={pendingTasks}
         className="col-span-1 min-[880px]:col-span-3"
         minH="min-h-[170px]"

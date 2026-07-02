@@ -130,7 +130,7 @@ export function AppShell({ initialProfile, initialAccountEmail, householdId, ini
     profileSubtitle;
 
   function renderView() {
-    if (activeView === "home") return <HomeDashboard onNavigate={setActiveView} />;
+    if (activeView === "home") return <HomeDashboard onNavigate={setActiveView} shoppingItems={shoppingItems} tasks={tasks} />;
     if (activeView === "shopping") {
       return (
         <ShoppingListScreen
