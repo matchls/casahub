@@ -49,7 +49,7 @@ export interface AgendaEvent {
 export type NoteCategory = "wifi" | "codes" | "numbers" | "ideas";
 
 export interface Note {
-  id: number;
+  id: string;
   title: string;
   content: string;
   category: NoteCategory;

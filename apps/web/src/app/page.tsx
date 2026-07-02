@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { AppShell } from "@/components/layout/AppShell";
-import type { HouseholdProfile, ShoppingItem, Task } from "@/lib/domain/types";
+import type { HouseholdProfile, Note, ShoppingItem, Task } from "@/lib/domain/types";
 
 export const dynamic = "force-dynamic";
 
@@ -96,6 +96,24 @@ export default async function Home() {
     assignedTo: "lea",
   }));
 
+  const { data: noteRows, error: notesError } = await supabase
+    .from("notes")
+    .select("id, title, content, category, created_by")
+    .eq("household_id", household.id)
+    .order("created_at", { ascending: false });
+
+  if (notesError) {
+    console.error("[page] notes query failed:", notesError.message);
+  }
+
+  const initialNotes: Note[] = (noteRows ?? []).map((row) => ({
+    id: row.id,
+    title: row.title,
+    content: row.content,
+    category: row.category as Note["category"],
+    createdBy: "lea",
+  }));
+
   return (
     <AppShell
       initialProfile={profile}
@@ -103,6 +121,7 @@ export default async function Home() {
       householdId={household.id}
       initialShoppingItems={initialShoppingItems}
       initialTasks={initialTasks}
+      initialNotes={initialNotes}
     />
   );
 }
