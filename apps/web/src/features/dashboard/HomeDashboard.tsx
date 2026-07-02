@@ -10,7 +10,8 @@ interface HomeDashboardProps {
 }
 
 export function HomeDashboard({ onNavigate, shoppingItems, tasks }: HomeDashboardProps) {
-  const shoppingLabels = shoppingItems.map((i) => i.label);
+  const pendingShoppingItems = shoppingItems.filter((i) => !i.done);
+  const shoppingLabels = pendingShoppingItems.map((i) => i.label);
   const extraShopping = shoppingLabels.length - 3;
   const shoppingPreview =
     shoppingLabels.length === 0
@@ -41,7 +42,7 @@ export function HomeDashboard({ onNavigate, shoppingItems, tasks }: HomeDashboar
         emoji="🛒"
         title="Courses"
         subtitle={shoppingPreview}
-        badge={shoppingItems.length}
+        badge={pendingShoppingItems.length}
         className="col-span-2 min-[880px]:col-span-3"
         minH="min-h-[170px]"
         onClick={() => onNavigate("shopping")}
