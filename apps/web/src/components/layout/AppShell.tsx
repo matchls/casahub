@@ -13,7 +13,7 @@ import { NotesScreen } from "@/features/notes/NotesScreen";
 import { UsefulLinksScreen } from "@/features/links/UsefulLinksScreen";
 import { ProfileScreen } from "@/features/profile/ProfileScreen";
 import type { View } from "./types";
-import type { HouseholdProfile, Note, ShoppingItem, Task } from "@/lib/domain/types";
+import type { HouseholdProfile, Note, ShoppingItem, Task, UsefulLink } from "@/lib/domain/types";
 
 interface AppShellProps {
   initialProfile: HouseholdProfile;
@@ -22,6 +22,7 @@ interface AppShellProps {
   initialShoppingItems: ShoppingItem[];
   initialTasks: Task[];
   initialNotes: Note[];
+  initialLinks: UsefulLink[];
 }
 
 /* Simple placeholder for non-implemented views */
@@ -49,7 +50,7 @@ function ViewPlaceholder({ view }: { view: View }) {
   );
 }
 
-export function AppShell({ initialProfile, initialAccountEmail, householdId, initialShoppingItems, initialTasks, initialNotes }: AppShellProps) {
+export function AppShell({ initialProfile, initialAccountEmail, householdId, initialShoppingItems, initialTasks, initialNotes, initialLinks }: AppShellProps) {
   const {
     activeView,
     setActiveView,
@@ -76,7 +77,7 @@ export function AppShell({ initialProfile, initialAccountEmail, householdId, ini
     addTask,
     addNote,
     addUsefulLink,
-  } = useCasaHubState({ initialProfile, initialAccountEmail, householdId, initialShoppingItems, initialTasks, initialNotes });
+  } = useCasaHubState({ initialProfile, initialAccountEmail, householdId, initialShoppingItems, initialTasks, initialNotes, initialLinks });
 
   const shoppingSubtitle =
     activeView === "shopping"
@@ -131,7 +132,7 @@ export function AppShell({ initialProfile, initialAccountEmail, householdId, ini
     profileSubtitle;
 
   function renderView() {
-    if (activeView === "home") return <HomeDashboard onNavigate={setActiveView} shoppingItems={shoppingItems} tasks={tasks} notes={notes} />;
+    if (activeView === "home") return <HomeDashboard onNavigate={setActiveView} shoppingItems={shoppingItems} tasks={tasks} notes={notes} links={links} />;
     if (activeView === "shopping") {
       return (
         <ShoppingListScreen
