@@ -1,15 +1,10 @@
 "use client";
 import { useMemo, useState } from "react";
-
-// Monotonic counter for non-shopping item IDs (links).
-let _idCounter = 1000;
-function nextId() {
-  return ++_idCounter;
-}
 import type { View } from "@/components/layout/types";
 import type {
   AgendaEvent,
   HouseholdProfile,
+  LinkCategory,
   Note,
   NoteCategory,
   ShoppingItem,
@@ -26,11 +21,8 @@ import {
   toggleTask as toggleTaskDb,
 } from "@/lib/supabase/tasks";
 import { addNote as addNoteDb } from "@/lib/supabase/notes";
-import {
-  agendaEvents,
-  dayTimelineItems,
-  initialLinks,
-} from "@/lib/mocks";
+import { addUsefulLink as addUsefulLinkDb } from "@/lib/supabase/links";
+import { agendaEvents, dayTimelineItems } from "@/lib/mocks";
 
 interface CasaHubStateOptions {
   initialProfile: HouseholdProfile;
@@ -39,6 +31,7 @@ interface CasaHubStateOptions {
   initialShoppingItems: ShoppingItem[];
   initialTasks: Task[];
   initialNotes: Note[];
+  initialLinks: UsefulLink[];
 }
 
 export function useCasaHubState({
@@ -48,6 +41,7 @@ export function useCasaHubState({
   initialShoppingItems,
   initialTasks,
   initialNotes,
+  initialLinks,
 }: CasaHubStateOptions) {
   // Navigation
   const [activeView, setActiveView] = useState<View>("home");
@@ -57,7 +51,7 @@ export function useCasaHubState({
   const [shoppingItems, setShoppingItems] = useState<ShoppingItem[]>(initialShoppingItems);
   const [tasks, setTasks] = useState<Task[]>(initialTasks ?? []);
   const [notes, setNotes] = useState<Note[]>(initialNotes ?? []);
-  const [links, setLinks] = useState<UsefulLink[]>(initialLinks);
+  const [links, setLinks] = useState<UsefulLink[]>(initialLinks ?? []);
   const [events] = useState<AgendaEvent[]>(agendaEvents);
   const [dayItems] = useState<TimelineItem[]>(dayTimelineItems);
   const [profile] = useState<HouseholdProfile>(initialProfile);
@@ -174,20 +168,37 @@ export function useCasaHubState({
     }
   }
 
-  // Actions — links
-  function addUsefulLink(title: string, url: string) {
+  // Actions — links (Supabase-backed with optimistic updates)
+  async function addUsefulLink(title: string, url: string) {
     const trimmed = url.trim();
     const normalizedUrl =
       trimmed && !trimmed.startsWith("http") ? `https://${trimmed}` : trimmed || "#";
-    const newLink: UsefulLink = {
-      id: nextId(),
+    const category: LinkCategory = "ideas";
+    const icon = "🔗";
+
+    const tempId = `temp-${Date.now()}`;
+    const tempLink: UsefulLink = {
+      id: tempId,
       title,
       url: normalizedUrl,
-      category: "ideas",
-      icon: "🔗",
+      category,
+      icon,
       createdBy: "lea",
     };
-    setLinks((prev) => [...prev, newLink]);
+    setLinks((prev) => [...prev, tempLink]);
+    try {
+      const row = await addUsefulLinkDb(householdId, title, normalizedUrl, category, icon);
+      setLinks((prev) =>
+        prev.map((l) =>
+          l.id === tempId
+            ? { id: row.id, title: row.title, url: row.url, category: row.category as LinkCategory, icon: row.icon, createdBy: "lea" }
+            : l
+        )
+      );
+    } catch (err) {
+      console.error("[links] add failed:", err);
+      setLinks((prev) => prev.filter((l) => l.id !== tempId));
+    }
   }
 
   return {

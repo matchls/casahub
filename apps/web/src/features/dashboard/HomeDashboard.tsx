@@ -1,16 +1,17 @@
 import type { View } from "@/components/layout/types";
-import type { Note, ShoppingItem, Task } from "@/lib/domain/types";
+import type { Note, ShoppingItem, Task, UsefulLink } from "@/lib/domain/types";
 import { DashboardTile } from "./DashboardTile";
-import { events, links } from "./dashboardData";
+import { events } from "./dashboardData";
 
 interface HomeDashboardProps {
   onNavigate: (view: View) => void;
   shoppingItems: ShoppingItem[];
   tasks: Task[];
   notes: Note[];
+  links: UsefulLink[];
 }
 
-export function HomeDashboard({ onNavigate, shoppingItems, tasks, notes }: HomeDashboardProps) {
+export function HomeDashboard({ onNavigate, shoppingItems, tasks, notes, links }: HomeDashboardProps) {
   const pendingShoppingItems = shoppingItems.filter((i) => !i.done);
   const shoppingLabels = pendingShoppingItems.map((i) => i.label);
   const extraShopping = shoppingLabels.length - 3;
@@ -36,7 +37,8 @@ export function HomeDashboard({ onNavigate, shoppingItems, tasks, notes }: HomeD
       ? "Aucune note partagée"
       : notesLabels.slice(0, 3).join(" · ") + (extraNotes > 0 ? ` · +${extraNotes}` : "");
 
-  const linksPreview = links.map((l) => l.label).join(" · ");
+  const linksPreview =
+    links.length === 0 ? "Aucun lien partagé" : links.map((l) => l.title).join(" · ");
 
   return (
     <div className="grid grid-cols-2 min-[880px]:grid-cols-6 gap-4">

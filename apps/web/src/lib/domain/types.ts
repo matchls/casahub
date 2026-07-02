@@ -59,7 +59,7 @@ export interface Note {
 export type LinkCategory = "home" | "health" | "documents" | "admin" | "services" | "ideas";
 
 export interface UsefulLink {
-  id: number;
+  id: string;
   title: string;
   url: string;
   category: LinkCategory;

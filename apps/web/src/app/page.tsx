@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { AppShell } from "@/components/layout/AppShell";
-import type { HouseholdProfile, Note, ShoppingItem, Task } from "@/lib/domain/types";
+import type { HouseholdProfile, Note, ShoppingItem, Task, UsefulLink } from "@/lib/domain/types";
 
 export const dynamic = "force-dynamic";
 
@@ -114,6 +114,25 @@ export default async function Home() {
     createdBy: "lea",
   }));
 
+  const { data: linkRows, error: linksError } = await supabase
+    .from("useful_links")
+    .select("id, title, url, category, icon, created_by")
+    .eq("household_id", household.id)
+    .order("created_at", { ascending: false });
+
+  if (linksError) {
+    console.error("[page] useful_links query failed:", linksError.message);
+  }
+
+  const initialLinks: UsefulLink[] = (linkRows ?? []).map((row) => ({
+    id: row.id,
+    title: row.title,
+    url: row.url,
+    category: row.category as UsefulLink["category"],
+    icon: row.icon,
+    createdBy: "lea",
+  }));
+
   return (
     <AppShell
       initialProfile={profile}
@@ -122,6 +141,7 @@ export default async function Home() {
       initialShoppingItems={initialShoppingItems}
       initialTasks={initialTasks}
       initialNotes={initialNotes}
+      initialLinks={initialLinks}
     />
   );
 }
