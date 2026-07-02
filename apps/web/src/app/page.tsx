@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { AppShell } from "@/components/layout/AppShell";
-import type { HouseholdProfile, ShoppingItem } from "@/lib/domain/types";
+import type { HouseholdProfile, ShoppingItem, Task } from "@/lib/domain/types";
 
 export const dynamic = "force-dynamic";
 
@@ -77,12 +77,32 @@ export default async function Home() {
     assignedTo: "lea",
   }));
 
+  const { data: taskRows, error: tasksError } = await supabase
+    .from("tasks")
+    .select("id, title, due_label, due_type, done, assigned_to")
+    .eq("household_id", household.id)
+    .order("created_at", { ascending: false });
+
+  if (tasksError) {
+    console.error("[page] tasks query failed:", tasksError.message);
+  }
+
+  const initialTasks: Task[] = (taskRows ?? []).map((row) => ({
+    id: row.id,
+    title: row.title,
+    dueLabel: row.due_label ?? "Sans date",
+    dueType: (row.due_type as Task["dueType"]) ?? "none",
+    done: row.done,
+    assignedTo: "lea",
+  }));
+
   return (
     <AppShell
       initialProfile={profile}
       initialAccountEmail={user.email ?? ""}
       householdId={household.id}
       initialShoppingItems={initialShoppingItems}
+      initialTasks={initialTasks}
     />
   );
 }

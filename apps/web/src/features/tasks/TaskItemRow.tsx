@@ -4,7 +4,7 @@ import { MEMBERS } from "./tasksData";
 
 interface TaskItemRowProps {
   task: Task;
-  onToggle: (id: number) => void;
+  onToggle: (id: string) => void;
 }
 
 const DUE_ICON: Record<Task["dueType"], string | null> = {
