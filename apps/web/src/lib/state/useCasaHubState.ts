@@ -22,7 +22,7 @@ import {
 } from "@/lib/supabase/tasks";
 import { addNote as addNoteDb } from "@/lib/supabase/notes";
 import { addUsefulLink as addUsefulLinkDb } from "@/lib/supabase/links";
-import { agendaEvents, dayTimelineItems } from "@/lib/mocks";
+import { dayTimelineItems } from "@/lib/mocks";
 
 interface CasaHubStateOptions {
   initialProfile: HouseholdProfile;
@@ -32,6 +32,7 @@ interface CasaHubStateOptions {
   initialTasks: Task[];
   initialNotes: Note[];
   initialLinks: UsefulLink[];
+  initialEvents: AgendaEvent[];
 }
 
 export function useCasaHubState({
@@ -42,6 +43,7 @@ export function useCasaHubState({
   initialTasks,
   initialNotes,
   initialLinks,
+  initialEvents,
 }: CasaHubStateOptions) {
   // Navigation
   const [activeView, setActiveView] = useState<View>("home");
@@ -52,7 +54,7 @@ export function useCasaHubState({
   const [tasks, setTasks] = useState<Task[]>(initialTasks ?? []);
   const [notes, setNotes] = useState<Note[]>(initialNotes ?? []);
   const [links, setLinks] = useState<UsefulLink[]>(initialLinks ?? []);
-  const [events] = useState<AgendaEvent[]>(agendaEvents);
+  const [events] = useState<AgendaEvent[]>(initialEvents ?? []);
   const [dayItems] = useState<TimelineItem[]>(dayTimelineItems);
   const [profile] = useState<HouseholdProfile>(initialProfile);
 
