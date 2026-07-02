@@ -155,12 +155,12 @@ export function useCasaHubState({
   }
 
   // Actions — notes (Supabase-backed with optimistic updates)
-  async function addNote(title: string) {
+  async function addNote(title: string, category: NoteCategory) {
     const tempId = `temp-${Date.now()}`;
-    const tempNote: Note = { id: tempId, title, content: "", category: "ideas", createdBy: "lea" };
+    const tempNote: Note = { id: tempId, title, content: "", category, createdBy: "lea" };
     setNotes((prev) => [tempNote, ...prev]);
     try {
-      const row = await addNoteDb(householdId, title);
+      const row = await addNoteDb(householdId, title, category);
       setNotes((prev) =>
         prev.map((n) =>
           n.id === tempId
