@@ -1,7 +1,7 @@
 "use client";
 import { useMemo, useState } from "react";
 
-// Monotonic counter for non-shopping item IDs (tasks, notes, links).
+// Monotonic counter for non-shopping item IDs (links).
 let _idCounter = 1000;
 function nextId() {
   return ++_idCounter;
@@ -11,6 +11,7 @@ import type {
   AgendaEvent,
   HouseholdProfile,
   Note,
+  NoteCategory,
   ShoppingItem,
   Task,
   TimelineItem,
@@ -24,11 +25,11 @@ import {
   addTask as addTaskDb,
   toggleTask as toggleTaskDb,
 } from "@/lib/supabase/tasks";
+import { addNote as addNoteDb } from "@/lib/supabase/notes";
 import {
   agendaEvents,
   dayTimelineItems,
   initialLinks,
-  initialNotes,
 } from "@/lib/mocks";
 
 interface CasaHubStateOptions {
@@ -37,6 +38,7 @@ interface CasaHubStateOptions {
   householdId: string;
   initialShoppingItems: ShoppingItem[];
   initialTasks: Task[];
+  initialNotes: Note[];
 }
 
 export function useCasaHubState({
@@ -45,6 +47,7 @@ export function useCasaHubState({
   householdId,
   initialShoppingItems,
   initialTasks,
+  initialNotes,
 }: CasaHubStateOptions) {
   // Navigation
   const [activeView, setActiveView] = useState<View>("home");
@@ -53,7 +56,7 @@ export function useCasaHubState({
   // Data
   const [shoppingItems, setShoppingItems] = useState<ShoppingItem[]>(initialShoppingItems);
   const [tasks, setTasks] = useState<Task[]>(initialTasks ?? []);
-  const [notes, setNotes] = useState<Note[]>(initialNotes);
+  const [notes, setNotes] = useState<Note[]>(initialNotes ?? []);
   const [links, setLinks] = useState<UsefulLink[]>(initialLinks);
   const [events] = useState<AgendaEvent[]>(agendaEvents);
   const [dayItems] = useState<TimelineItem[]>(dayTimelineItems);
@@ -151,16 +154,24 @@ export function useCasaHubState({
     }
   }
 
-  // Actions — notes
-  function addNote(title: string) {
-    const newNote: Note = {
-      id: nextId(),
-      title,
-      content: "",
-      category: "ideas",
-      createdBy: "lea",
-    };
-    setNotes((prev) => [...prev, newNote]);
+  // Actions — notes (Supabase-backed with optimistic updates)
+  async function addNote(title: string, category: NoteCategory, content: string = "") {
+    const tempId = `temp-${Date.now()}`;
+    const tempNote: Note = { id: tempId, title, content, category, createdBy: "lea" };
+    setNotes((prev) => [tempNote, ...prev]);
+    try {
+      const row = await addNoteDb(householdId, title, category, content);
+      setNotes((prev) =>
+        prev.map((n) =>
+          n.id === tempId
+            ? { id: row.id, title: row.title, content: row.content, category: row.category as NoteCategory, createdBy: "lea" }
+            : n
+        )
+      );
+    } catch (err) {
+      console.error("[notes] add failed:", err);
+      setNotes((prev) => prev.filter((n) => n.id !== tempId));
+    }
   }
 
   // Actions — links

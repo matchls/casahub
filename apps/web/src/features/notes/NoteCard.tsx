@@ -56,8 +56,12 @@ export function NoteCard({ category, notes }: NoteCardProps) {
           {notes.map((note) => (
             <li key={note.id} className="text-[13.5px] text-[var(--text-secondary)]">
               {note.title}
-              <span className="mx-[6px] text-[var(--text-muted)]">·</span>
-              <span className="font-semibold text-[var(--text-primary)]">{note.content}</span>
+              {note.content.trim() && (
+                <>
+                  <span className="mx-[6px] text-[var(--text-muted)]">·</span>
+                  <span className="font-semibold text-[var(--text-primary)]">{note.content}</span>
+                </>
+              )}
             </li>
           ))}
         </ul>
@@ -69,8 +73,12 @@ export function NoteCard({ category, notes }: NoteCardProps) {
           {notes.map((note) => (
             <li key={note.id} className="text-[13.5px] text-[var(--text-secondary)]">
               {note.title}
-              <span className="mx-[4px] text-[var(--text-muted)]">:</span>
-              <span className="font-bold text-[var(--notes-text)]">{note.content}</span>
+              {note.content.trim() && (
+                <>
+                  <span className="mx-[4px] text-[var(--text-muted)]">:</span>
+                  <span className="font-bold text-[var(--notes-text)]">{note.content}</span>
+                </>
+              )}
             </li>
           ))}
         </ul>

@@ -26,11 +26,6 @@ export const events = [
   { id: 2, label: "Dîner chez Marc", time: "19:30" },
 ];
 
-export const notes = [
-  { id: 1, label: "Wi-Fi : Nom du réseau / mot de passe masqué" },
-  { id: 2, label: "Code alarme : enregistré dans les documents" },
-];
-
 export const links = [
   { id: 1, label: "Google Drive", url: "#" },
   { id: 2, label: "Assurance",    url: "#" },

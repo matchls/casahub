@@ -1,15 +1,16 @@
 import type { View } from "@/components/layout/types";
-import type { ShoppingItem, Task } from "@/lib/domain/types";
+import type { Note, ShoppingItem, Task } from "@/lib/domain/types";
 import { DashboardTile } from "./DashboardTile";
-import { events, notes, links } from "./dashboardData";
+import { events, links } from "./dashboardData";
 
 interface HomeDashboardProps {
   onNavigate: (view: View) => void;
   shoppingItems: ShoppingItem[];
   tasks: Task[];
+  notes: Note[];
 }
 
-export function HomeDashboard({ onNavigate, shoppingItems, tasks }: HomeDashboardProps) {
+export function HomeDashboard({ onNavigate, shoppingItems, tasks, notes }: HomeDashboardProps) {
   const pendingShoppingItems = shoppingItems.filter((i) => !i.done);
   const shoppingLabels = pendingShoppingItems.map((i) => i.label);
   const extraShopping = shoppingLabels.length - 3;
@@ -27,10 +28,13 @@ export function HomeDashboard({ onNavigate, shoppingItems, tasks }: HomeDashboar
     ? `${nextEvent.label} · ${nextEvent.time}`
     : "Aucun événement";
 
-  // "Wi-Fi · Code alarme"
-  const notesPreview = notes
-    .map((n) => n.label.split(":")[0].trim())
-    .join(" · ");
+  // "Wi-Fi · Codes · +2"
+  const notesLabels = notes.map((n) => n.title);
+  const extraNotes = notesLabels.length - 3;
+  const notesPreview =
+    notesLabels.length === 0
+      ? "Aucune note partagée"
+      : notesLabels.slice(0, 3).join(" · ") + (extraNotes > 0 ? ` · +${extraNotes}` : "");
 
   const linksPreview = links.map((l) => l.label).join(" · ");
 
@@ -77,6 +81,7 @@ export function HomeDashboard({ onNavigate, shoppingItems, tasks }: HomeDashboar
         emoji="📝"
         title="Notes"
         subtitle={notesPreview}
+        badge={notes.length}
         className="col-span-1 min-[880px]:col-span-2"
         minH="min-h-[140px]"
         onClick={() => onNavigate("notes")}
