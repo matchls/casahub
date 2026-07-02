@@ -78,6 +78,7 @@ export function AppShell({ initialProfile, initialAccountEmail, householdId, ini
     addTask,
     addNote,
     addUsefulLink,
+    addEvent,
   } = useCasaHubState({ initialProfile, initialAccountEmail, householdId, initialShoppingItems, initialTasks, initialNotes, initialLinks, initialEvents });
 
   const shoppingSubtitle =
@@ -196,7 +197,7 @@ export function AppShell({ initialProfile, initialAccountEmail, householdId, ini
       </div>
 
       {/* Add drawer (modal/sheet) */}
-      {addOpen && <AddDrawer onClose={closeAddDrawer} />}
+      {addOpen && <AddDrawer onClose={closeAddDrawer} onAddEvent={addEvent} />}
     </div>
   );
 }

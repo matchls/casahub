@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { AddActionCard } from "./add-drawer/AddActionCard";
 import { QuickAddForm } from "./add-drawer/QuickAddForm";
+import { EventQuickAddForm } from "./add-drawer/EventQuickAddForm";
 
 interface ActionOption {
   id: string;
@@ -65,9 +66,10 @@ type Step = "list" | "form" | "success";
 
 interface AddDrawerProps {
   onClose: () => void;
+  onAddEvent: (title: string, eventDate: string, eventTime?: string, location?: string) => void;
 }
 
-export function AddDrawer({ onClose }: AddDrawerProps) {
+export function AddDrawer({ onClose, onAddEvent }: AddDrawerProps) {
   const [step, setStep] = useState<Step>("list");
   const [selected, setSelected] = useState<ActionOption | null>(null);
 
@@ -85,6 +87,12 @@ export function AddDrawer({ onClose }: AddDrawerProps) {
   }
 
   function handleSubmit() {
+    setStep("success");
+    setTimeout(onClose, 1300);
+  }
+
+  function handleEventSubmit(title: string, eventDate: string, eventTime?: string, location?: string) {
+    onAddEvent(title, eventDate, eventTime, location);
     setStep("success");
     setTimeout(onClose, 1300);
   }
@@ -155,7 +163,18 @@ export function AddDrawer({ onClose }: AddDrawerProps) {
         )}
 
         {/* Step: quick-add form */}
-        {step === "form" && selected && (
+        {step === "form" && selected && selected.id === "agenda" && (
+          <EventQuickAddForm
+            emoji={selected.emoji}
+            label={selected.label}
+            placeholder={selected.placeholder}
+            bg={selected.bg}
+            color={selected.color}
+            onBack={() => setStep("list")}
+            onSubmit={handleEventSubmit}
+          />
+        )}
+        {step === "form" && selected && selected.id !== "agenda" && (
           <QuickAddForm
             emoji={selected.emoji}
             label={selected.label}

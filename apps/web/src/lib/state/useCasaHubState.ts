@@ -22,7 +22,9 @@ import {
 } from "@/lib/supabase/tasks";
 import { addNote as addNoteDb } from "@/lib/supabase/notes";
 import { addUsefulLink as addUsefulLinkDb } from "@/lib/supabase/links";
+import { addEvent as addEventDb } from "@/lib/supabase/events";
 import { dayTimelineItems } from "@/lib/mocks";
+import { insertEventSorted, mapEventRow, type EventRow } from "@/lib/domain/agenda";
 
 interface CasaHubStateOptions {
   initialProfile: HouseholdProfile;
@@ -54,7 +56,7 @@ export function useCasaHubState({
   const [tasks, setTasks] = useState<Task[]>(initialTasks ?? []);
   const [notes, setNotes] = useState<Note[]>(initialNotes ?? []);
   const [links, setLinks] = useState<UsefulLink[]>(initialLinks ?? []);
-  const [events] = useState<AgendaEvent[]>(initialEvents ?? []);
+  const [events, setEvents] = useState<AgendaEvent[]>(initialEvents ?? []);
   const [dayItems] = useState<TimelineItem[]>(dayTimelineItems);
   const [profile] = useState<HouseholdProfile>(initialProfile);
 
@@ -203,6 +205,35 @@ export function useCasaHubState({
     }
   }
 
+  // Actions — agenda (Supabase-backed with optimistic updates)
+  async function addEvent(title: string, eventDate: string, eventTime?: string, location?: string) {
+    const tempId = `temp-${Date.now()}`;
+    const tempRow: EventRow = {
+      id: tempId,
+      title,
+      event_date: eventDate,
+      event_time: eventTime || null,
+      location: location || null,
+      assigned_to: null,
+    };
+    const tempEvent = mapEventRow(tempRow, new Date());
+    if (tempEvent) {
+      setEvents((prev) => insertEventSorted(prev, tempEvent));
+    }
+    try {
+      const row = await addEventDb(householdId, title, eventDate, eventTime, location);
+      const savedEvent = mapEventRow(row, new Date());
+      setEvents((prev) =>
+        prev
+          .map((e) => (e.id === tempId ? savedEvent : e))
+          .filter((e): e is AgendaEvent => e !== null)
+      );
+    } catch (err) {
+      console.error("[events] add failed:", err);
+      setEvents((prev) => prev.filter((e) => e.id !== tempId));
+    }
+  }
+
   return {
     // Navigation
     activeView,
@@ -236,5 +267,6 @@ export function useCasaHubState({
     addTask,
     addNote,
     addUsefulLink,
+    addEvent,
   };
 }
