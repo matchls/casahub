@@ -4,7 +4,7 @@ CasaHub is a shared home management hub for couples, families, and roommates: on
 
 ## Product overview
 
-A household signs up, creates (or joins) a household during onboarding, and gets a shared dashboard with widgets for each area of daily life. Everyone in the household sees and edits the same data in real time via Supabase.
+A household signs up, creates (or joins) a household during onboarding, and gets a shared dashboard with widgets for each area of daily life. Everyone in the household shares the same persisted data through Supabase.
 
 ## Main features
 
