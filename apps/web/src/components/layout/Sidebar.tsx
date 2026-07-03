@@ -72,16 +72,18 @@ export function Sidebar({ activeView, onNavigate, onAdd }: SidebarProps) {
         ))}
       </nav>
 
-      {/* + Ajouter */}
-      <div className="px-[14px] mt-[18px]">
-        <button
-          onClick={onAdd}
-          className="w-full rounded-[13px] bg-[var(--primary)] text-white py-[13px] text-[14.5px] font-bold cursor-pointer hover:opacity-90 transition-opacity"
-          style={{ boxShadow: "var(--shadow-accent)" }}
-        >
-          + Ajouter
-        </button>
-      </div>
+      {/* + Ajouter — agenda only */}
+      {activeView === "calendar" && (
+        <div className="px-[14px] mt-[18px]">
+          <button
+            onClick={onAdd}
+            className="w-full rounded-[13px] bg-[var(--primary)] text-white py-[13px] text-[14.5px] font-bold cursor-pointer hover:opacity-90 transition-opacity"
+            style={{ boxShadow: "var(--shadow-accent)" }}
+          >
+            + Ajouter
+          </button>
+        </div>
+      )}
 
       {/* Profile */}
       <button

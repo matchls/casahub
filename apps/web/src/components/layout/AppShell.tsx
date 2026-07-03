@@ -3,7 +3,7 @@ import { useCasaHubState } from "@/lib/state/useCasaHubState";
 import { Sidebar } from "./Sidebar";
 import { MobileBottomNav } from "./MobileBottomNav";
 import { AppHeader } from "./AppHeader";
-import { AddDrawer } from "./AddDrawer";
+import { AddEventDrawer } from "./AddEventDrawer";
 import { HomeDashboard } from "@/features/dashboard/HomeDashboard";
 import { ShoppingListScreen } from "@/features/shopping/ShoppingListScreen";
 import { TasksScreen } from "@/features/tasks/TasksScreen";
@@ -196,8 +196,8 @@ export function AppShell({ initialProfile, initialAccountEmail, householdId, ini
         />
       </div>
 
-      {/* Add drawer (modal/sheet) */}
-      {addOpen && <AddDrawer onClose={closeAddDrawer} onAddEvent={addEvent} />}
+      {/* Add drawer (modal/sheet) — agenda events only */}
+      {addOpen && <AddEventDrawer onClose={closeAddDrawer} onAddEvent={addEvent} />}
     </div>
   );
 }

@@ -54,14 +54,16 @@ export function AppHeader({ activeView, onAdd, subtitle }: AppHeaderProps) {
           </div>
         </div>
 
-        {/* + Ajouter — desktop only */}
-        <button
-          onClick={onAdd}
-          className="hidden min-[880px]:flex items-center rounded-[13px] bg-[var(--primary)] text-white px-[18px] py-[11px] text-[14px] font-bold cursor-pointer hover:opacity-90 transition-opacity"
-          style={{ boxShadow: "var(--shadow-accent)" }}
-        >
-          + Ajouter
-        </button>
+        {/* + Ajouter — desktop only, agenda only */}
+        {activeView === "calendar" && (
+          <button
+            onClick={onAdd}
+            className="hidden min-[880px]:flex items-center rounded-[13px] bg-[var(--primary)] text-white px-[18px] py-[11px] text-[14px] font-bold cursor-pointer hover:opacity-90 transition-opacity"
+            style={{ boxShadow: "var(--shadow-accent)" }}
+          >
+            + Ajouter
+          </button>
+        )}
       </div>
     </header>
   );

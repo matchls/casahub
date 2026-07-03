@@ -34,16 +34,18 @@ export function MobileBottomNav({
         onClick={() => onNavigate("day")}
       />
 
-      {/* Central + button */}
+      {/* Central + button — agenda only */}
       <div className="flex-1 flex items-center justify-center">
-        <button
-          onClick={onAdd}
-          className="w-[52px] h-[52px] rounded-full bg-[var(--primary)] text-white flex items-center justify-center text-[28px] font-light cursor-pointer -mt-6 hover:opacity-90 transition-opacity"
-          style={{ boxShadow: "var(--shadow-accent)" }}
-          aria-label="Ajouter"
-        >
-          +
-        </button>
+        {activeView === "calendar" && (
+          <button
+            onClick={onAdd}
+            className="w-[52px] h-[52px] rounded-full bg-[var(--primary)] text-white flex items-center justify-center text-[28px] font-light cursor-pointer -mt-6 hover:opacity-90 transition-opacity"
+            style={{ boxShadow: "var(--shadow-accent)" }}
+            aria-label="Ajouter"
+          >
+            +
+          </button>
+        )}
       </div>
 
       {/* Agenda */}
