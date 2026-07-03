@@ -192,7 +192,6 @@ export function AppShell({ initialProfile, initialAccountEmail, householdId, ini
         <MobileBottomNav
           activeView={activeView}
           onNavigate={setActiveView}
-          onAdd={openAddDrawer}
         />
       </div>
 
