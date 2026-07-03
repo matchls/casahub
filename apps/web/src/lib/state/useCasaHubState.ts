@@ -224,7 +224,7 @@ export function useCasaHubState({
       const row = await addEventDb(householdId, title, eventDate, eventTime, location);
       const savedEvent = mapEventRow(row, new Date());
       if (!savedEvent) {
-        console.warn("[events] added event falls outside the agenda's visible date range:", row);
+        console.warn("[events] added event is in the past and won't be shown:", row);
       }
       setEvents((prev) =>
         prev

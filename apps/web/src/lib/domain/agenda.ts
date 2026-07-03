@@ -1,6 +1,6 @@
 import type { AgendaEvent, AgendaGroup } from "./types";
 
-export const GROUP_ORDER: AgendaGroup[] = ["today", "tomorrow", "this_week", "next_week"];
+export const GROUP_ORDER: AgendaGroup[] = ["today", "tomorrow", "this_week", "next_week", "later"];
 
 const DAY_ABBRS = ["DIM", "LUN", "MAR", "MER", "JEU", "VEN", "SAM"];
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
@@ -24,10 +24,11 @@ function startOfWeekMonday(date: Date): Date {
 }
 
 /**
- * Buckets an event date relative to today into the groups the agenda UI knows how to render.
+ * Buckets an event date relative to today into the groups the agenda UI renders.
  * "this_week"/"next_week" are the ISO (Monday-start) weeks following tomorrow, not today's own
- * week — mirrors the original mock data's grouping. Returns null for past events or events more
- * than two weeks out, which the agenda view doesn't have a section for.
+ * week — mirrors the original mock data's grouping. Anything past next week falls into "later"
+ * so no future event is ever dropped from the view. Returns null only for past events, which the
+ * agenda view doesn't have a section for.
  */
 export function deriveAgendaGroup(eventDate: Date, today: Date): AgendaGroup | null {
   const todayStart = startOfDay(today);
@@ -48,7 +49,7 @@ export function deriveAgendaGroup(eventDate: Date, today: Date): AgendaGroup | n
 
   if (eventStart >= thisWeekStart && eventStart < nextWeekStart) return "this_week";
   if (eventStart >= nextWeekStart && eventStart < afterNextWeekStart) return "next_week";
-  return null;
+  return "later";
 }
 
 export interface EventRow {
@@ -60,7 +61,7 @@ export interface EventRow {
   assigned_to: string | null;
 }
 
-/** Maps a Supabase `events` row to the UI shape, or null if it falls outside the groups the agenda view renders. */
+/** Maps a Supabase `events` row to the UI shape, or null if the event is in the past. */
 export function mapEventRow(row: EventRow, today: Date): AgendaEvent | null {
   const eventDate = parseDateOnly(row.event_date);
   const group = deriveAgendaGroup(eventDate, today);
