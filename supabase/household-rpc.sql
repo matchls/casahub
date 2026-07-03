@@ -8,6 +8,13 @@
 CREATE UNIQUE INDEX IF NOT EXISTS idx_household_members_unique_user
   ON household_members (user_id);
 
+-- Security hardening (issue #61): projects provisioned before this change may
+-- still have the old permissive INSERT policy on households, which let any
+-- authenticated client insert a household row directly (risking orphan
+-- households with no admin member). Drop it here so household creation is
+-- only possible through create_household_with_member below. Safe to re-run.
+DROP POLICY IF EXISTS "authenticated_can_insert_household" ON households;
+
 
 CREATE OR REPLACE FUNCTION create_household_with_member(
   household_name      text,

@@ -294,13 +294,13 @@ CREATE POLICY "household_members_can_select_household"
   FOR SELECT TO authenticated
   USING (is_household_member(id));
 
--- Any authenticated user may create a household.
--- The caller is responsible for immediately inserting a matching admin row
--- into household_members within the same transaction.
-CREATE POLICY "authenticated_can_insert_household"
-  ON households
-  FOR INSERT TO authenticated
-  WITH CHECK (true);
+-- No direct INSERT policy exists for households: a bare `.from("households").insert(...)`
+-- from an authenticated client is rejected by RLS (no matching policy = deny).
+-- Household creation only happens through the SECURITY DEFINER RPC
+-- `create_household_with_member` (see household-rpc.sql), which inserts the
+-- household and its first admin member atomically, as the function owner —
+-- SECURITY DEFINER bypasses RLS, so it is unaffected by the missing policy.
+-- This guarantees a household can never exist without an admin member.
 
 -- Only admin members may update household details (name, type…).
 -- WITH CHECK mirrors USING so the resulting row stays within an admin-owned

@@ -40,6 +40,15 @@ live database reads/writes, not mocked data.
       navigates to `/onboarding` is redirected away, *if that redirect is
       implemented*. (Not implemented as of this checklist — confirm current
       behavior and file a follow-up issue if it should be added.)
+- [ ] **Direct household insert is blocked** — as an authenticated client
+      (e.g. Supabase SQL Editor running `set role authenticated;` or the API
+      with a user's access token), attempt
+      `insert into households (name, type) values ('x', 'Couple');` — it must
+      fail with a permission/RLS error, not succeed.
+- [ ] **RPC household creation still works** — `create_household_with_member`
+      still creates a household plus exactly one admin `household_members`
+      row for a user with no existing household (covered by the onboarding
+      flow above, or callable directly via `supabase.rpc(...)`).
 
 ## Cross-cutting checks
 
@@ -61,7 +70,9 @@ Run through this before considering a V1 deploy production-ready.
 - [ ] CI passes on `main` (`.github/workflows/ci.yml` — lint + build).
 - [ ] Supabase schema applied (`supabase/schema.sql`).
 - [ ] Supabase grants applied (`supabase/grants.sql`).
-- [ ] Supabase RPC applied (`supabase/household-rpc.sql`).
+- [ ] Supabase RPC applied (`supabase/household-rpc.sql`) — also drops the
+      legacy direct-INSERT policy on `households` on already-provisioned
+      projects.
 - [ ] Row Level Security (RLS) enabled on all tables (verified in
       `supabase/schema.sql` — `households`, `household_members`,
       `shopping_items`, `tasks`, `events`, and other app tables).
