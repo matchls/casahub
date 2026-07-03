@@ -231,6 +231,7 @@ export function useCasaHubState({
     } catch (err) {
       console.error("[events] add failed:", err);
       setEvents((prev) => prev.filter((e) => e.id !== tempId));
+      throw err;
     }
   }
 

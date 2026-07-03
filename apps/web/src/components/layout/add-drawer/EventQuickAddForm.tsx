@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/Input";
 interface EventQuickAddFormProps {
   onCancel: () => void;
   onSubmit: (title: string, eventDate: string, eventTime?: string, location?: string) => void;
+  submitting?: boolean;
+  error?: string | null;
 }
 
 function todayIsoDate(): string {
@@ -13,7 +15,7 @@ function todayIsoDate(): string {
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
 }
 
-export function EventQuickAddForm({ onCancel, onSubmit }: EventQuickAddFormProps) {
+export function EventQuickAddForm({ onCancel, onSubmit, submitting = false, error = null }: EventQuickAddFormProps) {
   const [title, setTitle] = useState("");
   const [eventDate, setEventDate] = useState(todayIsoDate());
   const [eventTime, setEventTime] = useState("");
@@ -77,6 +79,10 @@ export function EventQuickAddForm({ onCancel, onSubmit }: EventQuickAddFormProps
           onChange={(e) => setLocation(e.target.value)}
         />
 
+        {error && (
+          <p className="text-[13px] text-red-500 text-center">{error}</p>
+        )}
+
         <div className="flex gap-[10px] mt-1">
           <Button
             type="button"
@@ -84,6 +90,7 @@ export function EventQuickAddForm({ onCancel, onSubmit }: EventQuickAddFormProps
             size="md"
             onClick={onCancel}
             className="shrink-0"
+            disabled={submitting}
           >
             Annuler
           </Button>
@@ -91,10 +98,10 @@ export function EventQuickAddForm({ onCancel, onSubmit }: EventQuickAddFormProps
             type="submit"
             variant="primary"
             size="lg"
-            disabled={!title.trim() || !eventDate}
+            disabled={!title.trim() || !eventDate || submitting}
             className="flex-1"
           >
-            Ajouter
+            {submitting ? "Ajout…" : "Ajouter"}
           </Button>
         </div>
       </form>

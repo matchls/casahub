@@ -6,11 +6,13 @@ type Step = "form" | "success";
 
 interface AddEventDrawerProps {
   onClose: () => void;
-  onAddEvent: (title: string, eventDate: string, eventTime?: string, location?: string) => void;
+  onAddEvent: (title: string, eventDate: string, eventTime?: string, location?: string) => Promise<void>;
 }
 
 export function AddEventDrawer({ onClose, onAddEvent }: AddEventDrawerProps) {
   const [step, setStep] = useState<Step>("form");
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -20,10 +22,18 @@ export function AddEventDrawer({ onClose, onAddEvent }: AddEventDrawerProps) {
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
 
-  function handleEventSubmit(title: string, eventDate: string, eventTime?: string, location?: string) {
-    onAddEvent(title, eventDate, eventTime, location);
-    setStep("success");
-    setTimeout(onClose, 1300);
+  async function handleEventSubmit(title: string, eventDate: string, eventTime?: string, location?: string) {
+    setSubmitting(true);
+    setError(null);
+    try {
+      await onAddEvent(title, eventDate, eventTime, location);
+      setStep("success");
+      setTimeout(onClose, 1300);
+    } catch {
+      setError("L'ajout a échoué. Réessaie.");
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   const panelTitle = step === "success" ? "Ajouté !" : "📅 Événement";
@@ -71,7 +81,12 @@ export function AddEventDrawer({ onClose, onAddEvent }: AddEventDrawerProps) {
 
         {/* Step: event form */}
         {step === "form" && (
-          <EventQuickAddForm onCancel={onClose} onSubmit={handleEventSubmit} />
+          <EventQuickAddForm
+            onCancel={onClose}
+            onSubmit={handleEventSubmit}
+            submitting={submitting}
+            error={error}
+          />
         )}
 
         {/* Step: success confirmation */}
