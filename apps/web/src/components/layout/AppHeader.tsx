@@ -42,7 +42,7 @@ export function AppHeader({ activeView, onAdd, subtitle }: AppHeaderProps) {
         )}
       </div>
 
-      {/* Right: avatars + add button (desktop only) */}
+      {/* Right: avatars + add button (agenda only) */}
       <div className="flex items-center gap-[14px] shrink-0">
         {/* Overlapping member avatars */}
         <div className="flex">
@@ -54,14 +54,16 @@ export function AppHeader({ activeView, onAdd, subtitle }: AppHeaderProps) {
           </div>
         </div>
 
-        {/* + Ajouter — desktop only */}
-        <button
-          onClick={onAdd}
-          className="hidden min-[880px]:flex items-center rounded-[13px] bg-[var(--primary)] text-white px-[18px] py-[11px] text-[14px] font-bold cursor-pointer hover:opacity-90 transition-opacity"
-          style={{ boxShadow: "var(--shadow-accent)" }}
-        >
-          + Ajouter
-        </button>
+        {/* + Ajouter — agenda only */}
+        {activeView === "calendar" && (
+          <button
+            onClick={onAdd}
+            className="flex items-center rounded-[13px] bg-[var(--primary)] text-white px-[18px] py-[11px] text-[14px] font-bold cursor-pointer hover:opacity-90 transition-opacity"
+            style={{ boxShadow: "var(--shadow-accent)" }}
+          >
+            + Ajouter
+          </button>
+        )}
       </div>
     </header>
   );

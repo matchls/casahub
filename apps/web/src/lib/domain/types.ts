@@ -23,7 +23,7 @@ export interface Task {
 }
 
 export type ItemType = "event" | "task" | "shopping" | "reminder";
-export type AgendaGroup = "today" | "tomorrow" | "this_week" | "next_week";
+export type AgendaGroup = "today" | "tomorrow" | "this_week" | "next_week" | "later";
 
 export interface TimelineItem {
   id: number;

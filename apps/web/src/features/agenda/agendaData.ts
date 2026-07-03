@@ -19,4 +19,5 @@ export const GROUP_LABELS: Record<AgendaGroup, string> = {
   tomorrow:  "DEMAIN",
   this_week: "CETTE SEMAINE",
   next_week: "LA SEMAINE PROCHAINE",
+  later:     "PLUS TARD",
 };

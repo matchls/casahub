@@ -223,6 +223,9 @@ export function useCasaHubState({
     try {
       const row = await addEventDb(householdId, title, eventDate, eventTime, location);
       const savedEvent = mapEventRow(row, new Date());
+      if (!savedEvent) {
+        console.warn("[events] added event is in the past and won't be shown:", row);
+      }
       setEvents((prev) =>
         prev
           .map((e) => (e.id === tempId ? savedEvent : e))
@@ -231,6 +234,7 @@ export function useCasaHubState({
     } catch (err) {
       console.error("[events] add failed:", err);
       setEvents((prev) => prev.filter((e) => e.id !== tempId));
+      throw err;
     }
   }
 

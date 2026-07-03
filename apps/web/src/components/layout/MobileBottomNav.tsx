@@ -5,13 +5,11 @@ import type { View } from "./types";
 interface MobileBottomNavProps {
   activeView: View;
   onNavigate: (view: View) => void;
-  onAdd: () => void;
 }
 
 export function MobileBottomNav({
   activeView,
   onNavigate,
-  onAdd,
 }: MobileBottomNavProps) {
   return (
     <nav
@@ -33,18 +31,6 @@ export function MobileBottomNav({
         active={activeView === "day"}
         onClick={() => onNavigate("day")}
       />
-
-      {/* Central + button */}
-      <div className="flex-1 flex items-center justify-center">
-        <button
-          onClick={onAdd}
-          className="w-[52px] h-[52px] rounded-full bg-[var(--primary)] text-white flex items-center justify-center text-[28px] font-light cursor-pointer -mt-6 hover:opacity-90 transition-opacity"
-          style={{ boxShadow: "var(--shadow-accent)" }}
-          aria-label="Ajouter"
-        >
-          +
-        </button>
-      </div>
 
       {/* Agenda */}
       <TabButton

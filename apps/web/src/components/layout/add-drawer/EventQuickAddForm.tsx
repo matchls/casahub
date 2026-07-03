@@ -4,13 +4,10 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 
 interface EventQuickAddFormProps {
-  emoji: string;
-  label: string;
-  placeholder: string;
-  bg: string;
-  color: string;
-  onBack: () => void;
+  onCancel: () => void;
   onSubmit: (title: string, eventDate: string, eventTime?: string, location?: string) => void;
+  submitting?: boolean;
+  error?: string | null;
 }
 
 function todayIsoDate(): string {
@@ -18,15 +15,7 @@ function todayIsoDate(): string {
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
 }
 
-export function EventQuickAddForm({
-  emoji,
-  label,
-  placeholder,
-  bg,
-  color,
-  onBack,
-  onSubmit,
-}: EventQuickAddFormProps) {
+export function EventQuickAddForm({ onCancel, onSubmit, submitting = false, error = null }: EventQuickAddFormProps) {
   const [title, setTitle] = useState("");
   const [eventDate, setEventDate] = useState(todayIsoDate());
   const [eventTime, setEventTime] = useState("");
@@ -41,14 +30,14 @@ export function EventQuickAddForm({
 
   return (
     <div>
-      {/* Colored badge showing the selected action type */}
+      {/* Colored badge showing the event type */}
       <div
         className="inline-flex items-center gap-[8px] rounded-[10px] px-[12px] py-[8px] mb-5"
-        style={{ background: bg }}
+        style={{ background: "var(--agenda-bg)" }}
       >
-        <span className="text-[18px] leading-none">{emoji}</span>
-        <span className="text-[13px] font-semibold" style={{ color }}>
-          {label}
+        <span className="text-[18px] leading-none">📅</span>
+        <span className="text-[13px] font-semibold" style={{ color: "var(--agenda-text)" }}>
+          Événement
         </span>
       </div>
 
@@ -56,7 +45,7 @@ export function EventQuickAddForm({
         <Input
           id="event-title"
           label="Titre"
-          placeholder={placeholder}
+          placeholder="Ex : dîner, médecin..."
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           autoFocus
@@ -90,24 +79,29 @@ export function EventQuickAddForm({
           onChange={(e) => setLocation(e.target.value)}
         />
 
+        {error && (
+          <p className="text-[13px] text-red-500 text-center">{error}</p>
+        )}
+
         <div className="flex gap-[10px] mt-1">
           <Button
             type="button"
             variant="ghost"
             size="md"
-            onClick={onBack}
+            onClick={onCancel}
             className="shrink-0"
+            disabled={submitting}
           >
-            ← Retour
+            Annuler
           </Button>
           <Button
             type="submit"
             variant="primary"
             size="lg"
-            disabled={!title.trim() || !eventDate}
+            disabled={!title.trim() || !eventDate || submitting}
             className="flex-1"
           >
-            Ajouter
+            {submitting ? "Ajout…" : "Ajouter"}
           </Button>
         </div>
       </form>
