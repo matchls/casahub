@@ -17,6 +17,8 @@ A household signs up, creates (or joins) a household during onboarding, and gets
 - **Useful links** — shared bookmarks for the household
 - **Agenda** — shared calendar/events, ordered by date
 - **Profile** — household member profile (name, initial, color)
+- **Member invitations** — an admin generates a copyable invite link from
+  Profile; no automatic email sending in V1
 
 All of the above are implemented and backed by Supabase (see [V1 status](#roadmap--v1-status)).
 
@@ -39,7 +41,8 @@ casahub/
 ├── supabase/
 │   ├── schema.sql              # Tables + RLS policies
 │   ├── grants.sql               # Table-level privileges for `authenticated`
-│   └── household-rpc.sql         # create_household_with_member RPC
+│   ├── household-rpc.sql         # create_household_with_member RPC
+│   └── household-invitations.sql # Invitation table + create/accept RPCs
 ├── docs/
 │   ├── data-model.md          # Entity/column reference for the Supabase schema
 │   ├── deployment.md          # Vercel setup, env vars, Node version
@@ -125,6 +128,7 @@ Apply the SQL files in order via the Supabase SQL Editor on a fresh project:
 1. [`supabase/schema.sql`](supabase/schema.sql) — tables and Row Level Security (RLS) policies. RLS is enabled on every table (`households`, `household_members`, `shopping_items`, `tasks`, `events`, `notes`, `useful_links`); access is scoped per household member.
 2. [`supabase/grants.sql`](supabase/grants.sql) — table-level `GRANT`s for the `authenticated` role (required in addition to RLS).
 3. [`supabase/household-rpc.sql`](supabase/household-rpc.sql) — `create_household_with_member` RPC used by onboarding to atomically create a household and its first admin member. Also drops the legacy direct-INSERT policy on `households`, so re-running it on an existing project applies the hardening from issue #61.
+4. [`supabase/household-invitations.sql`](supabase/household-invitations.sql) — `household_invitations` table (RLS enabled, no direct-access policies) plus the `create_household_invitation` / `get_household_invitation` / `accept_household_invitation` RPCs used by the member invitation flow.
 
 See [docs/data-model.md](docs/data-model.md) for the entity/column reference.
 
@@ -167,6 +171,7 @@ All core features are implemented and connected to Supabase: auth, onboarding, d
 
 - Row Level Security is enabled on every table; policies scope reads/writes to a user's own household (see [`supabase/schema.sql`](supabase/schema.sql)).
 - Households can only be created through the `create_household_with_member` RPC ([`supabase/household-rpc.sql`](supabase/household-rpc.sql)), which atomically creates the household and its first admin member. There is no RLS policy allowing a direct `INSERT` into `households` from an authenticated client, preventing orphan households with no admin member.
+- `household_invitations` ([`supabase/household-invitations.sql`](supabase/household-invitations.sql)) has RLS enabled with **no** SELECT/INSERT/UPDATE/DELETE policies at all — every read and write goes through its `SECURITY DEFINER` RPCs, which enforce admin-only invite creation, expiry/one-time-use on acceptance, and the one-household-per-user rule server-side.
 - The frontend uses only the Supabase **publishable/anon key**. The `service_role` key must never be added to this repo, `.env.local`, or Vercel.
 - Don't commit `.env.local` or any file containing real Supabase credentials.
 

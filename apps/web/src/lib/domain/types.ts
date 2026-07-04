@@ -80,5 +80,7 @@ export interface HouseholdProfile {
   name: string;
   type: "Couple" | "Colocation" | "Famille";
   createdAtLabel: string;
+  /** Whether the currently signed-in user is an admin of this household. */
+  currentUserIsAdmin: boolean;
   members: HouseholdMember[];
 }

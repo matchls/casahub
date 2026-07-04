@@ -5,10 +5,15 @@ export const metadata = {
   title: "Créer un compte — CasaHub",
 };
 
-export default function SignupPage() {
+export default async function SignupPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ next?: string }>;
+}) {
+  const { next } = await searchParams;
   return (
     <AuthLayout>
-      <SignupForm />
+      <SignupForm next={next} />
     </AuthLayout>
   );
 }

@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Card } from "@/components/ui/Card";
 import { HouseholdMemberCard } from "./HouseholdMemberCard";
+import { InviteMemberRow } from "./InviteMemberRow";
 import type { HouseholdProfile } from "@/lib/domain/types";
 
 function Toggle({ checked, onChange }: { checked: boolean; onChange: () => void }) {
@@ -67,7 +68,7 @@ export function ProfileScreen({ profile, accountEmail }: ProfileScreenProps) {
     router.push("/login");
   }
 
-  const { name, type, createdAtLabel, members } = profile;
+  const { name, type, createdAtLabel, currentUserIsAdmin, members } = profile;
 
   return (
     <div className="max-w-[720px] flex flex-col gap-5">
@@ -101,20 +102,8 @@ export function ProfileScreen({ profile, accountEmail }: ProfileScreenProps) {
             <HouseholdMemberCard key={m.id} member={m} isCurrentUser={i === 0} />
           ))}
 
-          {/* Invite row — disabled: member invitations aren't available in V1 */}
-          <div className="flex items-center gap-3 pt-[13px] opacity-60">
-            <div className="w-10 h-10 rounded-full border-[1.5px] border-dashed border-[var(--border-input)] flex items-center justify-center shrink-0">
-              <span className="text-[18px] text-[var(--text-muted)] leading-none">
-                +
-              </span>
-            </div>
-            <span className="flex-1 text-[15px] text-[var(--text-secondary)] font-medium">
-              Inviter un membre
-            </span>
-            <span className="text-[11px] font-bold px-[10px] py-[4px] rounded-full bg-[var(--surface-muted)] text-[var(--text-muted)] shrink-0">
-              Bientôt
-            </span>
-          </div>
+          {/* Invite row — only the household admin can invite new members */}
+          {currentUserIsAdmin && <InviteMemberRow />}
         </Card>
       </div>
 
