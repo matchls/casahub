@@ -4,8 +4,6 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { AuthBrandHeader } from "./AuthBrandHeader";
-import { AuthSeparator } from "./AuthSeparator";
-import { GoogleAuthButton } from "./GoogleAuthButton";
 import { AuthTextInput } from "./AuthTextInput";
 import { primaryButtonClass, primaryButtonStyle } from "./authStyles";
 
@@ -116,9 +114,6 @@ export function SignupForm() {
           {loading ? "Création…" : "Créer mon compte"}
         </button>
       </form>
-
-      <AuthSeparator />
-      <GoogleAuthButton />
 
       <p className="mt-[24px] text-[14px] text-[var(--text-soft)] text-center">
         Déjà un compte ?{" "}
