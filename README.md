@@ -124,7 +124,7 @@ Apply the SQL files in order via the Supabase SQL Editor on a fresh project:
 
 1. [`supabase/schema.sql`](supabase/schema.sql) — tables and Row Level Security (RLS) policies. RLS is enabled on every table (`households`, `household_members`, `shopping_items`, `tasks`, `events`, `notes`, `useful_links`); access is scoped per household member.
 2. [`supabase/grants.sql`](supabase/grants.sql) — table-level `GRANT`s for the `authenticated` role (required in addition to RLS).
-3. [`supabase/household-rpc.sql`](supabase/household-rpc.sql) — `create_household_with_member` RPC used by onboarding to atomically create a household and its first admin member.
+3. [`supabase/household-rpc.sql`](supabase/household-rpc.sql) — `create_household_with_member` RPC used by onboarding to atomically create a household and its first admin member. Also drops the legacy direct-INSERT policy on `households`, so re-running it on an existing project applies the hardening from issue #61.
 
 See [docs/data-model.md](docs/data-model.md) for the entity/column reference.
 
@@ -166,6 +166,7 @@ All core features are implemented and connected to Supabase: auth, onboarding, d
 ## Security notes
 
 - Row Level Security is enabled on every table; policies scope reads/writes to a user's own household (see [`supabase/schema.sql`](supabase/schema.sql)).
+- Households can only be created through the `create_household_with_member` RPC ([`supabase/household-rpc.sql`](supabase/household-rpc.sql)), which atomically creates the household and its first admin member. There is no RLS policy allowing a direct `INSERT` into `households` from an authenticated client, preventing orphan households with no admin member.
 - The frontend uses only the Supabase **publishable/anon key**. The `service_role` key must never be added to this repo, `.env.local`, or Vercel.
 - Don't commit `.env.local` or any file containing real Supabase credentials.
 
