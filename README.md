@@ -16,7 +16,8 @@ A household signs up, creates (or joins) a household during onboarding, and gets
 - **Notes** — categorized shared notes
 - **Useful links** — shared bookmarks for the household
 - **Agenda** — shared calendar/events, ordered by date
-- **Profile** — household member profile (name, initial, color)
+- **Profile** — household member profile (name, initial, color); an admin
+  can also rename the household
 - **Member invitations** — an admin generates a copyable invite link from
   Profile; no automatic email sending in V1
 
