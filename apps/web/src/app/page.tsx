@@ -38,7 +38,7 @@ export default async function Home() {
 
   const { data: members } = await supabase
     .from("household_members")
-    .select("id, display_name, role, initial, color")
+    .select("id, user_id, display_name, role, initial, color")
     .eq("household_id", memberRow.household_id);
 
   const createdAt = new Date(household.created_at);
@@ -47,10 +47,15 @@ export default async function Home() {
     year: "numeric",
   })}`;
 
+  const currentUserIsAdmin = (members ?? []).some(
+    (m) => m.user_id === user.id && m.role === "admin"
+  );
+
   const profile: HouseholdProfile = {
     name: household.name,
     type: household.type as HouseholdProfile["type"],
     createdAtLabel,
+    currentUserIsAdmin,
     members: (members ?? []).map((m) => ({
       id: m.id,
       name: m.display_name,

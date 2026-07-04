@@ -4,6 +4,15 @@ import type { NextRequest } from 'next/server'
 
 const PUBLIC_ROUTES = ['/login', '/signup']
 
+// Invite links must work for signed-out visitors too — the page itself
+// guides them to log in/sign up (with a return path) instead of the proxy
+// bouncing them away. Unlike PUBLIC_ROUTES, this does NOT redirect signed-in
+// users elsewhere: an authenticated user must still be able to open the
+// link to accept the invitation.
+function isGuestAllowed(pathname: string) {
+  return pathname.startsWith('/invite/')
+}
+
 export async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
 
@@ -32,8 +41,10 @@ export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
   const isPublic = PUBLIC_ROUTES.includes(pathname)
 
-  if (!user && !isPublic) {
-    return NextResponse.redirect(new URL('/login', request.url))
+  if (!user && !isPublic && !isGuestAllowed(pathname)) {
+    const loginUrl = new URL('/login', request.url)
+    loginUrl.searchParams.set('next', pathname)
+    return NextResponse.redirect(loginUrl)
   }
 
   if (user && isPublic) {

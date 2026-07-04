@@ -29,6 +29,42 @@ live database reads/writes, not mocked data.
 - [ ] **Useful links** — add a link, hard refresh — link persists.
 - [ ] **Agenda** — add an event, hard refresh — event persists and appears
       in the correct date order.
+- [ ] **Member invitations** — an admin creates an invitation from
+      Profile / Membres and gets a copyable link (V1 uses copyable links
+      only — there is no automatic email sending). A second account opens
+      the link, logs in or signs up, accepts the invitation, and lands in
+      the same household with the same shared data. See
+      [Invitation flow](#invitation-flow) below for the full checklist.
+
+## Invitation flow
+
+- [ ] **Create invitation (admin)** — from Profile / Membres, an admin
+      enters an email and creates an invitation; a copyable invite link is
+      shown.
+- [ ] **Create invitation (non-admin)** — a non-admin member does not see
+      the invite control; calling `create_household_invitation` directly
+      for a non-admin fails.
+- [ ] **Accept — logged out** — opening `/invite/<token>` while logged out
+      shows a "log in or sign up" screen instead of the app's normal
+      logged-out redirect.
+- [ ] **Accept — login round trip** — logging in from that screen returns
+      to `/invite/<token>` afterward (not the dashboard).
+- [ ] **Accept — signup round trip** — signing up from that screen (with
+      email confirmation off, or after confirming) returns to
+      `/invite/<token>` and skips `/onboarding`.
+- [ ] **Accept — success** — a logged-in invited user sees the household
+      name and a "Rejoindre le foyer" button; accepting adds them as a
+      `household_members` row with role `member` and redirects to `/`.
+- [ ] **Accept — already in a household** — a logged-in user who already
+      belongs to a household gets a clear error when accepting, and is not
+      added to a second household.
+- [ ] **Accept — expired invite** — an invitation past `expires_at` shows a
+      clear "expired" message, not a generic error.
+- [ ] **Accept — already accepted** — reusing a token that was already
+      accepted shows a clear "already used" message.
+- [ ] **Shared data after joining** — the new member sees the same
+      shopping list / tasks / notes / links / agenda as the existing admin,
+      and the admin sees the new member appear in the member list.
 
 ## Access protection
 
@@ -73,6 +109,8 @@ Run through this before considering a V1 deploy production-ready.
 - [ ] Supabase RPC applied (`supabase/household-rpc.sql`) — also drops the
       legacy direct-INSERT policy on `households` on already-provisioned
       projects.
+- [ ] Supabase invitations SQL applied (`supabase/household-invitations.sql`)
+      — `household_invitations` table + invitation RPCs.
 - [ ] Row Level Security (RLS) enabled on all tables (verified in
       `supabase/schema.sql` — `households`, `household_members`,
       `shopping_items`, `tasks`, `events`, and other app tables).

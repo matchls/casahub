@@ -3,11 +3,17 @@ import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { sanitizeNextPath } from "@/lib/utils";
 import { AuthBrandHeader } from "./AuthBrandHeader";
 import { AuthTextInput } from "./AuthTextInput";
 import { primaryButtonClass, primaryButtonStyle } from "./authStyles";
 
-export function SignupForm() {
+interface SignupFormProps {
+  next?: string;
+}
+
+export function SignupForm({ next: rawNext }: SignupFormProps) {
+  const next = sanitizeNextPath(rawNext);
   const router = useRouter();
   const [firstName, setFirstName] = useState("");
   const [email, setEmail] = useState("");
@@ -42,7 +48,9 @@ export function SignupForm() {
     }
 
     if (data.session) {
-      router.push("/onboarding");
+      // With an invite link (`next`), skip onboarding entirely — the user is
+      // joining an existing household, not creating a new one.
+      router.push(next || "/onboarding");
       return;
     }
 
@@ -118,7 +126,7 @@ export function SignupForm() {
       <p className="mt-[24px] text-[14px] text-[var(--text-soft)] text-center">
         Déjà un compte ?{" "}
         <Link
-          href="/login"
+          href={next ? `/login?next=${encodeURIComponent(next)}` : "/login"}
           className="font-bold text-[var(--primary)] hover:opacity-80 transition-opacity"
         >
           Se connecter

@@ -3,10 +3,16 @@ import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { sanitizeNextPath } from "@/lib/utils";
 import { AuthBrandHeader } from "./AuthBrandHeader";
 import { inputClass, primaryButtonClass, primaryButtonStyle } from "./authStyles";
 
-export function LoginForm() {
+interface LoginFormProps {
+  next?: string;
+}
+
+export function LoginForm({ next: rawNext }: LoginFormProps) {
+  const next = sanitizeNextPath(rawNext);
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -27,7 +33,7 @@ export function LoginForm() {
       return;
     }
 
-    router.push("/");
+    router.push(next || "/");
   }
 
   return (
@@ -73,7 +79,7 @@ export function LoginForm() {
       <p className="mt-[24px] text-[14px] text-[var(--text-soft)] text-center">
         Pas encore de foyer ?{" "}
         <Link
-          href="/signup"
+          href={next ? `/signup?next=${encodeURIComponent(next)}` : "/signup"}
           className="font-bold text-[var(--primary)] hover:opacity-80 transition-opacity"
         >
           Créer un compte
