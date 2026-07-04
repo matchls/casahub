@@ -1,4 +1,4 @@
-# CasaHub — Agent & contributor instructions
+# Domotidien — Agent & contributor instructions
 
 This file is the source of truth for agents, AI tools, and contributors working on this repository.
 Read it before opening any issue or writing any code.

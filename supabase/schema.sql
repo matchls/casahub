@@ -1,5 +1,5 @@
 -- =============================================================================
--- CasaHub — Initial Supabase Schema (V1)
+-- Domotidien — Initial Supabase Schema (V1)
 --
 -- Copy this entire file into the Supabase SQL Editor and execute it.
 -- It is idempotent for functions and triggers (CREATE OR REPLACE), but

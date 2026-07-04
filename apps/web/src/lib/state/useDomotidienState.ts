@@ -28,7 +28,7 @@ import { addEvent as addEventDb } from "@/lib/supabase/events";
 import { updateHouseholdName as updateHouseholdNameDb } from "@/lib/supabase/households";
 import { insertEventSorted, mapEventRow, type EventRow } from "@/lib/domain/agenda";
 
-interface CasaHubStateOptions {
+interface DomotidienStateOptions {
   initialProfile: HouseholdProfile;
   initialAccountEmail: string;
   householdId: string;
@@ -39,7 +39,7 @@ interface CasaHubStateOptions {
   initialEvents: AgendaEvent[];
 }
 
-export function useCasaHubState({
+export function useDomotidienState({
   initialProfile,
   initialAccountEmail,
   householdId,
@@ -48,7 +48,7 @@ export function useCasaHubState({
   initialNotes,
   initialLinks,
   initialEvents,
-}: CasaHubStateOptions) {
+}: DomotidienStateOptions) {
   // Navigation
   const [activeView, setActiveView] = useState<View>("home");
   const [addOpen, setAddOpen] = useState(false);

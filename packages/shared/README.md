@@ -1,6 +1,6 @@
-# @casahub/shared
+# @domotidien/shared
 
-Shared types, schemas, and utilities for CasaHub.
+Shared types, schemas, and utilities for Domotidien.
 
 This package is a placeholder for future shared code that will be used across the monorepo — for example, Supabase types, Zod schemas, and utility functions.
 

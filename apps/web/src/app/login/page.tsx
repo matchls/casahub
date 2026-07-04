@@ -2,7 +2,7 @@ import { AuthLayout } from "@/features/auth/AuthLayout";
 import { LoginForm } from "@/features/auth/LoginForm";
 
 export const metadata = {
-  title: "Connexion — CasaHub",
+  title: "Connexion — Domotidien",
 };
 
 export default async function LoginPage({

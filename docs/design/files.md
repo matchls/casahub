@@ -1,4 +1,4 @@
-# CasaHub design source files
+# Domotidien design source files
 
 Les fichiers de design HTML envoyés dans ChatGPT sont à copier localement dans ce dossier si besoin :
 

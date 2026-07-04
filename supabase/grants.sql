@@ -1,4 +1,4 @@
--- CasaHub — Table grants
+-- Domotidien — Table grants
 --
 -- When Supabase's automatic table exposure is disabled, PostgreSQL's
 -- table-level privileges are not set automatically. RLS policies restrict

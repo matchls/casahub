@@ -1,7 +1,7 @@
 import type { ShoppingItem } from "@/lib/domain/types";
 
 /**
- * Shopping service — currently backed by in-memory mock data via useCasaHubState.
+ * Shopping service — currently backed by in-memory mock data via useDomotidienState.
  * Replace these stubs with Supabase calls once the `shopping_items` table is live.
  *
  * Target table: shopping_items

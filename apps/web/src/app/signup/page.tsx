@@ -2,7 +2,7 @@ import { AuthLayout } from "@/features/auth/AuthLayout";
 import { SignupForm } from "@/features/auth/SignupForm";
 
 export const metadata = {
-  title: "Créer un compte — CasaHub",
+  title: "Créer un compte — Domotidien",
 };
 
 export default async function SignupPage({

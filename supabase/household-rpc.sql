@@ -1,4 +1,4 @@
--- CasaHub — Household RPC
+-- Domotidien — Household RPC
 --
 -- Atomic creation of a household + its first admin member.
 -- Apply in the Supabase SQL Editor after schema.sql.

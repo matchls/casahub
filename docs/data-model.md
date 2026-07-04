@@ -1,4 +1,4 @@
-# CasaHub — Target Data Model
+# Domotidien — Target Data Model
 
 This document describes the target Supabase schema for V1. All data is currently served from in-memory mocks; this is the migration target.
 

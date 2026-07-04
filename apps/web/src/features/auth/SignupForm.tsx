@@ -63,7 +63,7 @@ export function SignupForm({ next: rawNext }: SignupFormProps) {
     <>
       <AuthBrandHeader
         title="Créer un compte"
-        subtitle="Rejoignez votre foyer CasaHub."
+        subtitle="Rejoignez votre foyer Domotidien."
         titleClassName="text-[30px] text-center"
       />
 

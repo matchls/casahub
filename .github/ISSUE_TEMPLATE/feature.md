@@ -1,6 +1,6 @@
 ---
 name: Feature
-about: Issue de développement CasaHub
+about: Issue de développement Domotidien
 title: ""
 labels: ""
 assignees: ""
