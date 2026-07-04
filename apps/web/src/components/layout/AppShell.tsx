@@ -141,6 +141,7 @@ export function AppShell({ initialProfile, initialAccountEmail, householdId, ini
           items={shoppingItems}
           onToggle={toggleShoppingItem}
           onAdd={addShoppingItem}
+          members={profile.members}
         />
       );
     }
@@ -150,11 +151,12 @@ export function AppShell({ initialProfile, initialAccountEmail, householdId, ini
           tasks={tasks}
           onToggle={toggleTask}
           onAdd={addTask}
+          members={profile.members}
         />
       );
     }
-    if (activeView === "day") return <DayViewScreen items={dayItems} />;
-    if (activeView === "calendar") return <AgendaScreen events={events} />;
+    if (activeView === "day") return <DayViewScreen items={dayItems} members={profile.members} />;
+    if (activeView === "calendar") return <AgendaScreen events={events} members={profile.members} />;
     if (activeView === "notes") {
       return <NotesScreen notes={notes} onAdd={addNote} />;
     }
@@ -174,6 +176,7 @@ export function AppShell({ initialProfile, initialAccountEmail, householdId, ini
         activeView={activeView}
         onNavigate={setActiveView}
         onAdd={openAddDrawer}
+        profile={profile}
       />
 
       {/* Main column */}
@@ -182,6 +185,7 @@ export function AppShell({ initialProfile, initialAccountEmail, householdId, ini
           activeView={activeView}
           onAdd={openAddDrawer}
           subtitle={activeSubtitle}
+          profile={profile}
         />
 
         <main className="flex-1 overflow-auto px-4 py-5 min-[880px]:px-8 min-[880px]:py-7">
@@ -192,6 +196,7 @@ export function AppShell({ initialProfile, initialAccountEmail, householdId, ini
         <MobileBottomNav
           activeView={activeView}
           onNavigate={setActiveView}
+          profile={profile}
         />
       </div>
 

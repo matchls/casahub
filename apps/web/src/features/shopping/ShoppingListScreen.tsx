@@ -2,16 +2,17 @@
 import { useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/Card";
-import type { ShoppingItem } from "@/lib/domain/types";
+import type { ShoppingItem, HouseholdMember } from "@/lib/domain/types";
 import { ShoppingItemRow } from "./ShoppingItemRow";
 
 interface ShoppingListScreenProps {
   items: ShoppingItem[];
   onToggle: (id: string) => void;
   onAdd: (label: string) => void;
+  members: HouseholdMember[];
 }
 
-export function ShoppingListScreen({ items, onToggle, onAdd }: ShoppingListScreenProps) {
+export function ShoppingListScreen({ items, onToggle, onAdd, members }: ShoppingListScreenProps) {
   const [draft, setDraft] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -87,7 +88,7 @@ export function ShoppingListScreen({ items, onToggle, onAdd }: ShoppingListScree
                 key={item.id}
                 className={index > 0 ? "border-t border-[rgba(44,38,34,0.06)]" : ""}
               >
-                <ShoppingItemRow item={item} onToggle={onToggle} />
+                <ShoppingItemRow item={item} onToggle={onToggle} members={members} />
               </div>
             ))}
           </div>
@@ -106,7 +107,7 @@ export function ShoppingListScreen({ items, onToggle, onAdd }: ShoppingListScree
                 key={item.id}
                 className={index > 0 ? "border-t border-[rgba(44,38,34,0.06)]" : ""}
               >
-                <ShoppingItemRow item={item} onToggle={onToggle} />
+                <ShoppingItemRow item={item} onToggle={onToggle} members={members} />
               </div>
             ))}
           </div>

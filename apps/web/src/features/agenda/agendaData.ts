@@ -1,11 +1,6 @@
-import type { MemberId, ItemType, AgendaGroup, TimelineItem, AgendaEvent } from "@/lib/domain/types";
-export type { MemberId, ItemType, AgendaGroup, TimelineItem, AgendaEvent };
+import type { ItemType, AgendaGroup, TimelineItem, AgendaEvent } from "@/lib/domain/types";
+export type { ItemType, AgendaGroup, TimelineItem, AgendaEvent };
 export { GROUP_ORDER } from "@/lib/domain/agenda";
-
-export const MEMBERS: Record<MemberId, { initial: string; color: string; name: string }> = {
-  lea: { initial: "L", color: "#C2603F", name: "Léa" },
-  tom: { initial: "T", color: "#6E8BA6", name: "Tom" },
-};
 
 export const TYPE_META: Record<ItemType, { emoji: string; label: string }> = {
   event:    { emoji: "📅", label: "Agenda" },

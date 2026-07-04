@@ -1,6 +1,7 @@
 "use client";
 import { cn } from "@/lib/utils";
 import type { View } from "./types";
+import type { HouseholdProfile } from "@/lib/domain/types";
 
 const topNav: { id: View; emoji: string; label: string }[] = [
   { id: "home", emoji: "🏡", label: "Foyer" },
@@ -19,9 +20,12 @@ interface SidebarProps {
   activeView: View;
   onNavigate: (view: View) => void;
   onAdd: () => void;
+  profile: HouseholdProfile;
 }
 
-export function Sidebar({ activeView, onNavigate, onAdd }: SidebarProps) {
+export function Sidebar({ activeView, onNavigate, onAdd, profile }: SidebarProps) {
+  const currentUser = profile.members[0];
+
   return (
     <aside
       className="hidden min-[880px]:flex flex-col w-[248px] shrink-0 h-full pt-[22px] pb-[22px] bg-[var(--surface)]"
@@ -91,12 +95,15 @@ export function Sidebar({ activeView, onNavigate, onAdd }: SidebarProps) {
         className="mt-auto flex items-center gap-[10px] px-[22px] py-[11px] cursor-pointer hover:bg-[var(--surface-muted)] transition-colors text-left"
         style={{ borderTop: "1px solid rgba(44,38,34,.06)" }}
       >
-        <div className="w-[32px] h-[32px] rounded-full bg-[#C2603F] text-white flex items-center justify-center font-bold text-[12px] shrink-0">
-          L
+        <div
+          className="w-[32px] h-[32px] rounded-full text-white flex items-center justify-center font-bold text-[12px] shrink-0"
+          style={{ backgroundColor: currentUser?.color ?? "var(--primary)" }}
+        >
+          {currentUser?.initial ?? "🏠"}
         </div>
         <div className="flex-1 min-w-0">
-          <div className="text-[13.5px] font-semibold text-[var(--text-primary)] leading-tight">
-            Léa &amp; Tom
+          <div className="text-[13.5px] font-semibold text-[var(--text-primary)] leading-tight truncate">
+            {profile.name}
           </div>
           <div className="text-[11px] text-[var(--text-muted)]">Le Foyer</div>
         </div>

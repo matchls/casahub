@@ -1,8 +1,10 @@
 "use client";
+import { cn } from "@/lib/utils";
 import type { View } from "./types";
+import type { HouseholdProfile } from "@/lib/domain/types";
 
 const VIEW_META: Record<View, { title: string; subtitle?: string }> = {
-  home:     { title: "Le Foyer 🏡", subtitle: "Mardi 24 juin · 12 choses à voir" },
+  home:     { title: "Le Foyer 🏡" },
   day:      { title: "La journée ☀️" },
   shopping: { title: "Courses 🛒" },
   tasks:    { title: "Tâches ✅" },
@@ -16,9 +18,10 @@ interface AppHeaderProps {
   activeView: View;
   onAdd: () => void;
   subtitle?: string;
+  profile: HouseholdProfile;
 }
 
-export function AppHeader({ activeView, onAdd, subtitle }: AppHeaderProps) {
+export function AppHeader({ activeView, onAdd, subtitle, profile }: AppHeaderProps) {
   const meta = VIEW_META[activeView];
   const resolvedSubtitle = subtitle ?? meta.subtitle;
 
@@ -44,14 +47,21 @@ export function AppHeader({ activeView, onAdd, subtitle }: AppHeaderProps) {
 
       {/* Right: avatars + add button (agenda only) */}
       <div className="flex items-center gap-[14px] shrink-0">
-        {/* Overlapping member avatars */}
+        {/* Overlapping member avatars — real household members, capped so it never overflows */}
         <div className="flex">
-          <div className="w-[34px] h-[34px] rounded-full bg-[#C2603F] text-white flex items-center justify-center font-bold text-[13px] border-2 border-[var(--background)] z-10 relative">
-            L
-          </div>
-          <div className="w-[34px] h-[34px] rounded-full bg-[#6E8BA6] text-white flex items-center justify-center font-bold text-[13px] border-2 border-[var(--background)] -ml-[10px]">
-            T
-          </div>
+          {profile.members.slice(0, 4).map((member, index) => (
+            <div
+              key={member.id}
+              className={cn(
+                "w-[34px] h-[34px] rounded-full text-white flex items-center justify-center font-bold text-[13px] border-2 border-[var(--background)]",
+                index === 0 ? "z-10 relative" : "-ml-[10px]"
+              )}
+              style={{ backgroundColor: member.color }}
+              title={member.name}
+            >
+              {member.initial}
+            </div>
+          ))}
         </div>
 
         {/* + Ajouter — agenda only */}

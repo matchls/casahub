@@ -1,12 +1,13 @@
 import { Card } from "@/components/ui/Card";
-import type { TimelineItem } from "@/lib/domain/types";
+import type { TimelineItem, HouseholdMember } from "@/lib/domain/types";
 import { TimelineItemRow } from "./TimelineItemRow";
 
 interface DayViewScreenProps {
   items: TimelineItem[];
+  members: HouseholdMember[];
 }
 
-export function DayViewScreen({ items }: DayViewScreenProps) {
+export function DayViewScreen({ items, members }: DayViewScreenProps) {
   if (items.length === 0) {
     return (
       <div className="max-w-[720px] flex flex-col items-center justify-center gap-3 py-20 text-center">
@@ -30,6 +31,7 @@ export function DayViewScreen({ items }: DayViewScreenProps) {
               key={item.id}
               item={item}
               isLast={index === items.length - 1}
+              members={members}
             />
           ))}
         </div>

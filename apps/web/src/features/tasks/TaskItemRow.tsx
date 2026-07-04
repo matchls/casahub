@@ -1,10 +1,11 @@
 import { cn } from "@/lib/utils";
 import type { Task } from "./tasksData";
-import { MEMBERS } from "./tasksData";
+import type { HouseholdMember } from "@/lib/domain/types";
 
 interface TaskItemRowProps {
   task: Task;
   onToggle: (id: string) => void;
+  members: HouseholdMember[];
 }
 
 const DUE_ICON: Record<Task["dueType"], string | null> = {
@@ -13,8 +14,8 @@ const DUE_ICON: Record<Task["dueType"], string | null> = {
   none: null,
 };
 
-export function TaskItemRow({ task, onToggle }: TaskItemRowProps) {
-  const member = MEMBERS[task.assignedTo];
+export function TaskItemRow({ task, onToggle, members }: TaskItemRowProps) {
+  const member = task.assignedTo ? members.find((m) => m.id === task.assignedTo) : undefined;
   const dueIcon = DUE_ICON[task.dueType];
 
   return (
@@ -62,14 +63,16 @@ export function TaskItemRow({ task, onToggle }: TaskItemRowProps) {
         </p>
       </div>
 
-      {/* Member avatar */}
-      <div
-        className="shrink-0 w-[28px] h-[28px] rounded-full flex items-center justify-center text-white text-[11px] font-bold"
-        style={{ backgroundColor: member.color }}
-        title={member.name}
-      >
-        {member.initial}
-      </div>
+      {/* Member avatar (optional — only shown when the task is actually assigned) */}
+      {member && (
+        <div
+          className="shrink-0 w-[28px] h-[28px] rounded-full flex items-center justify-center text-white text-[11px] font-bold"
+          style={{ backgroundColor: member.color }}
+          title={member.name}
+        >
+          {member.initial}
+        </div>
+      )}
     </div>
   );
 }
