@@ -1,4 +1,4 @@
-# CasaHub — ordre conseillé des issues
+# Domotidien — ordre conseillé des issues
 
 1. Ajouter les screenshots de référence
 2. Initialiser le projet web

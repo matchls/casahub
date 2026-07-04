@@ -1,7 +1,7 @@
 import type { Note, NoteCategory } from "@/lib/domain/types";
 
 /**
- * Notes service — currently backed by in-memory mock data via useCasaHubState.
+ * Notes service — currently backed by in-memory mock data via useDomotidienState.
  * Replace these stubs with Supabase calls once the `notes` table is live.
  *
  * Target table: notes

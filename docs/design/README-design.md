@@ -1,6 +1,6 @@
-# CasaHub — Design handoff
+# Domotidien — Design handoff
 
-Ce dossier sert de référence pour l’implémentation UI de CasaHub.
+Ce dossier sert de référence pour l’implémentation UI de Domotidien.
 
 ## Références principales
 

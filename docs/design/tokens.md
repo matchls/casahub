@@ -1,4 +1,4 @@
-# CasaHub design tokens
+# Domotidien design tokens
 
 ## Colors
 

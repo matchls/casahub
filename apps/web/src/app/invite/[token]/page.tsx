@@ -5,7 +5,7 @@ import { primaryButtonClass, primaryButtonStyle } from "@/features/auth/authStyl
 import { AcceptInvitationCard } from "@/features/invitations/AcceptInvitationCard";
 
 export const metadata = {
-  title: "Rejoindre un foyer — CasaHub",
+  title: "Rejoindre un foyer — Domotidien",
 };
 
 export const dynamic = "force-dynamic";

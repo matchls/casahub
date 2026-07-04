@@ -40,7 +40,7 @@ export function Sidebar({ activeView, onNavigate, onAdd, profile }: SidebarProps
           className="text-[21px] font-extrabold text-[var(--text-primary)] tracking-[-0.02em]"
           style={{ fontFamily: "var(--font-display)" }}
         >
-          CasaHub
+          Domotidien
         </span>
       </div>
 

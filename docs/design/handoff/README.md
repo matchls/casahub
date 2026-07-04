@@ -1,8 +1,8 @@
-# Handoff : CasaHub — app de gestion de foyer (V1)
+# Handoff : Domotidien — app de gestion de foyer (V1)
 
 ## Vue d'ensemble
 
-CasaHub est une **app web responsive** de gestion de foyer, pensée comme un hub partagé
+Domotidien est une **app web responsive** de gestion de foyer, pensée comme un hub partagé
 entre les membres d'un même logement (couples, colocs, familles). Elle centralise
 l'organisation du quotidien : **courses, tâches, notes, calendrier, rappels et liens utiles**.
 Objectif produit : partager la charge mentale du foyer, mobile-first, utilisable à deux
@@ -92,7 +92,7 @@ backend restent à brancher.
 
 - **But** : se connecter ou accéder à la création de compte.
 - **Layout** : carte centrée, max-width 380px, fond crème en léger radial-gradient.
-- **Composants** : logo 78px (carré arrondi 23px, terracotta, 🏠) ; titre "CasaHub" ;
+- **Composants** : logo 78px (carré arrondi 23px, terracotta, 🏠) ; titre "Domotidien" ;
   sous-titre "Le hub partagé de votre foyer." ; champ e-mail ; champ mot de passe ;
   bouton plein terracotta "Se connecter" ; séparateur "ou" ; bouton outline "Continuer avec Google" ;
   lien "Pas encore de foyer ? **Créer un compte**".

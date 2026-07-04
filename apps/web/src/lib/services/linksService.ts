@@ -1,7 +1,7 @@
 import type { UsefulLink, LinkCategory } from "@/lib/domain/types";
 
 /**
- * Links service — currently backed by in-memory mock data via useCasaHubState.
+ * Links service — currently backed by in-memory mock data via useDomotidienState.
  * Replace these stubs with Supabase calls once the `useful_links` table is live.
  *
  * Target table: useful_links

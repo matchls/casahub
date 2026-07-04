@@ -1,4 +1,4 @@
--- CasaHub — Household invitations (issue #70)
+-- Domotidien — Household invitations (issue #70)
 --
 -- V1 invitation flow: a household admin creates a copyable invite link (no
 -- automatic email sending). The invited person opens the link, logs in or

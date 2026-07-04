@@ -1,10 +1,10 @@
 # Service Layer
 
-This directory contains typed service interfaces for each CasaHub data domain.
+This directory contains typed service interfaces for each Domotidien data domain.
 
 ## Current state
 
-All data is currently served from in-memory mock data via `useCasaHubState` (see `src/lib/state/useCasaHubState.ts`). No real API or database calls are made.
+All data is currently served from in-memory mock data via `useDomotidienState` (see `src/lib/state/useDomotidienState.ts`). No real API or database calls are made.
 
 ## Future: Supabase migration
 
@@ -13,7 +13,7 @@ When Supabase is connected, each service interface defined here will be implemen
 1. Install `@supabase/supabase-js` and set up env vars (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`).
 2. Create a `supabaseClient.ts` file in this directory.
 3. Implement each interface (e.g. `ShoppingService`) as a concrete class / set of functions that call `supabase.from('shopping_items')...`.
-4. Replace the `useState(initialXxx)` calls in `useCasaHubState` with async fetches using the implemented services.
+4. Replace the `useState(initialXxx)` calls in `useDomotidienState` with async fetches using the implemented services.
 
 ## Services
 

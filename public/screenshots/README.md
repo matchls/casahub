@@ -1,4 +1,4 @@
-# CasaHub screenshots
+# Domotidien screenshots
 
 Ajoute ici les captures de référence du design.
 

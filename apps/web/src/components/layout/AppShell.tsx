@@ -1,5 +1,5 @@
 "use client";
-import { useCasaHubState } from "@/lib/state/useCasaHubState";
+import { useDomotidienState } from "@/lib/state/useDomotidienState";
 import { Sidebar } from "./Sidebar";
 import { MobileBottomNav } from "./MobileBottomNav";
 import { AppHeader } from "./AppHeader";
@@ -80,7 +80,7 @@ export function AppShell({ initialProfile, initialAccountEmail, householdId, ini
     addUsefulLink,
     addEvent,
     updateHouseholdName,
-  } = useCasaHubState({ initialProfile, initialAccountEmail, householdId, initialShoppingItems, initialTasks, initialNotes, initialLinks, initialEvents });
+  } = useDomotidienState({ initialProfile, initialAccountEmail, householdId, initialShoppingItems, initialTasks, initialNotes, initialLinks, initialEvents });
 
   const shoppingSubtitle =
     activeView === "shopping"

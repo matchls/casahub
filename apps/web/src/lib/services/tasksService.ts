@@ -1,7 +1,7 @@
 import type { Task } from "@/lib/domain/types";
 
 /**
- * Tasks service — currently backed by in-memory mock data via useCasaHubState.
+ * Tasks service — currently backed by in-memory mock data via useDomotidienState.
  * Replace these stubs with Supabase calls once the `tasks` table is live.
  *
  * Target table: tasks

@@ -1,3 +1,3 @@
 # Issue template note
 
-Use issues in GitHub to implement CasaHub step by step.
+Use issues in GitHub to implement Domotidien step by step.

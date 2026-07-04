@@ -1,6 +1,6 @@
-# CasaHub
+# Domotidien
 
-CasaHub is a shared home management hub for couples, families, and roommates: one place to track the shopping list, tasks, notes, calendar events, and useful links for a household.
+Domotidien is a shared home management hub for couples, families, and roommates: one place to track the shopping list, tasks, notes, calendar events, and useful links for a household.
 
 ## Product overview
 
