@@ -4,7 +4,8 @@ import type { View } from "./types";
 import type { HouseholdProfile } from "@/lib/domain/types";
 
 const VIEW_META: Record<View, { title: string; subtitle?: string }> = {
-  home:     { title: "Le Foyer 🏡" },
+  // "home" has no fixed title — it displays the household name instead (see resolvedTitle below).
+  home:     { title: "Le Foyer" },
   day:      { title: "La journée ☀️" },
   shopping: { title: "Courses 🛒" },
   tasks:    { title: "Tâches ✅" },
@@ -24,6 +25,8 @@ interface AppHeaderProps {
 export function AppHeader({ activeView, onAdd, subtitle, profile }: AppHeaderProps) {
   const meta = VIEW_META[activeView];
   const resolvedSubtitle = subtitle ?? meta.subtitle;
+  const resolvedTitle =
+    activeView === "home" ? `${profile.name || meta.title} 🏡` : meta.title;
 
   return (
     <header
@@ -36,7 +39,7 @@ export function AppHeader({ activeView, onAdd, subtitle, profile }: AppHeaderPro
           className="font-extrabold text-[23px] min-[880px]:text-[28px] text-[var(--text-primary)] tracking-[-0.02em] leading-tight"
           style={{ fontFamily: "var(--font-display)" }}
         >
-          {meta.title}
+          {resolvedTitle}
         </h1>
         {resolvedSubtitle && (
           <p className="text-[13px] text-[var(--text-muted)] font-semibold mt-[2px]">
