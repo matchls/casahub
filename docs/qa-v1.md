@@ -15,11 +15,18 @@ live database reads/writes, not mocked data.
       message is shown (no crash, no unhandled error).
 - [ ] **Login** — log in with a confirmed test account; redirected to the
       dashboard.
+- [ ] **Logout / login persistence** — log out, then log back in with the
+      same account; shopping list, tasks, notes, links, agenda, and member
+      list are all unchanged from before logout.
 - [ ] **Onboarding — household creation** — a user with no household is
       redirected to `/onboarding`; creating a household succeeds and lands
       on the dashboard.
 - [ ] **Dashboard** — household profile, members, and all widgets load
       without errors for a user with a household.
+- [ ] **Profile — household name edit** — an admin renames the household
+      from Profile (Modifier → input → Enregistrer); the new name updates
+      immediately in Sidebar/Header/Profile and still shows after a hard
+      refresh. A non-admin does not see the "Modifier" control.
 - [ ] **Shopping list** — add an item, toggle it done/undone, hard refresh —
       state persists.
 - [ ] **Tasks** — add a task, toggle done/undone, hard refresh — state
@@ -96,6 +103,11 @@ live database reads/writes, not mocked data.
 - [ ] **No console Supabase permission errors** — browser console is free of
       Supabase/RLS permission errors (e.g. `permission denied for table …`)
       across all pages above.
+- [ ] **No fake placeholders visible** — no hardcoded/mock content remains
+      anywhere in the app: no fake member names or avatars, no mock
+      timeline items in "La journée", no buttons styled as clickable that
+      don't do anything. This guards against regressions of the cleanup in
+      PR #67 and PR #69.
 
 ---
 
