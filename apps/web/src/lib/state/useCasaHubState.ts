@@ -23,6 +23,7 @@ import {
 import { addNote as addNoteDb } from "@/lib/supabase/notes";
 import { addUsefulLink as addUsefulLinkDb } from "@/lib/supabase/links";
 import { addEvent as addEventDb } from "@/lib/supabase/events";
+import { updateHouseholdName as updateHouseholdNameDb } from "@/lib/supabase/households";
 import { insertEventSorted, mapEventRow, type EventRow } from "@/lib/domain/agenda";
 
 interface CasaHubStateOptions {
@@ -56,7 +57,7 @@ export function useCasaHubState({
   const [notes, setNotes] = useState<Note[]>(initialNotes ?? []);
   const [links, setLinks] = useState<UsefulLink[]>(initialLinks ?? []);
   const [events, setEvents] = useState<AgendaEvent[]>(initialEvents ?? []);
-  const [profile] = useState<HouseholdProfile>(initialProfile);
+  const [profile, setProfile] = useState<HouseholdProfile>(initialProfile);
 
   // "La journée" — derived from today's real events and incomplete tasks (no mock data).
   const dayItems = useMemo<TimelineItem[]>(() => {
@@ -260,6 +261,19 @@ export function useCasaHubState({
     }
   }
 
+  // Actions — household (Supabase-backed with optimistic update)
+  async function updateHouseholdName(name: string) {
+    const prevProfile = profile;
+    setProfile((p) => ({ ...p, name }));
+    try {
+      await updateHouseholdNameDb(householdId, name);
+    } catch (err) {
+      console.error("[household] update name failed:", err);
+      setProfile(prevProfile);
+      throw err;
+    }
+  }
+
   return {
     // Navigation
     activeView,
@@ -294,5 +308,6 @@ export function useCasaHubState({
     addNote,
     addUsefulLink,
     addEvent,
+    updateHouseholdName,
   };
 }

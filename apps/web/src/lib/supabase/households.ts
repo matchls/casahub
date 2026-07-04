@@ -18,3 +18,12 @@ export async function createHouseholdWithMember(params: {
   if (error) throw new Error(error.message);
   return data as string;
 }
+
+export async function updateHouseholdName(householdId: string, name: string): Promise<void> {
+  const supabase = createClient();
+  const { error } = await supabase
+    .from("households")
+    .update({ name })
+    .eq("id", householdId);
+  if (error) throw new Error(error.message);
+}
