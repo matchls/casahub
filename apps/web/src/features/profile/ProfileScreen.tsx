@@ -59,7 +59,6 @@ interface ProfileScreenProps {
 export function ProfileScreen({ profile, accountEmail }: ProfileScreenProps) {
   const router = useRouter();
   const [notifs, setNotifs]     = useState(true);
-  const [darkMode, setDarkMode] = useState(false);
   const [dailyMsg, setDailyMsg] = useState(true);
 
   async function handleSignOut() {
@@ -102,17 +101,19 @@ export function ProfileScreen({ profile, accountEmail }: ProfileScreenProps) {
             <HouseholdMemberCard key={m.id} member={m} isCurrentUser={i === 0} />
           ))}
 
-          {/* Invite row */}
-          <div className="flex items-center gap-3 pt-[13px] cursor-pointer group">
-            <div className="w-10 h-10 rounded-full border-[1.5px] border-dashed border-[var(--border-input)] flex items-center justify-center shrink-0 group-hover:border-[var(--primary)] transition-colors">
-              <span className="text-[18px] text-[var(--text-muted)] group-hover:text-[var(--primary)] transition-colors leading-none">
+          {/* Invite row — disabled: member invitations aren't available in V1 */}
+          <div className="flex items-center gap-3 pt-[13px] opacity-60">
+            <div className="w-10 h-10 rounded-full border-[1.5px] border-dashed border-[var(--border-input)] flex items-center justify-center shrink-0">
+              <span className="text-[18px] text-[var(--text-muted)] leading-none">
                 +
               </span>
             </div>
-            <span className="flex-1 text-[15px] text-[var(--text-secondary)] font-medium group-hover:text-[var(--primary)] transition-colors">
+            <span className="flex-1 text-[15px] text-[var(--text-secondary)] font-medium">
               Inviter un membre
             </span>
-            <span className="text-[var(--text-muted)] text-[16px] leading-none">›</span>
+            <span className="text-[11px] font-bold px-[10px] py-[4px] rounded-full bg-[var(--surface-muted)] text-[var(--text-muted)] shrink-0">
+              Bientôt
+            </span>
           </div>
         </Card>
       </div>
@@ -123,9 +124,6 @@ export function ProfileScreen({ profile, accountEmail }: ProfileScreenProps) {
         <Card className="!p-4">
           <RowItem icon="🔔" label="Notifications du foyer">
             <Toggle checked={notifs} onChange={() => setNotifs((v) => !v)} />
-          </RowItem>
-          <RowItem icon="🌙" label="Thème sombre">
-            <Toggle checked={darkMode} onChange={() => setDarkMode((v) => !v)} />
           </RowItem>
           <RowItem icon="💬" label="Message du jour">
             <Toggle checked={dailyMsg} onChange={() => setDailyMsg((v) => !v)} />

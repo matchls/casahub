@@ -4,8 +4,6 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { AuthBrandHeader } from "./AuthBrandHeader";
-import { AuthSeparator } from "./AuthSeparator";
-import { GoogleAuthButton } from "./GoogleAuthButton";
 import { inputClass, primaryButtonClass, primaryButtonStyle } from "./authStyles";
 
 export function LoginForm() {
@@ -71,9 +69,6 @@ export function LoginForm() {
           {loading ? "Connexion…" : "Se connecter"}
         </button>
       </form>
-
-      <AuthSeparator />
-      <GoogleAuthButton />
 
       <p className="mt-[24px] text-[14px] text-[var(--text-soft)] text-center">
         Pas encore de foyer ?{" "}
