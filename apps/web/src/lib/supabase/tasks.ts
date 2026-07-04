@@ -1,4 +1,5 @@
 import { createClient } from "./client";
+import type { Task } from "@/lib/domain/types";
 
 export interface TaskRow {
   id: string;
@@ -7,6 +8,17 @@ export interface TaskRow {
   due_type: string | null;
   done: boolean;
   assigned_to: string | null;
+}
+
+export function mapTaskRow(row: TaskRow): Task {
+  return {
+    id: row.id,
+    title: row.title,
+    dueLabel: row.due_label ?? "Sans date",
+    dueType: (row.due_type as Task["dueType"]) ?? "none",
+    done: row.done,
+    assignedTo: row.assigned_to ?? undefined,
+  };
 }
 
 export async function addTask(householdId: string, title: string): Promise<TaskRow> {

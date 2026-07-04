@@ -15,13 +15,15 @@ import type {
 import {
   addShoppingItem as addShoppingItemDb,
   toggleShoppingItem as toggleShoppingItemDb,
+  mapShoppingRow,
 } from "@/lib/supabase/shopping";
 import {
   addTask as addTaskDb,
   toggleTask as toggleTaskDb,
+  mapTaskRow,
 } from "@/lib/supabase/tasks";
-import { addNote as addNoteDb } from "@/lib/supabase/notes";
-import { addUsefulLink as addUsefulLinkDb } from "@/lib/supabase/links";
+import { addNote as addNoteDb, mapNoteRow } from "@/lib/supabase/notes";
+import { addUsefulLink as addUsefulLinkDb, mapLinkRow } from "@/lib/supabase/links";
 import { addEvent as addEventDb } from "@/lib/supabase/events";
 import { updateHouseholdName as updateHouseholdNameDb } from "@/lib/supabase/households";
 import { insertEventSorted, mapEventRow, type EventRow } from "@/lib/domain/agenda";
@@ -129,11 +131,7 @@ export function useCasaHubState({
     try {
       const row = await addShoppingItemDb(householdId, label);
       setShoppingItems((prev) =>
-        prev.map((i) =>
-          i.id === tempId
-            ? { id: row.id, label: row.label, quantity: row.quantity ?? undefined, done: row.done, assignedTo: row.assigned_to ?? undefined }
-            : i
-        )
+        prev.map((i) => (i.id === tempId ? mapShoppingRow(row) : i))
       );
     } catch (err) {
       console.error("[shopping] add failed:", err);
@@ -164,11 +162,7 @@ export function useCasaHubState({
     try {
       const row = await addTaskDb(householdId, title);
       setTasks((prev) =>
-        prev.map((t) =>
-          t.id === tempId
-            ? { id: row.id, title: row.title, dueLabel: row.due_label ?? "Sans date", dueType: (row.due_type as Task["dueType"]) ?? "none", done: row.done, assignedTo: row.assigned_to ?? undefined }
-            : t
-        )
+        prev.map((t) => (t.id === tempId ? mapTaskRow(row) : t))
       );
     } catch (err) {
       console.error("[tasks] add failed:", err);
@@ -184,11 +178,7 @@ export function useCasaHubState({
     try {
       const row = await addNoteDb(householdId, title, category, content);
       setNotes((prev) =>
-        prev.map((n) =>
-          n.id === tempId
-            ? { id: row.id, title: row.title, content: row.content, category: row.category as NoteCategory, createdBy: row.created_by ?? undefined }
-            : n
-        )
+        prev.map((n) => (n.id === tempId ? mapNoteRow(row) : n))
       );
     } catch (err) {
       console.error("[notes] add failed:", err);
@@ -216,11 +206,7 @@ export function useCasaHubState({
     try {
       const row = await addUsefulLinkDb(householdId, title, normalizedUrl, category, icon);
       setLinks((prev) =>
-        prev.map((l) =>
-          l.id === tempId
-            ? { id: row.id, title: row.title, url: row.url, category: row.category as LinkCategory, icon: row.icon, createdBy: row.created_by ?? undefined }
-            : l
-        )
+        prev.map((l) => (l.id === tempId ? mapLinkRow(row) : l))
       );
     } catch (err) {
       console.error("[links] add failed:", err);
