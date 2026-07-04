@@ -1,14 +1,15 @@
 import { cn } from "@/lib/utils";
 import type { ShoppingItem } from "./shoppingData";
-import { MEMBERS } from "./shoppingData";
+import type { HouseholdMember } from "@/lib/domain/types";
 
 interface ShoppingItemRowProps {
   item: ShoppingItem;
   onToggle: (id: string) => void;
+  members: HouseholdMember[];
 }
 
-export function ShoppingItemRow({ item, onToggle }: ShoppingItemRowProps) {
-  const member = MEMBERS[item.assignedTo];
+export function ShoppingItemRow({ item, onToggle, members }: ShoppingItemRowProps) {
+  const member = item.assignedTo ? members.find((m) => m.id === item.assignedTo) : undefined;
 
   return (
     <div className="flex items-center gap-3 px-4 py-[11px]">
@@ -58,14 +59,16 @@ export function ShoppingItemRow({ item, onToggle }: ShoppingItemRowProps) {
         )}
       </div>
 
-      {/* Member avatar */}
-      <div
-        className="shrink-0 w-[28px] h-[28px] rounded-full flex items-center justify-center text-white text-[11px] font-bold"
-        style={{ backgroundColor: member.color }}
-        title={member.name}
-      >
-        {member.initial}
-      </div>
+      {/* Member avatar (optional — only shown when the item is actually assigned) */}
+      {member && (
+        <div
+          className="shrink-0 w-[28px] h-[28px] rounded-full flex items-center justify-center text-white text-[11px] font-bold"
+          style={{ backgroundColor: member.color }}
+          title={member.name}
+        >
+          {member.initial}
+        </div>
+      )}
     </div>
   );
 }

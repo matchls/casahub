@@ -2,16 +2,17 @@
 import { useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/Card";
-import type { Task } from "@/lib/domain/types";
+import type { Task, HouseholdMember } from "@/lib/domain/types";
 import { TaskItemRow } from "./TaskItemRow";
 
 interface TasksScreenProps {
   tasks: Task[];
   onToggle: (id: string) => void;
   onAdd: (title: string) => void;
+  members: HouseholdMember[];
 }
 
-export function TasksScreen({ tasks, onToggle, onAdd }: TasksScreenProps) {
+export function TasksScreen({ tasks, onToggle, onAdd, members }: TasksScreenProps) {
   const [draft, setDraft] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -85,7 +86,7 @@ export function TasksScreen({ tasks, onToggle, onAdd }: TasksScreenProps) {
                 key={task.id}
                 className={index > 0 ? "border-t border-[rgba(44,38,34,0.06)]" : ""}
               >
-                <TaskItemRow task={task} onToggle={onToggle} />
+                <TaskItemRow task={task} onToggle={onToggle} members={members} />
               </div>
             ))}
           </div>
@@ -104,7 +105,7 @@ export function TasksScreen({ tasks, onToggle, onAdd }: TasksScreenProps) {
                 key={task.id}
                 className={index > 0 ? "border-t border-[rgba(44,38,34,0.06)]" : ""}
               >
-                <TaskItemRow task={task} onToggle={onToggle} />
+                <TaskItemRow task={task} onToggle={onToggle} members={members} />
               </div>
             ))}
           </div>

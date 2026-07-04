@@ -1,16 +1,21 @@
 "use client";
 import { cn } from "@/lib/utils";
 import type { View } from "./types";
+import type { HouseholdProfile } from "@/lib/domain/types";
 
 interface MobileBottomNavProps {
   activeView: View;
   onNavigate: (view: View) => void;
+  profile: HouseholdProfile;
 }
 
 export function MobileBottomNav({
   activeView,
   onNavigate,
+  profile,
 }: MobileBottomNavProps) {
+  const currentUser = profile.members[0];
+
   return (
     <nav
       className="flex min-[880px]:hidden items-center h-[60px] px-[10px] bg-[var(--surface)] shrink-0"
@@ -50,9 +55,9 @@ export function MobileBottomNav({
             "w-[26px] h-[26px] rounded-full flex items-center justify-center font-bold text-[10px] text-white",
             activeView === "profile" ? "opacity-100" : "opacity-80"
           )}
-          style={{ background: "#C2603F" }}
+          style={{ background: currentUser?.color ?? "var(--primary)" }}
         >
-          L
+          {currentUser?.initial ?? "?"}
         </div>
         <span
           className={cn(

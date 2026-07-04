@@ -74,7 +74,7 @@ export function mapEventRow(row: EventRow, today: Date): AgendaEvent | null {
     dayNum: eventDate.getDate(),
     time: row.event_time ? row.event_time.slice(0, 5) : "Toute la journée",
     location: row.location ?? undefined,
-    assignedTo: row.assigned_to ? "lea" : undefined,
+    assignedTo: row.assigned_to ?? undefined,
     group,
   };
 }

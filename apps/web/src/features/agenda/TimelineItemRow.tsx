@@ -1,6 +1,7 @@
 import { cn } from "@/lib/utils";
 import type { TimelineItem, ItemType } from "./agendaData";
-import { MEMBERS, TYPE_META } from "./agendaData";
+import { TYPE_META } from "./agendaData";
+import type { HouseholdMember } from "@/lib/domain/types";
 
 const TYPE_BADGE_STYLES: Record<ItemType, string> = {
   event:    "bg-[var(--agenda-bg)] text-[var(--agenda-text)]",
@@ -19,11 +20,12 @@ const DOT_COLORS: Record<ItemType, string> = {
 interface TimelineItemRowProps {
   item: TimelineItem;
   isLast: boolean;
+  members: HouseholdMember[];
 }
 
-export function TimelineItemRow({ item, isLast }: TimelineItemRowProps) {
+export function TimelineItemRow({ item, isLast, members }: TimelineItemRowProps) {
   const meta = TYPE_META[item.type];
-  const member = item.assignedTo ? MEMBERS[item.assignedTo] : null;
+  const member = item.assignedTo ? members.find((m) => m.id === item.assignedTo) : undefined;
 
   return (
     <div className="flex gap-4">

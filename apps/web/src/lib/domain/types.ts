@@ -1,11 +1,12 @@
-export type MemberId = "lea" | "tom";
+/** A household member's id (matches `household_members.id` in Supabase). */
+export type MemberId = string;
 
 export interface ShoppingItem {
   id: string;
   label: string;
   quantity?: number;
   done: boolean;
-  assignedTo: MemberId;
+  assignedTo?: MemberId;
 }
 
 /** Alias matching the issue's domain language. */
@@ -19,14 +20,14 @@ export interface Task {
   dueLabel: string;
   dueType: DueType;
   done: boolean;
-  assignedTo: MemberId;
+  assignedTo?: MemberId;
 }
 
 export type ItemType = "event" | "task" | "shopping" | "reminder";
 export type AgendaGroup = "today" | "tomorrow" | "this_week" | "next_week" | "later";
 
 export interface TimelineItem {
-  id: number;
+  id: string;
   type: ItemType;
   title: string;
   time?: string;

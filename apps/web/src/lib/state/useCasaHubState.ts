@@ -23,7 +23,6 @@ import {
 import { addNote as addNoteDb } from "@/lib/supabase/notes";
 import { addUsefulLink as addUsefulLinkDb } from "@/lib/supabase/links";
 import { addEvent as addEventDb } from "@/lib/supabase/events";
-import { dayTimelineItems } from "@/lib/mocks";
 import { insertEventSorted, mapEventRow, type EventRow } from "@/lib/domain/agenda";
 
 interface CasaHubStateOptions {
@@ -57,8 +56,32 @@ export function useCasaHubState({
   const [notes, setNotes] = useState<Note[]>(initialNotes ?? []);
   const [links, setLinks] = useState<UsefulLink[]>(initialLinks ?? []);
   const [events, setEvents] = useState<AgendaEvent[]>(initialEvents ?? []);
-  const [dayItems] = useState<TimelineItem[]>(dayTimelineItems);
   const [profile] = useState<HouseholdProfile>(initialProfile);
+
+  // "La journée" — derived from today's real events and incomplete tasks (no mock data).
+  const dayItems = useMemo<TimelineItem[]>(() => {
+    const todayEvents: TimelineItem[] = events
+      .filter((e) => e.group === "today")
+      .map((e) => ({
+        id: e.id,
+        type: e.type,
+        title: e.title,
+        time: e.time,
+        location: e.location,
+        assignedTo: e.assignedTo,
+      }));
+
+    const incompleteTasks: TimelineItem[] = tasks
+      .filter((t) => !t.done)
+      .map((t) => ({
+        id: t.id,
+        type: "task",
+        title: t.title,
+        assignedTo: t.assignedTo,
+      }));
+
+    return [...todayEvents, ...incompleteTasks];
+  }, [events, tasks]);
 
   // Computed counters
   const shoppingPendingCount = useMemo(
@@ -100,14 +123,14 @@ export function useCasaHubState({
 
   async function addShoppingItem(label: string) {
     const tempId = `temp-${Date.now()}`;
-    const tempItem: ShoppingItem = { id: tempId, label, done: false, assignedTo: "lea" };
+    const tempItem: ShoppingItem = { id: tempId, label, done: false };
     setShoppingItems((prev) => [tempItem, ...prev]);
     try {
       const row = await addShoppingItemDb(householdId, label);
       setShoppingItems((prev) =>
         prev.map((i) =>
           i.id === tempId
-            ? { id: row.id, label: row.label, quantity: row.quantity ?? undefined, done: row.done, assignedTo: "lea" }
+            ? { id: row.id, label: row.label, quantity: row.quantity ?? undefined, done: row.done, assignedTo: row.assigned_to ?? undefined }
             : i
         )
       );
@@ -135,14 +158,14 @@ export function useCasaHubState({
 
   async function addTask(title: string) {
     const tempId = `temp-${Date.now()}`;
-    const tempTask: Task = { id: tempId, title, dueLabel: "Sans date", dueType: "none", done: false, assignedTo: "lea" };
+    const tempTask: Task = { id: tempId, title, dueLabel: "Sans date", dueType: "none", done: false };
     setTasks((prev) => [tempTask, ...prev]);
     try {
       const row = await addTaskDb(householdId, title);
       setTasks((prev) =>
         prev.map((t) =>
           t.id === tempId
-            ? { id: row.id, title: row.title, dueLabel: row.due_label ?? "Sans date", dueType: (row.due_type as Task["dueType"]) ?? "none", done: row.done, assignedTo: "lea" }
+            ? { id: row.id, title: row.title, dueLabel: row.due_label ?? "Sans date", dueType: (row.due_type as Task["dueType"]) ?? "none", done: row.done, assignedTo: row.assigned_to ?? undefined }
             : t
         )
       );
@@ -155,14 +178,14 @@ export function useCasaHubState({
   // Actions — notes (Supabase-backed with optimistic updates)
   async function addNote(title: string, category: NoteCategory, content: string = "") {
     const tempId = `temp-${Date.now()}`;
-    const tempNote: Note = { id: tempId, title, content, category, createdBy: "lea" };
+    const tempNote: Note = { id: tempId, title, content, category };
     setNotes((prev) => [tempNote, ...prev]);
     try {
       const row = await addNoteDb(householdId, title, category, content);
       setNotes((prev) =>
         prev.map((n) =>
           n.id === tempId
-            ? { id: row.id, title: row.title, content: row.content, category: row.category as NoteCategory, createdBy: "lea" }
+            ? { id: row.id, title: row.title, content: row.content, category: row.category as NoteCategory, createdBy: row.created_by ?? undefined }
             : n
         )
       );
@@ -187,7 +210,6 @@ export function useCasaHubState({
       url: normalizedUrl,
       category,
       icon,
-      createdBy: "lea",
     };
     setLinks((prev) => [...prev, tempLink]);
     try {
@@ -195,7 +217,7 @@ export function useCasaHubState({
       setLinks((prev) =>
         prev.map((l) =>
           l.id === tempId
-            ? { id: row.id, title: row.title, url: row.url, category: row.category as LinkCategory, icon: row.icon, createdBy: "lea" }
+            ? { id: row.id, title: row.title, url: row.url, category: row.category as LinkCategory, icon: row.icon, createdBy: row.created_by ?? undefined }
             : l
         )
       );

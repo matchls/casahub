@@ -75,7 +75,7 @@ export default async function Home() {
     label: row.label,
     quantity: row.quantity ?? undefined,
     done: row.done,
-    assignedTo: "lea",
+    assignedTo: row.assigned_to ?? undefined,
   }));
 
   const { data: taskRows, error: tasksError } = await supabase
@@ -94,7 +94,7 @@ export default async function Home() {
     dueLabel: row.due_label ?? "Sans date",
     dueType: (row.due_type as Task["dueType"]) ?? "none",
     done: row.done,
-    assignedTo: "lea",
+    assignedTo: row.assigned_to ?? undefined,
   }));
 
   const { data: noteRows, error: notesError } = await supabase
@@ -112,7 +112,7 @@ export default async function Home() {
     title: row.title,
     content: row.content,
     category: row.category as Note["category"],
-    createdBy: "lea",
+    createdBy: row.created_by ?? undefined,
   }));
 
   const { data: linkRows, error: linksError } = await supabase
@@ -131,7 +131,7 @@ export default async function Home() {
     url: row.url,
     category: row.category as UsefulLink["category"],
     icon: row.icon,
-    createdBy: "lea",
+    createdBy: row.created_by ?? undefined,
   }));
 
   const today = new Date();

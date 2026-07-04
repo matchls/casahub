@@ -2,16 +2,16 @@ import { cn } from "@/lib/utils";
 import {
   GROUP_LABELS,
   GROUP_ORDER,
-  MEMBERS,
   TYPE_META,
 } from "./agendaData";
-import type { AgendaEvent, AgendaGroup } from "@/lib/domain/types";
+import type { AgendaEvent, AgendaGroup, HouseholdMember } from "@/lib/domain/types";
 
 interface AgendaScreenProps {
   events: AgendaEvent[];
+  members: HouseholdMember[];
 }
 
-export function AgendaScreen({ events }: AgendaScreenProps) {
+export function AgendaScreen({ events, members }: AgendaScreenProps) {
   return (
     <div className="max-w-[720px] flex flex-col gap-8">
       {GROUP_ORDER.map((group) => {
@@ -29,7 +29,7 @@ export function AgendaScreen({ events }: AgendaScreenProps) {
                   key={event.id}
                   className={index > 0 ? "border-t border-[rgba(44,38,34,0.06)]" : ""}
                 >
-                  <AgendaEventRow event={event} group={group} />
+                  <AgendaEventRow event={event} group={group} members={members} />
                 </div>
               ))}
             </div>
@@ -40,8 +40,8 @@ export function AgendaScreen({ events }: AgendaScreenProps) {
   );
 }
 
-function AgendaEventRow({ event, group }: { event: AgendaEvent; group: AgendaGroup }) {
-  const member = event.assignedTo ? MEMBERS[event.assignedTo] : null;
+function AgendaEventRow({ event, group, members }: { event: AgendaEvent; group: AgendaGroup; members: HouseholdMember[] }) {
+  const member = event.assignedTo ? members.find((m) => m.id === event.assignedTo) : undefined;
   const typeMeta = TYPE_META[event.type];
 
   return (
