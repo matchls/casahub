@@ -7,6 +7,114 @@ import { HouseholdMemberCard } from "./HouseholdMemberCard";
 import { InviteMemberRow } from "./InviteMemberRow";
 import type { HouseholdProfile } from "@/lib/domain/types";
 
+const HOUSEHOLD_NAME_MAX_LENGTH = 60;
+
+function HouseholdNameEditor({
+  name,
+  isAdmin,
+  onSave,
+}: {
+  name: string;
+  isAdmin: boolean;
+  onSave: (name: string) => Promise<void>;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [value, setValue] = useState(name);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  function startEditing() {
+    setValue(name);
+    setError(null);
+    setEditing(true);
+  }
+
+  function cancelEditing() {
+    setEditing(false);
+    setError(null);
+  }
+
+  async function handleSave() {
+    const trimmed = value.trim();
+    if (!trimmed) {
+      setError("Le nom du foyer est obligatoire.");
+      return;
+    }
+    if (trimmed.length > HOUSEHOLD_NAME_MAX_LENGTH) {
+      setError(`Le nom ne peut pas dépasser ${HOUSEHOLD_NAME_MAX_LENGTH} caractères.`);
+      return;
+    }
+    if (trimmed === name) {
+      setEditing(false);
+      return;
+    }
+    setSaving(true);
+    setError(null);
+    try {
+      await onSave(trimmed);
+      setEditing(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Une erreur est survenue.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (!editing) {
+    return (
+      <div className="flex items-center gap-2 min-w-0">
+        <h2
+          className="font-extrabold text-[18px] text-[var(--text-primary)] tracking-[-0.02em] leading-tight truncate"
+          style={{ fontFamily: "var(--font-display)" }}
+        >
+          {name}
+        </h2>
+        {isAdmin && (
+          <button
+            type="button"
+            onClick={startEditing}
+            className="shrink-0 text-[12px] font-bold text-[var(--primary)] hover:opacity-80 transition-opacity cursor-pointer"
+          >
+            Modifier
+          </button>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-2">
+      <input
+        autoFocus
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        maxLength={HOUSEHOLD_NAME_MAX_LENGTH}
+        disabled={saving}
+        className="w-full rounded-[10px] border-[1.5px] border-[var(--border-input)] bg-[var(--surface)] px-3 py-[7px] text-[15px] font-semibold text-[var(--text-primary)] focus:outline-none focus:border-[var(--primary)] transition-colors"
+      />
+      <div className="flex items-center gap-3">
+        <button
+          type="button"
+          onClick={handleSave}
+          disabled={saving}
+          className="rounded-[10px] bg-[var(--primary)] text-white font-semibold text-[13px] px-3 py-[6px] hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+        >
+          {saving ? "Enregistrement…" : "Enregistrer"}
+        </button>
+        <button
+          type="button"
+          onClick={cancelEditing}
+          disabled={saving}
+          className="text-[13px] text-[var(--text-muted)] hover:text-[var(--text-secondary)] transition-colors cursor-pointer"
+        >
+          Annuler
+        </button>
+      </div>
+      {error && <p className="text-[13px] text-red-500">{error}</p>}
+    </div>
+  );
+}
+
 function Toggle({ checked, onChange }: { checked: boolean; onChange: () => void }) {
   return (
     <button
@@ -55,9 +163,10 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 interface ProfileScreenProps {
   profile: HouseholdProfile;
   accountEmail: string;
+  onUpdateName: (name: string) => Promise<void>;
 }
 
-export function ProfileScreen({ profile, accountEmail }: ProfileScreenProps) {
+export function ProfileScreen({ profile, accountEmail, onUpdateName }: ProfileScreenProps) {
   const router = useRouter();
   const [notifs, setNotifs]     = useState(true);
   const [dailyMsg, setDailyMsg] = useState(true);
@@ -81,13 +190,8 @@ export function ProfileScreen({ profile, accountEmail }: ProfileScreenProps) {
         <div className="w-[52px] h-[52px] rounded-[14px] bg-[var(--primary)] flex items-center justify-center text-[26px] shrink-0 shadow-[var(--shadow-accent)]">
           🏡
         </div>
-        <div className="min-w-0">
-          <h2
-            className="font-extrabold text-[18px] text-[var(--text-primary)] tracking-[-0.02em] leading-tight"
-            style={{ fontFamily: "var(--font-display)" }}
-          >
-            {name}
-          </h2>
+        <div className="min-w-0 flex-1">
+          <HouseholdNameEditor name={name} isAdmin={currentUserIsAdmin} onSave={onUpdateName} />
           <p className="text-[13px] text-[var(--shopping-text)] font-semibold mt-[3px]">
             {type} · {members.length} membres · {createdAtLabel}
           </p>

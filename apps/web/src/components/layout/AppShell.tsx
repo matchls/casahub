@@ -79,6 +79,7 @@ export function AppShell({ initialProfile, initialAccountEmail, householdId, ini
     addNote,
     addUsefulLink,
     addEvent,
+    updateHouseholdName,
   } = useCasaHubState({ initialProfile, initialAccountEmail, householdId, initialShoppingItems, initialTasks, initialNotes, initialLinks, initialEvents });
 
   const shoppingSubtitle =
@@ -164,7 +165,13 @@ export function AppShell({ initialProfile, initialAccountEmail, householdId, ini
       return <UsefulLinksScreen links={links} onAdd={addUsefulLink} />;
     }
     if (activeView === "profile") {
-      return <ProfileScreen profile={profile} accountEmail={accountEmail} />;
+      return (
+        <ProfileScreen
+          profile={profile}
+          accountEmail={accountEmail}
+          onUpdateName={updateHouseholdName}
+        />
+      );
     }
     return <ViewPlaceholder view={activeView} />;
   }
