@@ -1,4 +1,5 @@
 import { createClient } from "./client";
+import type { ShoppingItem } from "@/lib/domain/types";
 
 export interface ShoppingRow {
   id: string;
@@ -6,6 +7,16 @@ export interface ShoppingRow {
   quantity: number | null;
   done: boolean;
   assigned_to: string | null;
+}
+
+export function mapShoppingRow(row: ShoppingRow): ShoppingItem {
+  return {
+    id: row.id,
+    label: row.label,
+    quantity: row.quantity ?? undefined,
+    done: row.done,
+    assignedTo: row.assigned_to ?? undefined,
+  };
 }
 
 export async function addShoppingItem(

@@ -1,4 +1,5 @@
 import { createClient } from "./client";
+import type { UsefulLink } from "@/lib/domain/types";
 
 export interface LinkRow {
   id: string;
@@ -7,6 +8,17 @@ export interface LinkRow {
   category: string;
   icon: string;
   created_by: string | null;
+}
+
+export function mapLinkRow(row: LinkRow): UsefulLink {
+  return {
+    id: row.id,
+    title: row.title,
+    url: row.url,
+    category: row.category as UsefulLink["category"],
+    icon: row.icon,
+    createdBy: row.created_by ?? undefined,
+  };
 }
 
 export async function addUsefulLink(
