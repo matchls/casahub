@@ -5,10 +5,11 @@ import type { HouseholdMember } from "@/lib/domain/types";
 interface ShoppingItemRowProps {
   item: ShoppingItem;
   onToggle: (id: string) => void;
+  onDelete: (id: string) => void;
   members: HouseholdMember[];
 }
 
-export function ShoppingItemRow({ item, onToggle, members }: ShoppingItemRowProps) {
+export function ShoppingItemRow({ item, onToggle, onDelete, members }: ShoppingItemRowProps) {
   const member = item.assignedTo ? members.find((m) => m.id === item.assignedTo) : undefined;
 
   return (
@@ -69,6 +70,19 @@ export function ShoppingItemRow({ item, onToggle, members }: ShoppingItemRowProp
           {member.initial}
         </div>
       )}
+
+      {/* Delete */}
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          onDelete(item.id);
+        }}
+        aria-label="Supprimer la course"
+        className="shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-[15px] leading-none text-[var(--text-muted)] opacity-50 hover:opacity-100 hover:text-red-500 cursor-pointer transition-opacity"
+      >
+        ×
+      </button>
     </div>
   );
 }

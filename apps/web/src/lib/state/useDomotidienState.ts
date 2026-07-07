@@ -15,16 +15,18 @@ import type {
 import {
   addShoppingItem as addShoppingItemDb,
   toggleShoppingItem as toggleShoppingItemDb,
+  deleteShoppingItem as deleteShoppingItemDb,
   mapShoppingRow,
 } from "@/lib/supabase/shopping";
 import {
   addTask as addTaskDb,
   toggleTask as toggleTaskDb,
+  deleteTask as deleteTaskDb,
   mapTaskRow,
 } from "@/lib/supabase/tasks";
-import { addNote as addNoteDb, mapNoteRow } from "@/lib/supabase/notes";
-import { addUsefulLink as addUsefulLinkDb, mapLinkRow } from "@/lib/supabase/links";
-import { addEvent as addEventDb } from "@/lib/supabase/events";
+import { addNote as addNoteDb, deleteNote as deleteNoteDb, mapNoteRow } from "@/lib/supabase/notes";
+import { addUsefulLink as addUsefulLinkDb, deleteUsefulLink as deleteUsefulLinkDb, mapLinkRow } from "@/lib/supabase/links";
+import { addEvent as addEventDb, deleteEvent as deleteEventDb } from "@/lib/supabase/events";
 import { updateHouseholdName as updateHouseholdNameDb } from "@/lib/supabase/households";
 import { insertEventSorted, mapEventRow, type EventRow } from "@/lib/domain/agenda";
 
@@ -139,6 +141,18 @@ export function useDomotidienState({
     }
   }
 
+  async function deleteShoppingItem(id: string) {
+    const prevItems = shoppingItems;
+    setShoppingItems((items) => items.filter((i) => i.id !== id));
+    try {
+      await deleteShoppingItemDb(id);
+    } catch (err) {
+      console.error("[shopping] delete failed:", err);
+      setShoppingItems(prevItems);
+      alert("La suppression de l'article a échoué. Réessayez.");
+    }
+  }
+
   // Actions — tasks (Supabase-backed with optimistic updates)
   async function toggleTask(id: string) {
     const prevTasks = tasks;
@@ -170,6 +184,18 @@ export function useDomotidienState({
     }
   }
 
+  async function deleteTask(id: string) {
+    const prevTasks = tasks;
+    setTasks((prev) => prev.filter((t) => t.id !== id));
+    try {
+      await deleteTaskDb(id);
+    } catch (err) {
+      console.error("[tasks] delete failed:", err);
+      setTasks(prevTasks);
+      alert("La suppression de la tâche a échoué. Réessayez.");
+    }
+  }
+
   // Actions — notes (Supabase-backed with optimistic updates)
   async function addNote(title: string, category: NoteCategory, content: string = "") {
     const tempId = `temp-${Date.now()}`;
@@ -183,6 +209,18 @@ export function useDomotidienState({
     } catch (err) {
       console.error("[notes] add failed:", err);
       setNotes((prev) => prev.filter((n) => n.id !== tempId));
+    }
+  }
+
+  async function deleteNote(id: string) {
+    const prevNotes = notes;
+    setNotes((prev) => prev.filter((n) => n.id !== id));
+    try {
+      await deleteNoteDb(id);
+    } catch (err) {
+      console.error("[notes] delete failed:", err);
+      setNotes(prevNotes);
+      alert("La suppression de la note a échoué. Réessayez.");
     }
   }
 
@@ -211,6 +249,18 @@ export function useDomotidienState({
     } catch (err) {
       console.error("[links] add failed:", err);
       setLinks((prev) => prev.filter((l) => l.id !== tempId));
+    }
+  }
+
+  async function deleteUsefulLink(id: string) {
+    const prevLinks = links;
+    setLinks((prev) => prev.filter((l) => l.id !== id));
+    try {
+      await deleteUsefulLinkDb(id);
+    } catch (err) {
+      console.error("[links] delete failed:", err);
+      setLinks(prevLinks);
+      alert("La suppression du lien a échoué. Réessayez.");
     }
   }
 
@@ -244,6 +294,18 @@ export function useDomotidienState({
       console.error("[events] add failed:", err);
       setEvents((prev) => prev.filter((e) => e.id !== tempId));
       throw err;
+    }
+  }
+
+  async function deleteEvent(id: string) {
+    const prevEvents = events;
+    setEvents((prev) => prev.filter((e) => e.id !== id));
+    try {
+      await deleteEventDb(id);
+    } catch (err) {
+      console.error("[events] delete failed:", err);
+      setEvents(prevEvents);
+      alert("La suppression de l'événement a échoué. Réessayez.");
     }
   }
 
@@ -289,11 +351,16 @@ export function useDomotidienState({
     // Actions
     toggleShoppingItem,
     addShoppingItem,
+    deleteShoppingItem,
     toggleTask,
     addTask,
+    deleteTask,
     addNote,
+    deleteNote,
     addUsefulLink,
+    deleteUsefulLink,
     addEvent,
+    deleteEvent,
     updateHouseholdName,
   };
 }

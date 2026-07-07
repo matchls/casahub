@@ -5,6 +5,7 @@ import type { HouseholdMember } from "@/lib/domain/types";
 interface TaskItemRowProps {
   task: Task;
   onToggle: (id: string) => void;
+  onDelete: (id: string) => void;
   members: HouseholdMember[];
 }
 
@@ -14,7 +15,7 @@ const DUE_ICON: Record<Task["dueType"], string | null> = {
   none: null,
 };
 
-export function TaskItemRow({ task, onToggle, members }: TaskItemRowProps) {
+export function TaskItemRow({ task, onToggle, onDelete, members }: TaskItemRowProps) {
   const member = task.assignedTo ? members.find((m) => m.id === task.assignedTo) : undefined;
   const dueIcon = DUE_ICON[task.dueType];
 
@@ -73,6 +74,19 @@ export function TaskItemRow({ task, onToggle, members }: TaskItemRowProps) {
           {member.initial}
         </div>
       )}
+
+      {/* Delete */}
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          onDelete(task.id);
+        }}
+        aria-label="Supprimer la tâche"
+        className="shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-[15px] leading-none text-[var(--text-muted)] opacity-50 hover:opacity-100 hover:text-red-500 cursor-pointer transition-opacity"
+      >
+        ×
+      </button>
     </div>
   );
 }

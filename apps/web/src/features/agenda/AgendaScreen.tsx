@@ -9,9 +9,16 @@ import type { AgendaEvent, AgendaGroup, HouseholdMember } from "@/lib/domain/typ
 interface AgendaScreenProps {
   events: AgendaEvent[];
   members: HouseholdMember[];
+  onDelete: (id: string) => void;
 }
 
-export function AgendaScreen({ events, members }: AgendaScreenProps) {
+export function AgendaScreen({ events, members, onDelete }: AgendaScreenProps) {
+  function handleDelete(id: string) {
+    if (confirm("Supprimer cet événement ?")) {
+      onDelete(id);
+    }
+  }
+
   return (
     <div className="max-w-[720px] flex flex-col gap-8">
       {GROUP_ORDER.map((group) => {
@@ -29,7 +36,7 @@ export function AgendaScreen({ events, members }: AgendaScreenProps) {
                   key={event.id}
                   className={index > 0 ? "border-t border-[rgba(44,38,34,0.06)]" : ""}
                 >
-                  <AgendaEventRow event={event} group={group} members={members} />
+                  <AgendaEventRow event={event} group={group} members={members} onDelete={handleDelete} />
                 </div>
               ))}
             </div>
@@ -40,7 +47,7 @@ export function AgendaScreen({ events, members }: AgendaScreenProps) {
   );
 }
 
-function AgendaEventRow({ event, group, members }: { event: AgendaEvent; group: AgendaGroup; members: HouseholdMember[] }) {
+function AgendaEventRow({ event, group, members, onDelete }: { event: AgendaEvent; group: AgendaGroup; members: HouseholdMember[]; onDelete: (id: string) => void }) {
   const member = event.assignedTo ? members.find((m) => m.id === event.assignedTo) : undefined;
   const typeMeta = TYPE_META[event.type];
 
@@ -106,6 +113,19 @@ function AgendaEventRow({ event, group, members }: { event: AgendaEvent; group: 
           {member.initial}
         </div>
       )}
+
+      {/* Delete */}
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          onDelete(event.id);
+        }}
+        aria-label="Supprimer l'événement"
+        className="shrink-0 w-6 h-6 ml-2 self-center rounded-full flex items-center justify-center text-[15px] leading-none text-[var(--text-muted)] opacity-50 hover:opacity-100 hover:text-red-500 cursor-pointer transition-opacity"
+      >
+        ×
+      </button>
     </div>
   );
 }

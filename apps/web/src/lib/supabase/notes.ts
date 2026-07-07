@@ -34,3 +34,9 @@ export async function addNote(
   if (error) throw new Error(error.message);
   return data;
 }
+
+export async function deleteNote(id: string): Promise<void> {
+  const supabase = createClient();
+  const { error } = await supabase.from("notes").delete().eq("id", id);
+  if (error) throw new Error(error.message);
+}

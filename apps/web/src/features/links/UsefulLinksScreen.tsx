@@ -9,9 +9,10 @@ import type { UsefulLink } from "@/lib/domain/types";
 interface UsefulLinksScreenProps {
   links: UsefulLink[];
   onAdd: (title: string, url: string) => void;
+  onDelete: (id: string) => void;
 }
 
-export function UsefulLinksScreen({ links, onAdd }: UsefulLinksScreenProps) {
+export function UsefulLinksScreen({ links, onAdd, onDelete }: UsefulLinksScreenProps) {
   const [draftTitle, setDraftTitle] = useState("");
   const [draftUrl, setDraftUrl] = useState("");
   const titleInputRef = useRef<HTMLInputElement>(null);
@@ -99,6 +100,7 @@ export function UsefulLinksScreen({ links, onAdd }: UsefulLinksScreenProps) {
           key={category}
           category={category}
           links={links.filter((l) => l.category === category)}
+          onDelete={onDelete}
         />
       ))}
     </div>

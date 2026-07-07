@@ -37,3 +37,9 @@ export async function addUsefulLink(
   if (error) throw new Error(error.message);
   return data;
 }
+
+export async function deleteUsefulLink(id: string): Promise<void> {
+  const supabase = createClient();
+  const { error } = await supabase.from("useful_links").delete().eq("id", id);
+  if (error) throw new Error(error.message);
+}

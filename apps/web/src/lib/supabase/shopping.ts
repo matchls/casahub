@@ -41,3 +41,9 @@ export async function toggleShoppingItem(id: string, done: boolean): Promise<voi
     .eq("id", id);
   if (error) throw new Error(error.message);
 }
+
+export async function deleteShoppingItem(id: string): Promise<void> {
+  const supabase = createClient();
+  const { error } = await supabase.from("shopping_items").delete().eq("id", id);
+  if (error) throw new Error(error.message);
+}
