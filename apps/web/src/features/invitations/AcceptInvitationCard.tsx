@@ -42,7 +42,7 @@ export function AcceptInvitationCard({ token, householdName }: AcceptInvitationC
         Rejoindre {householdName}
       </h1>
       <p className="text-[15px] text-[var(--text-soft)]">
-        Tu as été invité·e à rejoindre ce foyer sur Domotidien.
+        Tu as été invité·e à rejoindre ce foyer sur Kasaly.
       </p>
       {error && <p className="text-[13px] text-red-500 text-center">{error}</p>}
       <button

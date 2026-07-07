@@ -2,7 +2,7 @@ import { OnboardingLayout } from "@/features/onboarding/OnboardingLayout";
 import { CreateHouseholdForm } from "@/features/onboarding/CreateHouseholdForm";
 
 export const metadata = {
-  title: "Créer votre foyer — Domotidien",
+  title: "Créer votre foyer — Kasaly",
 };
 
 export default function OnboardingPage() {
