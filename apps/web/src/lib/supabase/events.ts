@@ -23,3 +23,9 @@ export async function addEvent(
   if (error) throw new Error(error.message);
   return data;
 }
+
+export async function deleteEvent(id: string): Promise<void> {
+  const supabase = createClient();
+  const { error } = await supabase.from("events").delete().eq("id", id);
+  if (error) throw new Error(error.message);
+}

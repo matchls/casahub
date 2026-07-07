@@ -40,3 +40,9 @@ export async function toggleTask(id: string, done: boolean): Promise<void> {
     .eq("id", id);
   if (error) throw new Error(error.message);
 }
+
+export async function deleteTask(id: string): Promise<void> {
+  const supabase = createClient();
+  const { error } = await supabase.from("tasks").delete().eq("id", id);
+  if (error) throw new Error(error.message);
+}

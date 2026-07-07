@@ -74,11 +74,16 @@ export function AppShell({ initialProfile, initialAccountEmail, householdId, ini
     agendaEventsCount,
     toggleShoppingItem,
     addShoppingItem,
+    deleteShoppingItem,
     toggleTask,
     addTask,
+    deleteTask,
     addNote,
+    deleteNote,
     addUsefulLink,
+    deleteUsefulLink,
     addEvent,
+    deleteEvent,
     updateHouseholdName,
   } = useDomotidienState({ initialProfile, initialAccountEmail, householdId, initialShoppingItems, initialTasks, initialNotes, initialLinks, initialEvents });
 
@@ -142,6 +147,7 @@ export function AppShell({ initialProfile, initialAccountEmail, householdId, ini
           items={shoppingItems}
           onToggle={toggleShoppingItem}
           onAdd={addShoppingItem}
+          onDelete={deleteShoppingItem}
           members={profile.members}
         />
       );
@@ -152,17 +158,18 @@ export function AppShell({ initialProfile, initialAccountEmail, householdId, ini
           tasks={tasks}
           onToggle={toggleTask}
           onAdd={addTask}
+          onDelete={deleteTask}
           members={profile.members}
         />
       );
     }
     if (activeView === "day") return <DayViewScreen items={dayItems} members={profile.members} />;
-    if (activeView === "calendar") return <AgendaScreen events={events} members={profile.members} />;
+    if (activeView === "calendar") return <AgendaScreen events={events} members={profile.members} onDelete={deleteEvent} />;
     if (activeView === "notes") {
-      return <NotesScreen notes={notes} onAdd={addNote} />;
+      return <NotesScreen notes={notes} onAdd={addNote} onDelete={deleteNote} />;
     }
     if (activeView === "links") {
-      return <UsefulLinksScreen links={links} onAdd={addUsefulLink} />;
+      return <UsefulLinksScreen links={links} onAdd={addUsefulLink} onDelete={deleteUsefulLink} />;
     }
     if (activeView === "profile") {
       return (

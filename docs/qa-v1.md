@@ -43,6 +43,31 @@ live database reads/writes, not mocked data.
       the same household with the same shared data. See
       [Invitation flow](#invitation-flow) below for the full checklist.
 
+## Delete flows (issue #78)
+
+Each item type below is deletable via a small, discreet control (e.g. `×`)
+without disrupting existing interactions on the same row/card.
+
+- [ ] **Delete shopping item** — add an item, delete it, hard refresh — it
+      does not reappear.
+- [ ] **Delete task** — add a task, delete it, hard refresh — it does not
+      reappear.
+- [ ] **Delete note** — add a note, delete it (confirm dialog if shown),
+      hard refresh — it does not reappear.
+- [ ] **Delete useful link / shared code** — add a link, delete it (confirm
+      dialog if shown), hard refresh — it does not reappear.
+- [ ] **Delete agenda event** — add an event, delete it (confirm dialog if
+      shown), hard refresh — it does not reappear.
+- [ ] **No accidental side effects** — deleting a shopping item or task does
+      not toggle its done state; deleting a useful link does not open or
+      navigate to its URL.
+- [ ] **Delete failure handling** — if the Supabase delete call fails, the
+      item reappears in the UI (rollback) and a clear error is shown/logged,
+      instead of silently disappearing for good.
+- [ ] **Cross-household protection** — a member of one household cannot
+      delete another household's item (RLS blocks it — verify with a direct
+      API/SQL attempt as in [Access protection](#access-protection) below).
+
 ## Invitation flow
 
 - [ ] **Create invitation (admin)** — from Profile / Membres, an admin

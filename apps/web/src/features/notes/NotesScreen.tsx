@@ -45,9 +45,10 @@ const addButtonClass = cn(
 interface NotesScreenProps {
   notes: Note[];
   onAdd: (title: string, category: NoteCategory, content?: string) => void;
+  onDelete: (id: string) => void;
 }
 
-export function NotesScreen({ notes, onAdd }: NotesScreenProps) {
+export function NotesScreen({ notes, onAdd, onDelete }: NotesScreenProps) {
   const [titleDraft, setTitleDraft] = useState("");
   const [contentDraft, setContentDraft] = useState("");
   const [category, setCategory] = useState<NoteCategory>("ideas");
@@ -161,6 +162,7 @@ export function NotesScreen({ notes, onAdd }: NotesScreenProps) {
               key={cat}
               category={cat}
               notes={notes.filter((n) => n.category === cat)}
+              onDelete={onDelete}
             />
           ))}
         </div>

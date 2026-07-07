@@ -9,10 +9,11 @@ interface ShoppingListScreenProps {
   items: ShoppingItem[];
   onToggle: (id: string) => void;
   onAdd: (label: string) => void;
+  onDelete: (id: string) => void;
   members: HouseholdMember[];
 }
 
-export function ShoppingListScreen({ items, onToggle, onAdd, members }: ShoppingListScreenProps) {
+export function ShoppingListScreen({ items, onToggle, onAdd, onDelete, members }: ShoppingListScreenProps) {
   const [draft, setDraft] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -88,7 +89,7 @@ export function ShoppingListScreen({ items, onToggle, onAdd, members }: Shopping
                 key={item.id}
                 className={index > 0 ? "border-t border-[rgba(44,38,34,0.06)]" : ""}
               >
-                <ShoppingItemRow item={item} onToggle={onToggle} members={members} />
+                <ShoppingItemRow item={item} onToggle={onToggle} onDelete={onDelete} members={members} />
               </div>
             ))}
           </div>
@@ -107,7 +108,7 @@ export function ShoppingListScreen({ items, onToggle, onAdd, members }: Shopping
                 key={item.id}
                 className={index > 0 ? "border-t border-[rgba(44,38,34,0.06)]" : ""}
               >
-                <ShoppingItemRow item={item} onToggle={onToggle} members={members} />
+                <ShoppingItemRow item={item} onToggle={onToggle} onDelete={onDelete} members={members} />
               </div>
             ))}
           </div>
