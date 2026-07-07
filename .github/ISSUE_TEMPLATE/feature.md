@@ -1,6 +1,6 @@
 ---
 name: Feature
-about: Issue de développement Domotidien
+about: Issue de développement Kasaly
 title: ""
 labels: ""
 assignees: ""

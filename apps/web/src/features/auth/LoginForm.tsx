@@ -39,7 +39,7 @@ export function LoginForm({ next: rawNext }: LoginFormProps) {
   return (
     <>
       <AuthBrandHeader
-        title="Domotidien"
+        title="Kasaly"
         subtitle="Le hub partagé de votre foyer."
         titleClassName="text-[34px]"
       />

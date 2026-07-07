@@ -15,7 +15,7 @@ const hanken = Hanken_Grotesk({
 });
 
 export const metadata: Metadata = {
-  title: "Domotidien",
+  title: "Kasaly",
   description: "Shared home management hub",
 };
 

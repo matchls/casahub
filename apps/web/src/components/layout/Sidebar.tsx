@@ -39,7 +39,7 @@ export function Sidebar({ activeView, onNavigate, profile }: SidebarProps) {
           className="text-[21px] font-extrabold text-[var(--text-primary)] tracking-[-0.02em]"
           style={{ fontFamily: "var(--font-display)" }}
         >
-          Domotidien
+          Kasaly
         </span>
       </div>
 

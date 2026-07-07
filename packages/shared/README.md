@@ -1,6 +1,6 @@
-# @domotidien/shared
+# @kasaly/shared
 
-Shared types, schemas, and utilities for Domotidien.
+Shared types, schemas, and utilities for Kasaly.
 
 This package is a placeholder for future shared code that will be used across the monorepo — for example, Supabase types, Zod schemas, and utility functions.
 
