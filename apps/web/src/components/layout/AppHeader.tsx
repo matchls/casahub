@@ -17,12 +17,11 @@ const VIEW_META: Record<View, { title: string; subtitle?: string }> = {
 
 interface AppHeaderProps {
   activeView: View;
-  onAdd: () => void;
   subtitle?: string;
   profile: HouseholdProfile;
 }
 
-export function AppHeader({ activeView, onAdd, subtitle, profile }: AppHeaderProps) {
+export function AppHeader({ activeView, subtitle, profile }: AppHeaderProps) {
   const meta = VIEW_META[activeView];
   const resolvedSubtitle = subtitle ?? meta.subtitle;
   const resolvedTitle =
@@ -48,7 +47,7 @@ export function AppHeader({ activeView, onAdd, subtitle, profile }: AppHeaderPro
         )}
       </div>
 
-      {/* Right: avatars + add button (agenda only) */}
+      {/* Right: avatars */}
       <div className="flex items-center gap-[14px] shrink-0">
         {/* Overlapping member avatars — real household members, capped so it never overflows */}
         <div className="flex">
@@ -66,17 +65,6 @@ export function AppHeader({ activeView, onAdd, subtitle, profile }: AppHeaderPro
             </div>
           ))}
         </div>
-
-        {/* + Ajouter — agenda only */}
-        {activeView === "calendar" && (
-          <button
-            onClick={onAdd}
-            className="flex items-center rounded-[13px] bg-[var(--primary)] text-white px-[18px] py-[11px] text-[14px] font-bold cursor-pointer hover:opacity-90 transition-opacity"
-            style={{ boxShadow: "var(--shadow-accent)" }}
-          >
-            + Ajouter
-          </button>
-        )}
       </div>
     </header>
   );
