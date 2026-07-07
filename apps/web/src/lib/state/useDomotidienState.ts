@@ -67,7 +67,6 @@ export function useDomotidienState({
 }: DomotidienStateOptions) {
   // Navigation
   const [activeView, setActiveView] = useState<View>("home");
-  const [addOpen, setAddOpen] = useState(false);
 
   // Data
   const [shoppingItems, setShoppingItems] = useState<ShoppingItem[]>(initialShoppingItems);
@@ -115,14 +114,6 @@ export function useDomotidienState({
   const linksCount = links.length;
   const dayItemsCount = dayItems.length;
   const agendaEventsCount = events.length;
-
-  // Actions — navigation
-  function openAddDrawer() {
-    setAddOpen(true);
-  }
-  function closeAddDrawer() {
-    setAddOpen(false);
-  }
 
   // Actions — shopping (Supabase-backed with optimistic updates)
   async function toggleShoppingItem(id: string) {
@@ -427,9 +418,6 @@ export function useDomotidienState({
     // Navigation
     activeView,
     setActiveView,
-    addOpen,
-    openAddDrawer,
-    closeAddDrawer,
 
     // Data
     shoppingItems,

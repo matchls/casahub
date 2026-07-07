@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { Card } from "@/components/ui/Card";
 import {
   GROUP_LABELS,
   GROUP_ORDER,
@@ -11,11 +12,115 @@ import type { AgendaEvent, AgendaGroup, HouseholdMember } from "@/lib/domain/typ
 interface AgendaScreenProps {
   events: AgendaEvent[];
   members: HouseholdMember[];
+  onAdd: (title: string, eventDate: string, eventTime?: string, location?: string) => Promise<void>;
   onUpdate: (id: string, title: string, eventDate: string, eventTime?: string, location?: string) => Promise<void>;
   onDelete: (id: string) => void;
 }
 
-export function AgendaScreen({ events, members, onUpdate, onDelete }: AgendaScreenProps) {
+function todayIsoDate(): string {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+}
+
+const addInputClass = cn(
+  "min-w-0 rounded-[10px] border-[1.5px] border-[var(--border-input)] bg-[var(--surface)]",
+  "px-3 py-[9px] text-[14px] text-[var(--text-primary)]",
+  "placeholder:text-[var(--placeholder)] focus:outline-none focus:border-[var(--agenda-accent)] transition-colors"
+);
+
+function AddEventCard({ onAdd }: { onAdd: AgendaScreenProps["onAdd"] }) {
+  const [title, setTitle] = useState("");
+  const [eventDate, setEventDate] = useState(todayIsoDate());
+  const [eventTime, setEventTime] = useState("");
+  const [location, setLocation] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleAdd(e: React.FormEvent) {
+    e.preventDefault();
+    const trimmedTitle = title.trim();
+    if (!trimmedTitle) {
+      setError("Le titre est obligatoire.");
+      return;
+    }
+    if (!eventDate) {
+      setError("La date est obligatoire.");
+      return;
+    }
+    setSubmitting(true);
+    setError(null);
+    try {
+      await onAdd(trimmedTitle, eventDate, eventTime || undefined, location.trim() || undefined);
+      setTitle("");
+      setEventTime("");
+      setLocation("");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Une erreur est survenue.");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <Card className="flex flex-col gap-[10px] !p-[14px]">
+      <form onSubmit={handleAdd} className="flex flex-col gap-[10px]">
+        <div className="flex items-center gap-3">
+          <input
+            type="text"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            disabled={submitting}
+            placeholder="Nouvel événement..."
+            className={cn(addInputClass, "flex-1")}
+          />
+          <button
+            type="submit"
+            disabled={!title.trim() || !eventDate || submitting}
+            aria-label="Ajouter un événement"
+            className={cn(
+              "shrink-0 w-9 h-9 rounded-[10px] flex items-center justify-center",
+              "text-white text-[22px] font-light leading-none",
+              "cursor-pointer transition-opacity",
+              "bg-[var(--agenda-accent)]",
+              "shadow-[0_8px_18px_-8px_rgba(110,139,166,.7)]",
+              "hover:opacity-90 disabled:opacity-35 disabled:cursor-not-allowed"
+            )}
+          >
+            +
+          </button>
+        </div>
+        <div className="flex gap-3">
+          <input
+            type="date"
+            value={eventDate}
+            min={todayIsoDate()}
+            onChange={(e) => setEventDate(e.target.value)}
+            disabled={submitting}
+            className={cn(addInputClass, "flex-1")}
+          />
+          <input
+            type="time"
+            value={eventTime}
+            onChange={(e) => setEventTime(e.target.value)}
+            disabled={submitting}
+            className={cn(addInputClass, "flex-1")}
+          />
+        </div>
+        <input
+          type="text"
+          value={location}
+          onChange={(e) => setLocation(e.target.value)}
+          disabled={submitting}
+          placeholder="Lieu (optionnel)"
+          className={addInputClass}
+        />
+        {error && <p className="text-[13px] text-red-500">{error}</p>}
+      </form>
+    </Card>
+  );
+}
+
+export function AgendaScreen({ events, members, onAdd, onUpdate, onDelete }: AgendaScreenProps) {
   function handleDelete(id: string) {
     if (confirm("Supprimer cet événement ?")) {
       onDelete(id);
@@ -23,29 +128,33 @@ export function AgendaScreen({ events, members, onUpdate, onDelete }: AgendaScre
   }
 
   return (
-    <div className="max-w-[720px] flex flex-col gap-8">
-      {GROUP_ORDER.map((group) => {
-        const groupEvents = events.filter((e) => e.group === group);
-        if (groupEvents.length === 0) return null;
+    <div className="max-w-[720px] flex flex-col gap-5">
+      <AddEventCard onAdd={onAdd} />
 
-        return (
-          <section key={group}>
-            <h2 className="text-[11px] font-bold uppercase tracking-[.06em] text-[var(--text-muted)] mb-3 px-1">
-              {GROUP_LABELS[group]}
-            </h2>
-            <div className="rounded-[16px] bg-[var(--surface)] shadow-[var(--shadow-card)] overflow-hidden">
-              {groupEvents.map((event, index) => (
-                <div
-                  key={event.id}
-                  className={index > 0 ? "border-t border-[rgba(44,38,34,0.06)]" : ""}
-                >
-                  <AgendaEventRow event={event} group={group} members={members} onUpdate={onUpdate} onDelete={handleDelete} />
-                </div>
-              ))}
-            </div>
-          </section>
-        );
-      })}
+      <div className="flex flex-col gap-8">
+        {GROUP_ORDER.map((group) => {
+          const groupEvents = events.filter((e) => e.group === group);
+          if (groupEvents.length === 0) return null;
+
+          return (
+            <section key={group}>
+              <h2 className="text-[11px] font-bold uppercase tracking-[.06em] text-[var(--text-muted)] mb-3 px-1">
+                {GROUP_LABELS[group]}
+              </h2>
+              <div className="rounded-[16px] bg-[var(--surface)] shadow-[var(--shadow-card)] overflow-hidden">
+                {groupEvents.map((event, index) => (
+                  <div
+                    key={event.id}
+                    className={index > 0 ? "border-t border-[rgba(44,38,34,0.06)]" : ""}
+                  >
+                    <AgendaEventRow event={event} group={group} members={members} onUpdate={onUpdate} onDelete={handleDelete} />
+                  </div>
+                ))}
+              </div>
+            </section>
+          );
+        })}
+      </div>
     </div>
   );
 }

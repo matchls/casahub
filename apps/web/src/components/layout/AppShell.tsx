@@ -3,7 +3,6 @@ import { useDomotidienState } from "@/lib/state/useDomotidienState";
 import { Sidebar } from "./Sidebar";
 import { MobileBottomNav } from "./MobileBottomNav";
 import { AppHeader } from "./AppHeader";
-import { AddEventDrawer } from "./AddEventDrawer";
 import { HomeDashboard } from "@/features/dashboard/HomeDashboard";
 import { ShoppingListScreen } from "@/features/shopping/ShoppingListScreen";
 import { TasksScreen } from "@/features/tasks/TasksScreen";
@@ -55,9 +54,6 @@ export function AppShell({ initialProfile, initialAccountEmail, householdId, ini
   const {
     activeView,
     setActiveView,
-    addOpen,
-    openAddDrawer,
-    closeAddDrawer,
     shoppingItems,
     tasks,
     notes,
@@ -171,7 +167,7 @@ export function AppShell({ initialProfile, initialAccountEmail, householdId, ini
       );
     }
     if (activeView === "day") return <DayViewScreen items={dayItems} members={profile.members} />;
-    if (activeView === "calendar") return <AgendaScreen events={events} members={profile.members} onUpdate={updateEvent} onDelete={deleteEvent} />;
+    if (activeView === "calendar") return <AgendaScreen events={events} members={profile.members} onAdd={addEvent} onUpdate={updateEvent} onDelete={deleteEvent} />;
     if (activeView === "notes") {
       return <NotesScreen notes={notes} onAdd={addNote} onUpdate={updateNote} onDelete={deleteNote} />;
     }
@@ -196,7 +192,6 @@ export function AppShell({ initialProfile, initialAccountEmail, householdId, ini
       <Sidebar
         activeView={activeView}
         onNavigate={setActiveView}
-        onAdd={openAddDrawer}
         profile={profile}
       />
 
@@ -204,7 +199,6 @@ export function AppShell({ initialProfile, initialAccountEmail, householdId, ini
       <div className="flex flex-1 flex-col min-w-0 overflow-hidden">
         <AppHeader
           activeView={activeView}
-          onAdd={openAddDrawer}
           subtitle={activeSubtitle}
           profile={profile}
         />
@@ -220,9 +214,6 @@ export function AppShell({ initialProfile, initialAccountEmail, householdId, ini
           profile={profile}
         />
       </div>
-
-      {/* Add drawer (modal/sheet) — agenda events only */}
-      {addOpen && <AddEventDrawer onClose={closeAddDrawer} onAddEvent={addEvent} />}
     </div>
   );
 }
