@@ -68,6 +68,42 @@ without disrupting existing interactions on the same row/card.
       delete another household's item (RLS blocks it — verify with a direct
       API/SQL attempt as in [Access protection](#access-protection) below).
 
+## Edit flows (issue #81)
+
+Each item type below is editable in place via a small, discreet control (e.g.
+`✎` / "Modifier") without disrupting existing interactions on the same
+row/card. Edits use a compact inline form with "Enregistrer" / "Annuler" —
+no modal.
+
+- [ ] **Edit shopping item** — add an item, edit its label (and quantity if
+      set), save, hard refresh — the edit remains.
+- [ ] **Edit task** — add a task, edit its title, save, hard refresh — the
+      edit remains.
+- [ ] **Edit note** — add a note, edit its title/content, save, hard
+      refresh — the edit remains and the note stays in its category.
+- [ ] **Edit useful link** — add a link, edit its title/URL, save, hard
+      refresh — the edit remains.
+- [ ] **Edit agenda event** — add an event, edit its title/date/time/
+      location, save, hard refresh — the edit remains and the event appears
+      in the correct date group (including when the edited date moves it to
+      a different group, e.g. "aujourd'hui" → "cette semaine").
+- [ ] **Cancel restores original value** — start editing any item above,
+      change the value, click "Annuler" — the original value is shown
+      unchanged (no partial save).
+- [ ] **Empty/invalid values rejected** — clearing a required field
+      (label/title) and saving shows a clear inline error instead of
+      submitting; the previous value is kept.
+- [ ] **No accidental side effects** — clicking the edit control on a
+      shopping item or task does not toggle its done state; clicking the
+      edit control on a useful link does not open or navigate to its URL;
+      clicking edit does not trigger delete.
+- [ ] **Edit failure handling** — if the Supabase update call fails, the
+      form keeps/restores the previous value and shows a clear inline
+      error, instead of silently discarding the edit.
+- [ ] **Cross-household protection** — a member of one household cannot
+      edit another household's item (RLS blocks it — verify with a direct
+      API/SQL attempt as in [Access protection](#access-protection) below).
+
 ## Invitation flow
 
 - [ ] **Create invitation (admin)** — from Profile / Membres, an admin

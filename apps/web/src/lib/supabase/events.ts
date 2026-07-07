@@ -24,6 +24,29 @@ export async function addEvent(
   return data;
 }
 
+export async function updateEvent(
+  id: string,
+  title: string,
+  eventDate: string,
+  eventTime?: string,
+  location?: string
+): Promise<EventRow> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("events")
+    .update({
+      title,
+      event_date: eventDate,
+      event_time: eventTime || null,
+      location: location || null,
+    })
+    .eq("id", id)
+    .select("id, title, event_date, event_time, location, assigned_to")
+    .single();
+  if (error) throw new Error(error.message);
+  return data;
+}
+
 export async function deleteEvent(id: string): Promise<void> {
   const supabase = createClient();
   const { error } = await supabase.from("events").delete().eq("id", id);

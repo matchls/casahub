@@ -38,6 +38,23 @@ export async function addUsefulLink(
   return data;
 }
 
+export interface UpdateUsefulLinkInput {
+  title: string;
+  url: string;
+}
+
+export async function updateUsefulLink(id: string, input: UpdateUsefulLinkInput): Promise<LinkRow> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("useful_links")
+    .update({ title: input.title, url: input.url })
+    .eq("id", id)
+    .select("id, title, url, category, icon, created_by")
+    .single();
+  if (error) throw new Error(error.message);
+  return data;
+}
+
 export async function deleteUsefulLink(id: string): Promise<void> {
   const supabase = createClient();
   const { error } = await supabase.from("useful_links").delete().eq("id", id);

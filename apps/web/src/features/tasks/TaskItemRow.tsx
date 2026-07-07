@@ -1,3 +1,5 @@
+"use client";
+import { useState } from "react";
 import { cn } from "@/lib/utils";
 import type { Task } from "./tasksData";
 import type { HouseholdMember } from "@/lib/domain/types";
@@ -5,6 +7,7 @@ import type { HouseholdMember } from "@/lib/domain/types";
 interface TaskItemRowProps {
   task: Task;
   onToggle: (id: string) => void;
+  onUpdate: (id: string, title: string) => Promise<void>;
   onDelete: (id: string) => void;
   members: HouseholdMember[];
 }
@@ -15,9 +18,81 @@ const DUE_ICON: Record<Task["dueType"], string | null> = {
   none: null,
 };
 
-export function TaskItemRow({ task, onToggle, onDelete, members }: TaskItemRowProps) {
+export function TaskItemRow({ task, onToggle, onUpdate, onDelete, members }: TaskItemRowProps) {
+  const [editing, setEditing] = useState(false);
+  const [title, setTitle] = useState(task.title);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
   const member = task.assignedTo ? members.find((m) => m.id === task.assignedTo) : undefined;
   const dueIcon = DUE_ICON[task.dueType];
+
+  function startEditing(e: React.MouseEvent) {
+    e.stopPropagation();
+    setTitle(task.title);
+    setError(null);
+    setEditing(true);
+  }
+
+  function cancelEditing() {
+    setEditing(false);
+    setError(null);
+  }
+
+  async function handleSave() {
+    const trimmed = title.trim();
+    if (!trimmed) {
+      setError("Le titre de la tâche est obligatoire.");
+      return;
+    }
+    if (trimmed === task.title) {
+      setEditing(false);
+      return;
+    }
+    setSaving(true);
+    setError(null);
+    try {
+      await onUpdate(task.id, trimmed);
+      setEditing(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Une erreur est survenue.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (editing) {
+    return (
+      <div className="flex flex-col gap-2 px-4 py-[13px]">
+        <input
+          autoFocus
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          disabled={saving}
+          className="w-full rounded-[10px] border-[1.5px] border-[var(--border-input)] bg-[var(--surface)] px-3 py-[7px] text-[15px] font-semibold text-[var(--text-primary)] focus:outline-none focus:border-[var(--tasks-accent)] transition-colors"
+        />
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={saving}
+            className="rounded-[10px] bg-[var(--tasks-accent)] text-white font-semibold text-[13px] px-3 py-[6px] hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+          >
+            {saving ? "Enregistrement…" : "Enregistrer"}
+          </button>
+          <button
+            type="button"
+            onClick={cancelEditing}
+            disabled={saving}
+            className="text-[13px] text-[var(--text-muted)] hover:text-[var(--text-secondary)] transition-colors cursor-pointer"
+          >
+            Annuler
+          </button>
+        </div>
+        {error && <p className="text-[13px] text-red-500">{error}</p>}
+      </div>
+    );
+  }
 
   return (
     <div className="flex items-center gap-3 px-4 py-[13px]">
@@ -74,6 +149,16 @@ export function TaskItemRow({ task, onToggle, onDelete, members }: TaskItemRowPr
           {member.initial}
         </div>
       )}
+
+      {/* Edit */}
+      <button
+        type="button"
+        onClick={startEditing}
+        aria-label="Modifier la tâche"
+        className="shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-[13px] leading-none text-[var(--text-muted)] opacity-50 hover:opacity-100 hover:text-[var(--tasks-accent)] cursor-pointer transition-opacity"
+      >
+        ✎
+      </button>
 
       {/* Delete */}
       <button

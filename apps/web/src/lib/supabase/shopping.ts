@@ -42,6 +42,26 @@ export async function toggleShoppingItem(id: string, done: boolean): Promise<voi
   if (error) throw new Error(error.message);
 }
 
+export interface UpdateShoppingItemInput {
+  label: string;
+  quantity?: number;
+}
+
+export async function updateShoppingItem(
+  id: string,
+  input: UpdateShoppingItemInput
+): Promise<ShoppingRow> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("shopping_items")
+    .update({ label: input.label, quantity: input.quantity ?? null })
+    .eq("id", id)
+    .select("id, label, quantity, done, assigned_to")
+    .single();
+  if (error) throw new Error(error.message);
+  return data;
+}
+
 export async function deleteShoppingItem(id: string): Promise<void> {
   const supabase = createClient();
   const { error } = await supabase.from("shopping_items").delete().eq("id", id);

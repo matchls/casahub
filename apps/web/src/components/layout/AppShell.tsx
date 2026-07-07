@@ -74,15 +74,20 @@ export function AppShell({ initialProfile, initialAccountEmail, householdId, ini
     agendaEventsCount,
     toggleShoppingItem,
     addShoppingItem,
+    updateShoppingItem,
     deleteShoppingItem,
     toggleTask,
     addTask,
+    updateTask,
     deleteTask,
     addNote,
+    updateNote,
     deleteNote,
     addUsefulLink,
+    updateUsefulLink,
     deleteUsefulLink,
     addEvent,
+    updateEvent,
     deleteEvent,
     updateHouseholdName,
   } = useDomotidienState({ initialProfile, initialAccountEmail, householdId, initialShoppingItems, initialTasks, initialNotes, initialLinks, initialEvents });
@@ -147,6 +152,7 @@ export function AppShell({ initialProfile, initialAccountEmail, householdId, ini
           items={shoppingItems}
           onToggle={toggleShoppingItem}
           onAdd={addShoppingItem}
+          onUpdate={updateShoppingItem}
           onDelete={deleteShoppingItem}
           members={profile.members}
         />
@@ -158,18 +164,19 @@ export function AppShell({ initialProfile, initialAccountEmail, householdId, ini
           tasks={tasks}
           onToggle={toggleTask}
           onAdd={addTask}
+          onUpdate={updateTask}
           onDelete={deleteTask}
           members={profile.members}
         />
       );
     }
     if (activeView === "day") return <DayViewScreen items={dayItems} members={profile.members} />;
-    if (activeView === "calendar") return <AgendaScreen events={events} members={profile.members} onDelete={deleteEvent} />;
+    if (activeView === "calendar") return <AgendaScreen events={events} members={profile.members} onUpdate={updateEvent} onDelete={deleteEvent} />;
     if (activeView === "notes") {
-      return <NotesScreen notes={notes} onAdd={addNote} onDelete={deleteNote} />;
+      return <NotesScreen notes={notes} onAdd={addNote} onUpdate={updateNote} onDelete={deleteNote} />;
     }
     if (activeView === "links") {
-      return <UsefulLinksScreen links={links} onAdd={addUsefulLink} onDelete={deleteUsefulLink} />;
+      return <UsefulLinksScreen links={links} onAdd={addUsefulLink} onUpdate={updateUsefulLink} onDelete={deleteUsefulLink} />;
     }
     if (activeView === "profile") {
       return (

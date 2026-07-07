@@ -39,6 +39,8 @@ export interface AgendaEvent {
   id: string;
   type: ItemType;
   title: string;
+  /** Raw Postgres `date` string ("YYYY-MM-DD") — dayAbbr/dayNum are derived display values that drop month/year, so this is the only field that can round-trip into a date input. */
+  eventDate: string;
   dayAbbr: string;
   dayNum: number;
   time?: string;
