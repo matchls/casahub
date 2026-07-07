@@ -3,17 +3,19 @@ import { useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/Card";
 import type { ShoppingItem, HouseholdMember } from "@/lib/domain/types";
+import type { UpdateShoppingItemInput } from "@/lib/supabase/shopping";
 import { ShoppingItemRow } from "./ShoppingItemRow";
 
 interface ShoppingListScreenProps {
   items: ShoppingItem[];
   onToggle: (id: string) => void;
   onAdd: (label: string) => void;
+  onUpdate: (id: string, input: UpdateShoppingItemInput) => Promise<void>;
   onDelete: (id: string) => void;
   members: HouseholdMember[];
 }
 
-export function ShoppingListScreen({ items, onToggle, onAdd, onDelete, members }: ShoppingListScreenProps) {
+export function ShoppingListScreen({ items, onToggle, onAdd, onUpdate, onDelete, members }: ShoppingListScreenProps) {
   const [draft, setDraft] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -89,7 +91,7 @@ export function ShoppingListScreen({ items, onToggle, onAdd, onDelete, members }
                 key={item.id}
                 className={index > 0 ? "border-t border-[rgba(44,38,34,0.06)]" : ""}
               >
-                <ShoppingItemRow item={item} onToggle={onToggle} onDelete={onDelete} members={members} />
+                <ShoppingItemRow item={item} onToggle={onToggle} onUpdate={onUpdate} onDelete={onDelete} members={members} />
               </div>
             ))}
           </div>
@@ -108,7 +110,7 @@ export function ShoppingListScreen({ items, onToggle, onAdd, onDelete, members }
                 key={item.id}
                 className={index > 0 ? "border-t border-[rgba(44,38,34,0.06)]" : ""}
               >
-                <ShoppingItemRow item={item} onToggle={onToggle} onDelete={onDelete} members={members} />
+                <ShoppingItemRow item={item} onToggle={onToggle} onUpdate={onUpdate} onDelete={onDelete} members={members} />
               </div>
             ))}
           </div>

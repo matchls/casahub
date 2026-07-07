@@ -9,11 +9,12 @@ interface TasksScreenProps {
   tasks: Task[];
   onToggle: (id: string) => void;
   onAdd: (title: string) => void;
+  onUpdate: (id: string, title: string) => Promise<void>;
   onDelete: (id: string) => void;
   members: HouseholdMember[];
 }
 
-export function TasksScreen({ tasks, onToggle, onAdd, onDelete, members }: TasksScreenProps) {
+export function TasksScreen({ tasks, onToggle, onAdd, onUpdate, onDelete, members }: TasksScreenProps) {
   const [draft, setDraft] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -87,7 +88,7 @@ export function TasksScreen({ tasks, onToggle, onAdd, onDelete, members }: Tasks
                 key={task.id}
                 className={index > 0 ? "border-t border-[rgba(44,38,34,0.06)]" : ""}
               >
-                <TaskItemRow task={task} onToggle={onToggle} onDelete={onDelete} members={members} />
+                <TaskItemRow task={task} onToggle={onToggle} onUpdate={onUpdate} onDelete={onDelete} members={members} />
               </div>
             ))}
           </div>
@@ -106,7 +107,7 @@ export function TasksScreen({ tasks, onToggle, onAdd, onDelete, members }: Tasks
                 key={task.id}
                 className={index > 0 ? "border-t border-[rgba(44,38,34,0.06)]" : ""}
               >
-                <TaskItemRow task={task} onToggle={onToggle} onDelete={onDelete} members={members} />
+                <TaskItemRow task={task} onToggle={onToggle} onUpdate={onUpdate} onDelete={onDelete} members={members} />
               </div>
             ))}
           </div>

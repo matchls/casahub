@@ -35,6 +35,23 @@ export async function addNote(
   return data;
 }
 
+export interface UpdateNoteInput {
+  title: string;
+  content: string;
+}
+
+export async function updateNote(id: string, input: UpdateNoteInput): Promise<NoteRow> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("notes")
+    .update({ title: input.title, content: input.content })
+    .eq("id", id)
+    .select("id, title, content, category, created_by")
+    .single();
+  if (error) throw new Error(error.message);
+  return data;
+}
+
 export async function deleteNote(id: string): Promise<void> {
   const supabase = createClient();
   const { error } = await supabase.from("notes").delete().eq("id", id);

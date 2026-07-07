@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/Card";
 import { NoteCard } from "./NoteCard";
 import { CATEGORY_ORDER } from "./notesData";
 import type { Note, NoteCategory } from "@/lib/domain/types";
+import type { UpdateNoteInput } from "@/lib/supabase/notes";
 
 const CATEGORY_SHORT_LABELS: Record<NoteCategory, string> = {
   wifi: "Wi-Fi",
@@ -45,10 +46,11 @@ const addButtonClass = cn(
 interface NotesScreenProps {
   notes: Note[];
   onAdd: (title: string, category: NoteCategory, content?: string) => void;
+  onUpdate: (id: string, input: UpdateNoteInput) => Promise<void>;
   onDelete: (id: string) => void;
 }
 
-export function NotesScreen({ notes, onAdd, onDelete }: NotesScreenProps) {
+export function NotesScreen({ notes, onAdd, onUpdate, onDelete }: NotesScreenProps) {
   const [titleDraft, setTitleDraft] = useState("");
   const [contentDraft, setContentDraft] = useState("");
   const [category, setCategory] = useState<NoteCategory>("ideas");
@@ -162,6 +164,7 @@ export function NotesScreen({ notes, onAdd, onDelete }: NotesScreenProps) {
               key={cat}
               category={cat}
               notes={notes.filter((n) => n.category === cat)}
+              onUpdate={onUpdate}
               onDelete={onDelete}
             />
           ))}

@@ -41,6 +41,18 @@ export async function toggleTask(id: string, done: boolean): Promise<void> {
   if (error) throw new Error(error.message);
 }
 
+export async function updateTask(id: string, title: string): Promise<TaskRow> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("tasks")
+    .update({ title })
+    .eq("id", id)
+    .select("id, title, due_label, due_type, done, assigned_to")
+    .single();
+  if (error) throw new Error(error.message);
+  return data;
+}
+
 export async function deleteTask(id: string): Promise<void> {
   const supabase = createClient();
   const { error } = await supabase.from("tasks").delete().eq("id", id);

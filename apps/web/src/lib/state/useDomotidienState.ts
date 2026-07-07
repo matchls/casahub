@@ -15,18 +15,32 @@ import type {
 import {
   addShoppingItem as addShoppingItemDb,
   toggleShoppingItem as toggleShoppingItemDb,
+  updateShoppingItem as updateShoppingItemDb,
   deleteShoppingItem as deleteShoppingItemDb,
   mapShoppingRow,
+  type UpdateShoppingItemInput,
 } from "@/lib/supabase/shopping";
 import {
   addTask as addTaskDb,
   toggleTask as toggleTaskDb,
+  updateTask as updateTaskDb,
   deleteTask as deleteTaskDb,
   mapTaskRow,
 } from "@/lib/supabase/tasks";
-import { addNote as addNoteDb, deleteNote as deleteNoteDb, mapNoteRow } from "@/lib/supabase/notes";
-import { addUsefulLink as addUsefulLinkDb, deleteUsefulLink as deleteUsefulLinkDb, mapLinkRow } from "@/lib/supabase/links";
-import { addEvent as addEventDb, deleteEvent as deleteEventDb } from "@/lib/supabase/events";
+import {
+  addNote as addNoteDb,
+  updateNote as updateNoteDb,
+  deleteNote as deleteNoteDb,
+  mapNoteRow,
+  type UpdateNoteInput,
+} from "@/lib/supabase/notes";
+import {
+  addUsefulLink as addUsefulLinkDb,
+  updateUsefulLink as updateUsefulLinkDb,
+  deleteUsefulLink as deleteUsefulLinkDb,
+  mapLinkRow,
+} from "@/lib/supabase/links";
+import { addEvent as addEventDb, updateEvent as updateEventDb, deleteEvent as deleteEventDb } from "@/lib/supabase/events";
 import { updateHouseholdName as updateHouseholdNameDb } from "@/lib/supabase/households";
 import { insertEventSorted, mapEventRow, type EventRow } from "@/lib/domain/agenda";
 
@@ -141,6 +155,20 @@ export function useDomotidienState({
     }
   }
 
+  async function updateShoppingItem(id: string, input: UpdateShoppingItemInput) {
+    const prevItems = shoppingItems;
+    setShoppingItems((items) =>
+      items.map((i) => (i.id === id ? { ...i, label: input.label, quantity: input.quantity } : i))
+    );
+    try {
+      await updateShoppingItemDb(id, input);
+    } catch (err) {
+      console.error("[shopping] update failed:", err);
+      setShoppingItems(prevItems);
+      throw err;
+    }
+  }
+
   async function deleteShoppingItem(id: string) {
     const prevItems = shoppingItems;
     setShoppingItems((items) => items.filter((i) => i.id !== id));
@@ -184,6 +212,18 @@ export function useDomotidienState({
     }
   }
 
+  async function updateTask(id: string, title: string) {
+    const prevTasks = tasks;
+    setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, title } : t)));
+    try {
+      await updateTaskDb(id, title);
+    } catch (err) {
+      console.error("[tasks] update failed:", err);
+      setTasks(prevTasks);
+      throw err;
+    }
+  }
+
   async function deleteTask(id: string) {
     const prevTasks = tasks;
     setTasks((prev) => prev.filter((t) => t.id !== id));
@@ -209,6 +249,20 @@ export function useDomotidienState({
     } catch (err) {
       console.error("[notes] add failed:", err);
       setNotes((prev) => prev.filter((n) => n.id !== tempId));
+    }
+  }
+
+  async function updateNote(id: string, input: UpdateNoteInput) {
+    const prevNotes = notes;
+    setNotes((prev) =>
+      prev.map((n) => (n.id === id ? { ...n, title: input.title, content: input.content } : n))
+    );
+    try {
+      await updateNoteDb(id, input);
+    } catch (err) {
+      console.error("[notes] update failed:", err);
+      setNotes(prevNotes);
+      throw err;
     }
   }
 
@@ -249,6 +303,23 @@ export function useDomotidienState({
     } catch (err) {
       console.error("[links] add failed:", err);
       setLinks((prev) => prev.filter((l) => l.id !== tempId));
+    }
+  }
+
+  async function updateUsefulLink(id: string, title: string, url: string) {
+    const trimmed = url.trim();
+    const normalizedUrl =
+      trimmed && !trimmed.startsWith("http") ? `https://${trimmed}` : trimmed || "#";
+    const prevLinks = links;
+    setLinks((prev) =>
+      prev.map((l) => (l.id === id ? { ...l, title, url: normalizedUrl } : l))
+    );
+    try {
+      await updateUsefulLinkDb(id, { title, url: normalizedUrl });
+    } catch (err) {
+      console.error("[links] update failed:", err);
+      setLinks(prevLinks);
+      throw err;
     }
   }
 
@@ -293,6 +364,36 @@ export function useDomotidienState({
     } catch (err) {
       console.error("[events] add failed:", err);
       setEvents((prev) => prev.filter((e) => e.id !== tempId));
+      throw err;
+    }
+  }
+
+  async function updateEvent(id: string, title: string, eventDate: string, eventTime?: string, location?: string) {
+    const prevEvents = events;
+    const existing = prevEvents.find((e) => e.id === id);
+    if (!existing) return;
+
+    function resort(prev: AgendaEvent[], updated: AgendaEvent | null) {
+      const withoutId = prev.filter((e) => e.id !== id);
+      return updated ? insertEventSorted(withoutId, updated) : withoutId;
+    }
+
+    const optimisticRow: EventRow = {
+      id,
+      title,
+      event_date: eventDate,
+      event_time: eventTime || null,
+      location: location || null,
+      assigned_to: existing.assignedTo ?? null,
+    };
+    setEvents((prev) => resort(prev, mapEventRow(optimisticRow, new Date())));
+
+    try {
+      const row = await updateEventDb(id, title, eventDate, eventTime, location);
+      setEvents((prev) => resort(prev, mapEventRow(row, new Date())));
+    } catch (err) {
+      console.error("[events] update failed:", err);
+      setEvents(prevEvents);
       throw err;
     }
   }
@@ -351,15 +452,20 @@ export function useDomotidienState({
     // Actions
     toggleShoppingItem,
     addShoppingItem,
+    updateShoppingItem,
     deleteShoppingItem,
     toggleTask,
     addTask,
+    updateTask,
     deleteTask,
     addNote,
+    updateNote,
     deleteNote,
     addUsefulLink,
+    updateUsefulLink,
     deleteUsefulLink,
     addEvent,
+    updateEvent,
     deleteEvent,
     updateHouseholdName,
   };

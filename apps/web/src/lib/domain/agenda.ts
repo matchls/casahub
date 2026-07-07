@@ -70,6 +70,7 @@ export function mapEventRow(row: EventRow, today: Date): AgendaEvent | null {
     id: row.id,
     type: "event",
     title: row.title,
+    eventDate: row.event_date,
     dayAbbr: DAY_ABBRS[eventDate.getDay()],
     dayNum: eventDate.getDate(),
     time: row.event_time ? row.event_time.slice(0, 5) : "Toute la journée",
