@@ -1,4 +1,5 @@
 "use client";
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 import type { View } from "./types";
 import type { HouseholdProfile } from "@/lib/domain/types";
@@ -32,6 +33,16 @@ export function AppHeader({ activeView, subtitle, profile }: AppHeaderProps) {
       className="flex items-center gap-[13px] px-4 min-[880px]:px-7 py-[14px] min-[880px]:py-[18px] shrink-0"
       style={{ borderBottom: "1px solid rgba(44,38,34,.05)" }}
     >
+      {/* Logo — mobile only; desktop branding lives in the sidebar */}
+      <Image
+        src="/logo.png"
+        alt="Logo Kasaly"
+        width={32}
+        height={32}
+        priority
+        className="min-[880px]:hidden shrink-0"
+      />
+
       {/* Title */}
       <div className="flex-1 min-w-0">
         <h1

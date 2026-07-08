@@ -17,6 +17,10 @@ const hanken = Hanken_Grotesk({
 export const metadata: Metadata = {
   title: "Kasaly",
   description: "Shared home management hub",
+  icons: {
+    icon: "/logo.png",
+    apple: "/logo.png",
+  },
 };
 
 export default function RootLayout({
