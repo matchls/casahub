@@ -201,18 +201,10 @@ export function CreateHouseholdForm() {
 
             <div className="h-px bg-[rgba(44,38,34,.06)]" />
 
-            {/* Invite member */}
-            <button
-              type="button"
-              className="flex items-center gap-[10px] cursor-pointer group w-full text-left"
-            >
-              <div className="h-9 w-9 rounded-full border-[1.5px] border-dashed border-[var(--border-input)] flex items-center justify-center text-[var(--text-muted)] leading-none group-hover:border-[var(--primary)] group-hover:text-[var(--primary)] transition-colors shrink-0">
-                +
-              </div>
-              <span className="text-[14px] font-semibold text-[var(--text-secondary)] group-hover:text-[var(--primary)] transition-colors">
-                Inviter un membre
-              </span>
-            </button>
+            {/* Inviting other members happens after the household exists (Profil & foyer) */}
+            <p className="text-[13px] text-[var(--text-muted)]">
+              Vous pourrez inviter d&apos;autres membres une fois le foyer créé.
+            </p>
           </div>
         </div>
 
