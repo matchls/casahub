@@ -11,7 +11,6 @@ import { AgendaScreen } from "@/features/agenda/AgendaScreen";
 import { NotesScreen } from "@/features/notes/NotesScreen";
 import { UsefulLinksScreen } from "@/features/links/UsefulLinksScreen";
 import { ProfileScreen } from "@/features/profile/ProfileScreen";
-import type { View } from "./types";
 import type { AgendaEvent, HouseholdProfile, Note, ShoppingItem, Task, UsefulLink } from "@/lib/domain/types";
 
 interface AppShellProps {
@@ -23,31 +22,6 @@ interface AppShellProps {
   initialNotes: Note[];
   initialLinks: UsefulLink[];
   initialEvents: AgendaEvent[];
-}
-
-/* Simple placeholder for non-implemented views */
-function ViewPlaceholder({ view }: { view: View }) {
-  const meta: Record<View, { emoji: string; label: string; color: string }> = {
-    home:     { emoji: "🏡", label: "Foyer",          color: "var(--shopping-text)" },
-    day:      { emoji: "📆", label: "La journée",     color: "var(--agenda-text)" },
-    shopping: { emoji: "🛒", label: "Courses",        color: "var(--shopping-text)" },
-    tasks:    { emoji: "✅", label: "Tâches",         color: "var(--tasks-text)" },
-    calendar: { emoji: "📅", label: "Calendrier",     color: "var(--agenda-text)" },
-    notes:    { emoji: "📝", label: "Notes",          color: "var(--notes-text)" },
-    links:    { emoji: "🔗", label: "Liens utiles",   color: "var(--links-text)" },
-    profile:  { emoji: "👤", label: "Profil",         color: "var(--text-secondary)" },
-  };
-
-  const m = meta[view];
-
-  return (
-    <div className="flex flex-col items-center justify-center min-h-[300px] gap-4 text-center">
-      <span className="text-[64px] opacity-40">{m.emoji}</span>
-      <p className="text-[15px] font-semibold" style={{ color: m.color, opacity: 0.5 }}>
-        L&apos;écran « {m.label} » sera ici dans une prochaine issue.
-      </p>
-    </div>
-  );
 }
 
 export function AppShell({ initialProfile, initialAccountEmail, householdId, initialShoppingItems, initialTasks, initialNotes, initialLinks, initialEvents }: AppShellProps) {
@@ -183,7 +157,7 @@ export function AppShell({ initialProfile, initialAccountEmail, householdId, ini
         />
       );
     }
-    return <ViewPlaceholder view={activeView} />;
+    return null;
   }
 
   return (

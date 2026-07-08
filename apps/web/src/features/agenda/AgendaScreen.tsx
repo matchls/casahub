@@ -131,6 +131,18 @@ export function AgendaScreen({ events, members, onAdd, onUpdate, onDelete }: Age
     <div className="max-w-[720px] flex flex-col gap-5">
       <AddEventCard onAdd={onAdd} />
 
+      {events.length === 0 && (
+        <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
+          <span className="text-[56px] opacity-40">📅</span>
+          <p className="text-[15px] font-semibold text-[var(--text-muted)]">
+            Aucun événement à venir.
+          </p>
+          <p className="text-[13px] text-[var(--text-soft)]">
+            Ajoutez un événement ci-dessus pour commencer.
+          </p>
+        </div>
+      )}
+
       <div className="flex flex-col gap-8">
         {GROUP_ORDER.map((group) => {
           const groupEvents = events.filter((e) => e.group === group);

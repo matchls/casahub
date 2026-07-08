@@ -132,7 +132,9 @@ export function NoteCard({ category, notes, onUpdate, onDelete }: NoteCardProps)
 
       {/* Empty state */}
       {notes.length === 0 && (
-        <p className="text-[13px] text-[var(--text-muted)] italic">Aucune note</p>
+        <p className="text-[13px] text-[var(--text-muted)]">
+          Rien pour l&apos;instant — ajoutez-en un ci-dessus.
+        </p>
       )}
 
       {/* Ideas: chip tags */}
