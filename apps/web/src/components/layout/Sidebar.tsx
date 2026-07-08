@@ -1,4 +1,5 @@
 "use client";
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 import type { View } from "./types";
 import type { HouseholdProfile } from "@/lib/domain/types";
@@ -32,9 +33,14 @@ export function Sidebar({ activeView, onNavigate, profile }: SidebarProps) {
     >
       {/* Logo */}
       <div className="flex items-center gap-[11px] pl-[22px] pr-[14px] pb-[20px]">
-        <div className="w-[38px] h-[38px] rounded-[12px] bg-[var(--primary)] flex items-center justify-center text-[20px] shrink-0">
-          🏠
-        </div>
+        <Image
+          src="/logo.png"
+          alt="Logo Kasaly"
+          width={38}
+          height={38}
+          priority
+          className="shrink-0"
+        />
         <span
           className="text-[21px] font-extrabold text-[var(--text-primary)] tracking-[-0.02em]"
           style={{ fontFamily: "var(--font-display)" }}
