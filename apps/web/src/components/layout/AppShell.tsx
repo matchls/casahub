@@ -187,7 +187,7 @@ export function AppShell({ initialProfile, initialAccountEmail, householdId, ini
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[var(--background)]">
+    <div className="flex h-dvh overflow-hidden bg-[var(--background)]">
       {/* Sidebar — desktop only (hidden on mobile via Sidebar's CSS) */}
       <Sidebar
         activeView={activeView}
@@ -203,7 +203,7 @@ export function AppShell({ initialProfile, initialAccountEmail, householdId, ini
           profile={profile}
         />
 
-        <main className="flex-1 overflow-auto px-4 py-5 min-[880px]:px-8 min-[880px]:py-7">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden px-4 py-5 min-[880px]:px-8 min-[880px]:py-7">
           <div className="max-w-[1060px] mx-auto">{renderView()}</div>
         </main>
 

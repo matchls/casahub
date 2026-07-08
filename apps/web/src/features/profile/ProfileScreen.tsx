@@ -144,7 +144,7 @@ function RowItem({
   return (
     <div className="flex items-center gap-3 py-[13px] border-b border-[var(--border)] last:border-b-0">
       <span className="text-[18px] w-6 text-center shrink-0 leading-none">{icon}</span>
-      <span className="flex-1 text-[15px] text-[var(--text-primary)] font-medium">
+      <span className="flex-1 min-w-0 truncate text-[15px] text-[var(--text-primary)] font-medium">
         {label}
       </span>
       {children}
