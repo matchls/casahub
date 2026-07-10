@@ -1,8 +1,10 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import { Card } from "@/components/ui/Card";
+import { Badge } from "@/components/ui/Badge";
 import { HouseholdMemberCard } from "./HouseholdMemberCard";
 import { InviteMemberRow } from "./InviteMemberRow";
 import type { HouseholdProfile } from "@/lib/domain/types";
@@ -115,34 +117,24 @@ function HouseholdNameEditor({
   );
 }
 
-function Toggle({ checked, onChange }: { checked: boolean; onChange: () => void }) {
-  return (
-    <button
-      role="switch"
-      aria-checked={checked}
-      onClick={onChange}
-      className="relative inline-flex h-[26px] w-[46px] shrink-0 cursor-pointer rounded-full transition-colors"
-      style={{ backgroundColor: checked ? "var(--primary)" : "var(--surface-muted)" }}
-    >
-      <span
-        className="absolute top-[3px] left-[3px] h-[20px] w-[20px] rounded-full bg-white shadow-[0_1px_4px_rgba(0,0,0,0.15)] transition-transform"
-        style={{ transform: checked ? "translateX(20px)" : "translateX(0)" }}
-      />
-    </button>
-  );
-}
-
 function RowItem({
   icon,
   label,
+  disabled = false,
   children,
 }: {
   icon: string;
   label: string;
+  disabled?: boolean;
   children?: React.ReactNode;
 }) {
   return (
-    <div className="flex items-center gap-3 py-[13px] border-b border-[var(--border)] last:border-b-0">
+    <div
+      className={cn(
+        "flex items-center gap-3 py-[13px] border-b border-[var(--border)] last:border-b-0",
+        disabled && "opacity-50"
+      )}
+    >
       <span className="text-[18px] w-6 text-center shrink-0 leading-none">{icon}</span>
       <span className="flex-1 min-w-0 truncate text-[15px] text-[var(--text-primary)] font-medium">
         {label}
@@ -168,8 +160,6 @@ interface ProfileScreenProps {
 
 export function ProfileScreen({ profile, accountEmail, onUpdateName }: ProfileScreenProps) {
   const router = useRouter();
-  const [notifs, setNotifs]     = useState(true);
-  const [dailyMsg, setDailyMsg] = useState(true);
 
   async function handleSignOut() {
     const supabase = createClient();
@@ -215,11 +205,11 @@ export function ProfileScreen({ profile, accountEmail, onUpdateName }: ProfileSc
       <div>
         <SectionLabel>Préférences</SectionLabel>
         <Card className="!p-4">
-          <RowItem icon="🔔" label="Notifications du foyer">
-            <Toggle checked={notifs} onChange={() => setNotifs((v) => !v)} />
+          <RowItem icon="🔔" label="Notifications du foyer" disabled>
+            <Badge>Bientôt</Badge>
           </RowItem>
-          <RowItem icon="💬" label="Message du jour">
-            <Toggle checked={dailyMsg} onChange={() => setDailyMsg((v) => !v)} />
+          <RowItem icon="💬" label="Message du jour" disabled>
+            <Badge>Bientôt</Badge>
           </RowItem>
         </Card>
       </div>

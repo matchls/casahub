@@ -80,14 +80,26 @@ export function mapEventRow(row: EventRow, today: Date): AgendaEvent | null {
   };
 }
 
+/** Sort key for an event's time-of-day: all-day events (no time) sort before timed ones, matching the DB query's `nullsFirst` ordering. */
+function timeSortKey(time: string | undefined): string {
+  return time && time !== "Toute la journée" ? time : "";
+}
+
 /**
- * Inserts a newly-added event into an already date-sorted events array, keeping it grouped
- * with same-group events and ahead of any strictly-later group — without needing the full
- * original Date (AgendaEvent only carries day-of-month, not month/year).
+ * Sorts events chronologically — earliest date first, then earliest time-of-day within the same
+ * date. Returns a new array (stable sort; does not mutate the input).
  */
+export function sortEventsChronologically(events: AgendaEvent[]): AgendaEvent[] {
+  return [...events].sort((a, b) => {
+    if (a.eventDate !== b.eventDate) return a.eventDate < b.eventDate ? -1 : 1;
+    const aKey = timeSortKey(a.time);
+    const bKey = timeSortKey(b.time);
+    if (aKey !== bKey) return aKey < bKey ? -1 : 1;
+    return 0;
+  });
+}
+
+/** Inserts a newly-added or updated event and re-sorts the whole list chronologically. */
 export function insertEventSorted(events: AgendaEvent[], newEvent: AgendaEvent): AgendaEvent[] {
-  const newGroupIndex = GROUP_ORDER.indexOf(newEvent.group);
-  const insertAt = events.findIndex((e) => GROUP_ORDER.indexOf(e.group) > newGroupIndex);
-  if (insertAt === -1) return [...events, newEvent];
-  return [...events.slice(0, insertAt), newEvent, ...events.slice(insertAt)];
+  return sortEventsChronologically([...events, newEvent]);
 }

@@ -7,7 +7,7 @@ import type {
   Task,
   UsefulLink,
 } from "@/lib/domain/types";
-import { mapEventRow } from "@/lib/domain/agenda";
+import { mapEventRow, sortEventsChronologically } from "@/lib/domain/agenda";
 import { mapShoppingRow } from "./shopping";
 import { mapTaskRow } from "./tasks";
 import { mapNoteRow } from "./notes";
@@ -158,7 +158,9 @@ export async function loadEvents(
     console.error("[loaders] events query failed:", error.message);
   }
 
-  return (data ?? [])
+  const events = (data ?? [])
     .map((row) => mapEventRow(row, today))
     .filter((event): event is AgendaEvent => event !== null);
+
+  return sortEventsChronologically(events);
 }
