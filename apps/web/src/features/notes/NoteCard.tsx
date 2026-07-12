@@ -21,6 +21,12 @@ const editButtonClass =
 const inputClass =
   "min-w-0 rounded-[10px] border-[1.5px] border-[var(--border-input)] bg-[var(--surface)] px-2 py-[5px] text-[13.5px] text-[var(--text-primary)] focus:outline-none focus:border-[var(--notes-accent)] transition-colors";
 
+/** Normalizes escaped "\n" sequences (from older seed/demo content) to real newlines, so
+ * `whitespace-pre-line` renders them as line breaks alongside genuine multi-line content. */
+function toDisplayContent(content: string): string {
+  return content.replace(/\\n/g, "\n");
+}
+
 interface EditFormProps {
   note: Note;
   isIdeas: boolean;
@@ -193,7 +199,9 @@ export function NoteCard({ category, notes, onUpdate, onDelete }: NoteCardProps)
                     {note.content.trim() && (
                       <>
                         <span className="mx-[6px] text-[var(--text-muted)]">·</span>
-                        <span className="font-semibold text-[var(--text-primary)]">{note.content}</span>
+                        <span className="font-semibold text-[var(--text-primary)] whitespace-pre-line">
+                          {toDisplayContent(note.content)}
+                        </span>
                       </>
                     )}
                   </span>
@@ -242,7 +250,9 @@ export function NoteCard({ category, notes, onUpdate, onDelete }: NoteCardProps)
                     {note.content.trim() && (
                       <>
                         <span className="mx-[4px] text-[var(--text-muted)]">:</span>
-                        <span className="font-bold text-[var(--notes-text)]">{note.content}</span>
+                        <span className="font-bold text-[var(--notes-text)] whitespace-pre-line">
+                          {toDisplayContent(note.content)}
+                        </span>
                       </>
                     )}
                   </span>
