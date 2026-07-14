@@ -1,5 +1,3 @@
-import Image from "next/image";
-
 interface AuthBrandHeaderProps {
   title: string;
   subtitle: string;
@@ -14,15 +12,17 @@ export function AuthBrandHeader({
 }: AuthBrandHeaderProps) {
   return (
     <>
-      <Image
-        src="/logo.png"
-        alt="Logo Kasaly"
-        width={78}
-        height={78}
-        priority
-        className="rounded-[23px] shrink-0"
-        style={{ boxShadow: "0 16px 34px -12px rgba(194,96,63,.6)" }}
-      />
+      <div
+        role="img"
+        aria-label="Logo Kasaly"
+        className="w-[78px] h-[78px] rounded-[23px] bg-[var(--primary)] flex items-center justify-center text-white font-extrabold text-[42px] shrink-0"
+        style={{
+          boxShadow: "0 16px 34px -12px rgba(194,96,63,.6)",
+          fontFamily: "var(--font-display)",
+        }}
+      >
+        K
+      </div>
       <h1
         className={`font-extrabold text-[var(--text-primary)] tracking-[-0.02em] mt-[18px] ${titleClassName}`}
         style={{ fontFamily: "var(--font-display)" }}
