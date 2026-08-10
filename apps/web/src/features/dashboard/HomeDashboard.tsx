@@ -1,5 +1,6 @@
 import type { View } from "@/components/layout/types";
-import type { AgendaEvent, Note, ShoppingItem, Task, UsefulLink } from "@/lib/domain/types";
+import type { AgendaEvent, BudgetEntry, Note, ShoppingItem, Task, UsefulLink } from "@/lib/domain/types";
+import { formatCents } from "@/features/budget/budgetData";
 import { DashboardTile } from "./DashboardTile";
 
 interface HomeDashboardProps {
@@ -9,9 +10,10 @@ interface HomeDashboardProps {
   notes: Note[];
   links: UsefulLink[];
   events: AgendaEvent[];
+  budgetEntries: BudgetEntry[];
 }
 
-export function HomeDashboard({ onNavigate, shoppingItems, tasks, notes, links, events }: HomeDashboardProps) {
+export function HomeDashboard({ onNavigate, shoppingItems, tasks, notes, links, events, budgetEntries }: HomeDashboardProps) {
   const pendingShoppingItems = shoppingItems.filter((i) => !i.done);
   const shoppingLabels = pendingShoppingItems.map((i) => i.label);
   const extraShopping = shoppingLabels.length - 3;
@@ -41,6 +43,10 @@ export function HomeDashboard({ onNavigate, shoppingItems, tasks, notes, links, 
 
   const linksPreview =
     links.length === 0 ? "Aucun lien partagé" : links.map((l) => l.title).join(" · ");
+
+  const budgetTotalCents = budgetEntries.reduce((sum, e) => sum + e.amountCents, 0);
+  const budgetPreview =
+    budgetEntries.length === 0 ? "Aucune dépense ce mois-ci" : `${formatCents(budgetTotalCents)} ce mois-ci`;
 
   return (
     <div className="grid grid-cols-2 min-[880px]:grid-cols-6 gap-4">
@@ -100,6 +106,17 @@ export function HomeDashboard({ onNavigate, shoppingItems, tasks, notes, links, 
         className="col-span-1 min-[880px]:col-span-2"
         minH="min-h-[140px]"
         onClick={() => onNavigate("links")}
+      />
+
+      {/* Budget — full width mobile / half desktop */}
+      <DashboardTile
+        theme="budget"
+        emoji="💰"
+        title="Budget"
+        subtitle={budgetPreview}
+        className="col-span-2 min-[880px]:col-span-3"
+        minH="min-h-[140px]"
+        onClick={() => onNavigate("budget")}
       />
     </div>
   );

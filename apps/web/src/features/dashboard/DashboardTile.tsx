@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 
-export type TileTheme = "shopping" | "tasks" | "agenda" | "notes" | "links";
+export type TileTheme = "shopping" | "tasks" | "agenda" | "notes" | "links" | "budget";
 
 interface ThemeTokens {
   bg:            string;
@@ -39,6 +39,12 @@ const THEMES: Record<TileTheme, ThemeTokens> = {
     titleColor:    "var(--links-text)",
     subtitleColor: "#8A6A82",
     badgeBg:       "var(--links-accent)",
+  },
+  budget: {
+    bg:            "var(--budget-bg)",
+    titleColor:    "var(--budget-text)",
+    subtitleColor: "#3A7A70",
+    badgeBg:       "var(--budget-accent)",
   },
 };
 

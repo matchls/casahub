@@ -13,6 +13,7 @@ const VIEW_META: Record<View, { title: string; subtitle?: string }> = {
   calendar: { title: "Agenda 📅" },
   notes:    { title: "Notes 📝" },
   links:    { title: "Liens utiles 🔗" },
+  budget:   { title: "Budget 💰" },
   profile:  { title: "Profil & foyer 👤" },
 };
 

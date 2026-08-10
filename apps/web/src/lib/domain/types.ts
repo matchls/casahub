@@ -78,6 +78,33 @@ export interface HouseholdMember {
   color: string;
 }
 
+export interface BudgetCategory {
+  id: string;
+  /** Undefined for main categories; set to the parent's id for subcategories. */
+  parentId?: string;
+  name: string;
+  icon: string;
+  sortOrder: number;
+}
+
+export type BudgetEntryKind = "fixed" | "variable";
+
+export interface BudgetEntry {
+  id: string;
+  title: string;
+  /** Stored as an integer (cents), never a float, to avoid rounding drift when summing. */
+  amountCents: number;
+  /** Undefined if the entry's category was deleted (FK is ON DELETE SET NULL). */
+  categoryId?: string;
+  /** Raw Postgres `date` string ("YYYY-MM-DD"). */
+  entryDate: string;
+  /** First-of-month Postgres `date` string ("YYYY-MM-01") used to scope the entry to a budget month. */
+  entryMonth: string;
+  kind: BudgetEntryKind;
+  note?: string;
+  createdBy?: MemberId;
+}
+
 export interface HouseholdProfile {
   name: string;
   type: "Couple" | "Colocation" | "Famille";

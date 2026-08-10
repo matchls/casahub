@@ -3,6 +3,8 @@ import { useMemo, useState } from "react";
 import type { View } from "@/components/layout/types";
 import type {
   AgendaEvent,
+  BudgetCategory,
+  BudgetEntry,
   HouseholdProfile,
   LinkCategory,
   Note,
@@ -43,6 +45,16 @@ import {
 import { addEvent as addEventDb, updateEvent as updateEventDb, deleteEvent as deleteEventDb } from "@/lib/supabase/events";
 import { updateHouseholdName as updateHouseholdNameDb } from "@/lib/supabase/households";
 import { insertEventSorted, mapEventRow, type EventRow } from "@/lib/domain/agenda";
+import {
+  addBudgetEntry as addBudgetEntryDb,
+  updateBudgetEntry as updateBudgetEntryDb,
+  deleteBudgetEntry as deleteBudgetEntryDb,
+  fetchBudgetEntriesForMonth,
+  mapBudgetEntryRow,
+  toEntryMonth,
+  type BudgetEntryInput,
+} from "@/lib/supabase/budget";
+import { currentBudgetMonth } from "@/features/budget/budgetData";
 
 interface DomotidienStateOptions {
   initialProfile: HouseholdProfile;
@@ -53,6 +65,8 @@ interface DomotidienStateOptions {
   initialNotes: Note[];
   initialLinks: UsefulLink[];
   initialEvents: AgendaEvent[];
+  initialBudgetCategories: BudgetCategory[];
+  initialBudgetEntries: BudgetEntry[];
 }
 
 export function useDomotidienState({
@@ -64,6 +78,8 @@ export function useDomotidienState({
   initialNotes,
   initialLinks,
   initialEvents,
+  initialBudgetCategories,
+  initialBudgetEntries,
 }: DomotidienStateOptions) {
   // Navigation
   const [activeView, setActiveView] = useState<View>("home");
@@ -72,6 +88,10 @@ export function useDomotidienState({
   const [shoppingItems, setShoppingItems] = useState<ShoppingItem[]>(initialShoppingItems);
   const [tasks, setTasks] = useState<Task[]>(initialTasks ?? []);
   const [notes, setNotes] = useState<Note[]>(initialNotes ?? []);
+  const [budgetCategories] = useState<BudgetCategory[]>(initialBudgetCategories ?? []);
+  const [budgetEntries, setBudgetEntries] = useState<BudgetEntry[]>(initialBudgetEntries ?? []);
+  const [budgetMonth, setBudgetMonthState] = useState<string>(currentBudgetMonth());
+  const [budgetMonthLoading, setBudgetMonthLoading] = useState(false);
   const [links, setLinks] = useState<UsefulLink[]>(initialLinks ?? []);
   const [events, setEvents] = useState<AgendaEvent[]>(initialEvents ?? []);
   const [profile, setProfile] = useState<HouseholdProfile>(initialProfile);
@@ -401,6 +421,99 @@ export function useDomotidienState({
     }
   }
 
+  // Actions — budget (Supabase-backed with optimistic updates)
+  // Entries are fetched one month at a time rather than preloaded like the
+  // other modules, so switching months re-fetches from Supabase instead of
+  // filtering an already-loaded list.
+  async function setBudgetMonth(month: string) {
+    setBudgetMonthState(month);
+    setBudgetMonthLoading(true);
+    try {
+      const freshEntries = await fetchBudgetEntriesForMonth(householdId, month);
+      setBudgetEntries(freshEntries);
+    } catch (err) {
+      console.error("[budget] month fetch failed:", err);
+    } finally {
+      setBudgetMonthLoading(false);
+    }
+  }
+
+  async function addBudgetEntry(input: BudgetEntryInput) {
+    const tempId = `temp-${Date.now()}`;
+    const entryMonth = toEntryMonth(input.entryDate);
+    const belongsToVisibleMonth = entryMonth === budgetMonth;
+    if (belongsToVisibleMonth) {
+      setBudgetEntries((prev) => [
+        {
+          id: tempId,
+          title: input.title,
+          amountCents: input.amountCents,
+          categoryId: input.categoryId,
+          entryDate: input.entryDate,
+          entryMonth,
+          kind: input.kind,
+          note: input.note,
+        },
+        ...prev,
+      ]);
+    }
+    try {
+      const row = await addBudgetEntryDb(householdId, input);
+      const saved = mapBudgetEntryRow(row);
+      setBudgetEntries((prev) =>
+        belongsToVisibleMonth ? prev.map((e) => (e.id === tempId ? saved : e)) : prev
+      );
+    } catch (err) {
+      console.error("[budget] add failed:", err);
+      if (belongsToVisibleMonth) {
+        setBudgetEntries((prev) => prev.filter((e) => e.id !== tempId));
+      }
+      throw err;
+    }
+  }
+
+  async function updateBudgetEntry(id: string, input: BudgetEntryInput) {
+    const prevEntries = budgetEntries;
+    const entryMonth = toEntryMonth(input.entryDate);
+    setBudgetEntries((prev) => {
+      // The edited date may have moved the entry out of the visible month.
+      if (entryMonth !== budgetMonth) return prev.filter((e) => e.id !== id);
+      return prev.map((e) =>
+        e.id === id
+          ? {
+              ...e,
+              title: input.title,
+              amountCents: input.amountCents,
+              categoryId: input.categoryId,
+              entryDate: input.entryDate,
+              entryMonth,
+              kind: input.kind,
+              note: input.note,
+            }
+          : e
+      );
+    });
+    try {
+      await updateBudgetEntryDb(id, input);
+    } catch (err) {
+      console.error("[budget] update failed:", err);
+      setBudgetEntries(prevEntries);
+      throw err;
+    }
+  }
+
+  async function deleteBudgetEntry(id: string) {
+    const prevEntries = budgetEntries;
+    setBudgetEntries((prev) => prev.filter((e) => e.id !== id));
+    try {
+      await deleteBudgetEntryDb(id);
+    } catch (err) {
+      console.error("[budget] delete failed:", err);
+      setBudgetEntries(prevEntries);
+      alert("La suppression de la dépense a échoué. Réessayez.");
+    }
+  }
+
   // Actions — household (Supabase-backed with optimistic update)
   async function updateHouseholdName(name: string) {
     const prevProfile = profile;
@@ -428,6 +541,10 @@ export function useDomotidienState({
     dayItems,
     profile,
     accountEmail: initialAccountEmail,
+    budgetCategories,
+    budgetEntries,
+    budgetMonth,
+    budgetMonthLoading,
 
     // Computed counters
     shoppingPendingCount,
@@ -455,6 +572,10 @@ export function useDomotidienState({
     addEvent,
     updateEvent,
     deleteEvent,
+    setBudgetMonth,
+    addBudgetEntry,
+    updateBudgetEntry,
+    deleteBudgetEntry,
     updateHouseholdName,
   };
 }

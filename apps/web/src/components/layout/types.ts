@@ -6,4 +6,5 @@ export type View =
   | "calendar"
   | "notes"
   | "links"
+  | "budget"
   | "profile";
