@@ -8,6 +8,8 @@ import { groupBudgetCategories, todayIsoDate } from "./budgetData";
 interface BudgetEntryFormProps {
   categories: BudgetCategory[];
   defaultCategoryId?: string;
+  /** Date to prefill for a new entry (ignored once `initial` is set — edits keep their own date). */
+  defaultEntryDate?: string;
   initial?: {
     title: string;
     amountCents: number;
@@ -30,6 +32,7 @@ const inputClass = cn(
 export function BudgetEntryForm({
   categories,
   defaultCategoryId,
+  defaultEntryDate,
   initial,
   onSubmit,
   onCancel,
@@ -40,7 +43,7 @@ export function BudgetEntryForm({
     initial ? (initial.amountCents / 100).toString() : ""
   );
   const [categoryId, setCategoryId] = useState(initial?.categoryId ?? defaultCategoryId ?? "");
-  const [entryDate, setEntryDate] = useState(initial?.entryDate ?? todayIsoDate());
+  const [entryDate, setEntryDate] = useState(initial?.entryDate ?? defaultEntryDate ?? todayIsoDate());
   const [kind, setKind] = useState<BudgetEntryKind>(initial?.kind ?? "fixed");
   const [note, setNote] = useState(initial?.note ?? "");
   const [submitting, setSubmitting] = useState(false);

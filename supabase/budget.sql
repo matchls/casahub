@@ -98,6 +98,36 @@ CREATE POLICY "members_can_select_budget_categories"
 
 
 -- -----------------------------------------------------------------------------
+-- HELPER: budget_category_in_household
+-- Guards budget_entries.category_id: the FK alone only guarantees the
+-- category exists, not that it belongs to the same household as the entry.
+-- Without this, a member could (accidentally or not) attach an entry to a
+-- category id from a different household they don't belong to.
+--
+-- Not SECURITY DEFINER: the caller must already satisfy
+-- is_household_member(target_household_id) for the surrounding policy to
+-- pass, and household members already have SELECT on their own household's
+-- budget_categories rows (see policy above) — so this can safely run under
+-- the caller's own RLS-restricted view. If the caller isn't actually a
+-- member, the row is invisible to them and EXISTS just returns false, which
+-- fails the check anyway (fail-safe either way).
+-- -----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION budget_category_in_household(target_category_id uuid, target_household_id uuid)
+RETURNS boolean
+LANGUAGE sql
+STABLE
+SET search_path = public
+AS $$
+  SELECT target_category_id IS NULL OR EXISTS (
+    SELECT 1
+    FROM   budget_categories
+    WHERE  id           = target_category_id
+      AND  household_id = target_household_id
+  );
+$$;
+
+
+-- -----------------------------------------------------------------------------
 -- POLICIES: budget_entries
 -- -----------------------------------------------------------------------------
 CREATE POLICY "members_can_select_budget_entries"
@@ -108,13 +138,19 @@ CREATE POLICY "members_can_select_budget_entries"
 CREATE POLICY "members_can_insert_budget_entries"
   ON budget_entries
   FOR INSERT TO authenticated
-  WITH CHECK (is_household_member(household_id));
+  WITH CHECK (
+    is_household_member(household_id)
+    AND budget_category_in_household(category_id, household_id)
+  );
 
 CREATE POLICY "members_can_update_budget_entries"
   ON budget_entries
   FOR UPDATE TO authenticated
   USING     (is_household_member(household_id))
-  WITH CHECK (is_household_member(household_id));
+  WITH CHECK (
+    is_household_member(household_id)
+    AND budget_category_in_household(category_id, household_id)
+  );
 
 CREATE POLICY "members_can_delete_budget_entries"
   ON budget_entries

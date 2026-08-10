@@ -12,6 +12,19 @@ export function todayIsoDate(): string {
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
 }
 
+/**
+ * Default date for a new entry in the given budget month: today, if today
+ * falls within that month, otherwise the first day of that month. Keeps
+ * "add entry" defaulting to today while viewing the current month, but
+ * defaulting into the selected month (not today) when browsing a past or
+ * future month — otherwise a new entry added while viewing July would
+ * silently land in whatever month today actually is.
+ */
+export function defaultBudgetEntryDate(month: string): string {
+  const today = todayIsoDate();
+  return today.slice(0, 7) === month.slice(0, 7) ? today : month;
+}
+
 /** Shifts a "YYYY-MM-01" month string by `delta` months (can be negative). */
 export function shiftBudgetMonth(month: string, delta: number): string {
   const [year, monthIndex] = month.split("-").map(Number);

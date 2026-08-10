@@ -9,6 +9,7 @@ import { BudgetEntryForm } from "./BudgetEntryForm";
 import { BudgetEntryRow } from "./BudgetEntryRow";
 import {
   buildMainCategoryLookup,
+  defaultBudgetEntryDate,
   formatBudgetMonthLabel,
   formatCents,
   groupBudgetCategories,
@@ -77,6 +78,7 @@ export function BudgetScreen({
   }, [entries, mainCategoryLookup, selectedGroup]);
 
   const uncategorizedCents = categoryTotals.get("uncategorized") ?? 0;
+  const newEntryDefaultDate = defaultBudgetEntryDate(month);
 
   return (
     <div className="max-w-[880px] flex flex-col gap-5">
@@ -160,6 +162,7 @@ export function BudgetScreen({
             <BudgetEntryForm
               categories={categories}
               defaultCategoryId={selectedGroup.main.id}
+              defaultEntryDate={newEntryDefaultDate}
               submitLabel="Ajouter"
               onSubmit={onAdd}
             />
@@ -201,7 +204,12 @@ export function BudgetScreen({
 
           {/* Add entry */}
           <Card className="!p-[14px]">
-            <BudgetEntryForm categories={categories} submitLabel="Ajouter une dépense" onSubmit={onAdd} />
+            <BudgetEntryForm
+              categories={categories}
+              defaultEntryDate={newEntryDefaultDate}
+              submitLabel="Ajouter une dépense"
+              onSubmit={onAdd}
+            />
           </Card>
         </>
       )}
