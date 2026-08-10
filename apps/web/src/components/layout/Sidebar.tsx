@@ -15,6 +15,7 @@ const featureNav: { id: View; emoji: string; label: string }[] = [
   { id: "calendar", emoji: "📅", label: "Calendrier" },
   { id: "notes", emoji: "📝", label: "Notes" },
   { id: "links", emoji: "🔗", label: "Liens utiles" },
+  { id: "budget", emoji: "💰", label: "Budget" },
 ];
 
 interface SidebarProps {

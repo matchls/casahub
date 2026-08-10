@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { AppShell } from "@/components/layout/AppShell";
+import { currentBudgetMonth } from "@/features/budget/budgetData";
 import {
   loadCurrentUserHousehold,
   loadHouseholdProfile,
@@ -9,6 +10,8 @@ import {
   loadNotes,
   loadUsefulLinks,
   loadEvents,
+  loadBudgetCategories,
+  loadBudgetEntries,
 } from "@/lib/supabase/loaders";
 
 export const dynamic = "force-dynamic";
@@ -35,6 +38,19 @@ export default async function Home() {
   const initialLinks = await loadUsefulLinks(supabase, householdId);
   const initialEvents = await loadEvents(supabase, householdId, new Date());
 
+  const { error: ensureBudgetCategoriesError } = await supabase.rpc(
+    "ensure_default_budget_categories",
+    { target_household_id: householdId }
+  );
+  if (ensureBudgetCategoriesError) {
+    console.error(
+      "[page] ensure_default_budget_categories failed:",
+      ensureBudgetCategoriesError.message
+    );
+  }
+  const initialBudgetCategories = await loadBudgetCategories(supabase, householdId);
+  const initialBudgetEntries = await loadBudgetEntries(supabase, householdId, currentBudgetMonth());
+
   return (
     <AppShell
       initialProfile={profile}
@@ -45,6 +61,8 @@ export default async function Home() {
       initialNotes={initialNotes}
       initialLinks={initialLinks}
       initialEvents={initialEvents}
+      initialBudgetCategories={initialBudgetCategories}
+      initialBudgetEntries={initialBudgetEntries}
     />
   );
 }

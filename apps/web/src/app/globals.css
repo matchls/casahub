@@ -48,6 +48,11 @@
   --links-text:   #6E4D63;
   --links-accent: #9B6E8B;
 
+  /* Budget */
+  --budget-bg:     #DCEAE7;
+  --budget-text:   #1F4F47;
+  --budget-accent: #4F8F84;
+
   /* Borders */
   --border:       rgba(44,38,34,0.06);
   --border-input: rgba(44,38,34,0.10);

@@ -1,6 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type {
   AgendaEvent,
+  BudgetCategory,
+  BudgetEntry,
   HouseholdProfile,
   Note,
   ShoppingItem,
@@ -12,6 +14,7 @@ import { mapShoppingRow } from "./shopping";
 import { mapTaskRow } from "./tasks";
 import { mapNoteRow } from "./notes";
 import { mapLinkRow } from "./links";
+import { mapBudgetCategoryRow, mapBudgetEntryRow } from "./budget";
 
 /** Resolves the household the current user belongs to, or null if they have none (caller should redirect to onboarding). */
 export async function loadCurrentUserHousehold(
@@ -163,4 +166,40 @@ export async function loadEvents(
     .filter((event): event is AgendaEvent => event !== null);
 
   return sortEventsChronologically(events);
+}
+
+export async function loadBudgetCategories(
+  supabase: SupabaseClient,
+  householdId: string
+): Promise<BudgetCategory[]> {
+  const { data, error } = await supabase
+    .from("budget_categories")
+    .select("id, parent_id, name, icon, sort_order")
+    .eq("household_id", householdId)
+    .order("sort_order", { ascending: true });
+
+  if (error) {
+    console.error("[loaders] budget_categories query failed:", error.message);
+  }
+
+  return (data ?? []).map(mapBudgetCategoryRow);
+}
+
+export async function loadBudgetEntries(
+  supabase: SupabaseClient,
+  householdId: string,
+  entryMonth: string
+): Promise<BudgetEntry[]> {
+  const { data, error } = await supabase
+    .from("budget_entries")
+    .select("id, title, amount_cents, category_id, entry_date, entry_month, kind, note, created_by")
+    .eq("household_id", householdId)
+    .eq("entry_month", entryMonth)
+    .order("entry_date", { ascending: false });
+
+  if (error) {
+    console.error("[loaders] budget_entries query failed:", error.message);
+  }
+
+  return (data ?? []).map(mapBudgetEntryRow);
 }

@@ -10,8 +10,19 @@ import { DayViewScreen } from "@/features/agenda/DayViewScreen";
 import { AgendaScreen } from "@/features/agenda/AgendaScreen";
 import { NotesScreen } from "@/features/notes/NotesScreen";
 import { UsefulLinksScreen } from "@/features/links/UsefulLinksScreen";
+import { BudgetScreen } from "@/features/budget/BudgetScreen";
+import { formatCents } from "@/features/budget/budgetData";
 import { ProfileScreen } from "@/features/profile/ProfileScreen";
-import type { AgendaEvent, HouseholdProfile, Note, ShoppingItem, Task, UsefulLink } from "@/lib/domain/types";
+import type {
+  AgendaEvent,
+  BudgetCategory,
+  BudgetEntry,
+  HouseholdProfile,
+  Note,
+  ShoppingItem,
+  Task,
+  UsefulLink,
+} from "@/lib/domain/types";
 
 interface AppShellProps {
   initialProfile: HouseholdProfile;
@@ -22,9 +33,22 @@ interface AppShellProps {
   initialNotes: Note[];
   initialLinks: UsefulLink[];
   initialEvents: AgendaEvent[];
+  initialBudgetCategories: BudgetCategory[];
+  initialBudgetEntries: BudgetEntry[];
 }
 
-export function AppShell({ initialProfile, initialAccountEmail, householdId, initialShoppingItems, initialTasks, initialNotes, initialLinks, initialEvents }: AppShellProps) {
+export function AppShell({
+  initialProfile,
+  initialAccountEmail,
+  householdId,
+  initialShoppingItems,
+  initialTasks,
+  initialNotes,
+  initialLinks,
+  initialEvents,
+  initialBudgetCategories,
+  initialBudgetEntries,
+}: AppShellProps) {
   const {
     activeView,
     setActiveView,
@@ -36,6 +60,10 @@ export function AppShell({ initialProfile, initialAccountEmail, householdId, ini
     dayItems,
     profile,
     accountEmail,
+    budgetCategories,
+    budgetEntries,
+    budgetMonth,
+    budgetMonthLoading,
     shoppingPendingCount,
     tasksPendingCount,
     notesCount,
@@ -59,8 +87,23 @@ export function AppShell({ initialProfile, initialAccountEmail, householdId, ini
     addEvent,
     updateEvent,
     deleteEvent,
+    setBudgetMonth,
+    addBudgetEntry,
+    updateBudgetEntry,
+    deleteBudgetEntry,
     updateHouseholdName,
-  } = useDomotidienState({ initialProfile, initialAccountEmail, householdId, initialShoppingItems, initialTasks, initialNotes, initialLinks, initialEvents });
+  } = useDomotidienState({
+    initialProfile,
+    initialAccountEmail,
+    householdId,
+    initialShoppingItems,
+    initialTasks,
+    initialNotes,
+    initialLinks,
+    initialEvents,
+    initialBudgetCategories,
+    initialBudgetEntries,
+  });
 
   const shoppingSubtitle =
     activeView === "shopping"
@@ -105,6 +148,14 @@ export function AppShell({ initialProfile, initialAccountEmail, householdId, ini
       ? `${profile.name} · ${profile.members.length} membres`
       : undefined;
 
+  const budgetTotalCents = budgetEntries.reduce((sum, e) => sum + e.amountCents, 0);
+  const budgetSubtitle =
+    activeView === "budget"
+      ? budgetEntries.length === 0
+        ? "Aucune dépense ce mois-ci"
+        : `${formatCents(budgetTotalCents)} ce mois-ci`
+      : undefined;
+
   const activeSubtitle =
     shoppingSubtitle ??
     tasksSubtitle ??
@@ -112,10 +163,23 @@ export function AppShell({ initialProfile, initialAccountEmail, householdId, ini
     agendaSubtitle ??
     notesSubtitle ??
     linksSubtitle ??
+    budgetSubtitle ??
     profileSubtitle;
 
   function renderView() {
-    if (activeView === "home") return <HomeDashboard onNavigate={setActiveView} shoppingItems={shoppingItems} tasks={tasks} notes={notes} links={links} events={events} />;
+    if (activeView === "home") {
+      return (
+        <HomeDashboard
+          onNavigate={setActiveView}
+          shoppingItems={shoppingItems}
+          tasks={tasks}
+          notes={notes}
+          links={links}
+          events={events}
+          budgetEntries={budgetEntries}
+        />
+      );
+    }
     if (activeView === "shopping") {
       return (
         <ShoppingListScreen
@@ -147,6 +211,20 @@ export function AppShell({ initialProfile, initialAccountEmail, householdId, ini
     }
     if (activeView === "links") {
       return <UsefulLinksScreen links={links} onAdd={addUsefulLink} onUpdate={updateUsefulLink} onDelete={deleteUsefulLink} />;
+    }
+    if (activeView === "budget") {
+      return (
+        <BudgetScreen
+          categories={budgetCategories}
+          entries={budgetEntries}
+          month={budgetMonth}
+          monthLoading={budgetMonthLoading}
+          onMonthChange={setBudgetMonth}
+          onAdd={addBudgetEntry}
+          onUpdate={updateBudgetEntry}
+          onDelete={deleteBudgetEntry}
+        />
+      );
     }
     if (activeView === "profile") {
       return (

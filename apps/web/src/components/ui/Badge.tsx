@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 
-type BadgeVariant = "default" | "shopping" | "tasks" | "agenda" | "notes" | "links";
+type BadgeVariant = "default" | "shopping" | "tasks" | "agenda" | "notes" | "links" | "budget";
 
 interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
   variant?: BadgeVariant;
@@ -13,6 +13,7 @@ const variantStyles: Record<BadgeVariant, string> = {
   agenda:   "bg-[var(--agenda-accent)] text-white",
   notes:    "bg-[var(--notes-accent)] text-white",
   links:    "bg-[var(--links-accent)] text-white",
+  budget:   "bg-[var(--budget-accent)] text-white",
 };
 
 export function Badge({ variant = "default", className, children, ...props }: BadgeProps) {
