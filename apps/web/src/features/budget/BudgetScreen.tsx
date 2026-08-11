@@ -4,21 +4,26 @@ import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/Card";
 import type { BudgetCategory, BudgetEntry } from "@/lib/domain/types";
 import type { BudgetEntryInput } from "@/lib/supabase/budget";
+import { BudgetBreakdownChart } from "./BudgetBreakdownChart";
 import { BudgetCategoryCard } from "./BudgetCategoryCard";
 import { BudgetEntryForm } from "./BudgetEntryForm";
 import { BudgetEntryRow } from "./BudgetEntryRow";
+import { BudgetMonthlyEvolution } from "./BudgetMonthlyEvolution";
 import {
+  buildBudgetBreakdown,
   buildMainCategoryLookup,
   defaultBudgetEntryDate,
   formatBudgetMonthLabel,
   formatCents,
   groupBudgetCategories,
   shiftBudgetMonth,
+  type BudgetMonthlyEvolutionPoint,
 } from "./budgetData";
 
 interface BudgetScreenProps {
   categories: BudgetCategory[];
   entries: BudgetEntry[];
+  evolution: BudgetMonthlyEvolutionPoint[];
   month: string;
   monthLoading: boolean;
   onMonthChange: (month: string) => void;
@@ -30,6 +35,7 @@ interface BudgetScreenProps {
 export function BudgetScreen({
   categories,
   entries,
+  evolution,
   month,
   monthLoading,
   onMonthChange,
@@ -79,6 +85,7 @@ export function BudgetScreen({
 
   const uncategorizedCents = categoryTotals.get("uncategorized") ?? 0;
   const newEntryDefaultDate = defaultBudgetEntryDate(month);
+  const breakdown = useMemo(() => buildBudgetBreakdown(entries, categories), [entries, categories]);
 
   return (
     <div className="max-w-[880px] flex flex-col gap-5">
@@ -170,6 +177,26 @@ export function BudgetScreen({
         </>
       ) : (
         <>
+          {/* Répartition du mois */}
+          <section>
+            <h2 className="text-[11px] font-bold uppercase tracking-[.05em] text-[var(--text-muted)] mb-3 px-1">
+              Répartition du mois
+            </h2>
+            <Card className="!p-[16px]">
+              <BudgetBreakdownChart breakdown={breakdown} />
+            </Card>
+          </section>
+
+          {/* Évolution mensuelle */}
+          <section>
+            <h2 className="text-[11px] font-bold uppercase tracking-[.05em] text-[var(--text-muted)] mb-3 px-1">
+              Évolution mensuelle
+            </h2>
+            <Card className="!p-[16px]">
+              <BudgetMonthlyEvolution points={evolution} selectedMonth={month} />
+            </Card>
+          </section>
+
           {/* Category cards */}
           {groups.length === 0 ? (
             <div className="flex flex-col items-center justify-center gap-3 py-10 text-center">
