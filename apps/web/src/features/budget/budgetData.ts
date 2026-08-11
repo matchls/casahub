@@ -127,11 +127,28 @@ export interface BudgetBreakdownSlice {
 }
 
 /**
+ * Turns per-category totals into display slices against a shared
+ * denominator, rounding each share with Math.round(amount/total*100).
+ * Shared by buildBudgetBreakdown and buildSubcategoryBreakdown so both the
+ * monthly overview donut and the category drill-down donut always round
+ * percentages identically instead of risking two copies drifting apart.
+ */
+function toBreakdownSlices(
+  targets: BudgetCategory[],
+  totals: Map<string, number>,
+  totalCents: number
+): BudgetBreakdownSlice[] {
+  return targets.map((category) => {
+    const amountCents = totals.get(category.id) ?? 0;
+    const sharePercent = totalCents > 0 ? Math.round((amountCents / totalCents) * 100) : 0;
+    return { category, amountCents, sharePercent };
+  });
+}
+
+/**
  * Per-main-category totals + share for a set of entries (typically one
  * month), one slice per main category in sortOrder — including categories
  * with zero spending, so callers can decide whether to render or skip them.
- * Uses the exact same rounding as the category cards
- * (Math.round(amount/total*100)) so displayed percentages always agree.
  * Entries with no category (or a deleted category) are excluded, matching
  * how the category cards only ever total actual main categories.
  */
@@ -151,11 +168,36 @@ export function buildBudgetBreakdown(
   const totalCents = entries.reduce((sum, entry) => sum + entry.amountCents, 0);
   const mains = categories.filter((c) => !c.parentId).sort((a, b) => a.sortOrder - b.sortOrder);
 
-  return mains.map((category) => {
-    const amountCents = totals.get(category.id) ?? 0;
-    const sharePercent = totalCents > 0 ? Math.round((amountCents / totalCents) * 100) : 0;
-    return { category, amountCents, sharePercent };
-  });
+  return toBreakdownSlices(mains, totals, totalCents);
+}
+
+/**
+ * Per-subcategory totals + share within a single main category — used by
+ * the category drill-down donut (issue #100). `entries` must already be
+ * scoped to the selected main category (its subcategories AND any entries
+ * attached directly to the main category itself, e.g. via BudgetScreen's
+ * `visibleEntries`), so `totalCents` here is the same "total spending of
+ * the selected main category" figure already shown in the drill-down
+ * header — not the whole month's budget. That keeps percentages as
+ * subcategory / category-total, per issue #100, never subcategory /
+ * month-total. A direct-to-main entry has no subcategory, so it counts in
+ * the denominator but produces no slice of its own — same convention as
+ * buildBudgetBreakdown excluding uncategorized entries from its slices.
+ */
+export function buildSubcategoryBreakdown(
+  entries: BudgetEntry[],
+  subcategories: BudgetCategory[]
+): BudgetBreakdownSlice[] {
+  const totals = new Map<string, number>();
+  for (const entry of entries) {
+    if (!entry.categoryId) continue;
+    totals.set(entry.categoryId, (totals.get(entry.categoryId) ?? 0) + entry.amountCents);
+  }
+
+  const totalCents = entries.reduce((sum, entry) => sum + entry.amountCents, 0);
+  const targets = [...subcategories].sort((a, b) => a.sortOrder - b.sortOrder);
+
+  return toBreakdownSlices(targets, totals, totalCents);
 }
 
 export interface BudgetMonthlyEvolutionPoint {

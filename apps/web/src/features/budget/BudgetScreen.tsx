@@ -12,6 +12,7 @@ import { BudgetMonthlyEvolution } from "./BudgetMonthlyEvolution";
 import {
   buildBudgetBreakdown,
   buildMainCategoryLookup,
+  buildSubcategoryBreakdown,
   defaultBudgetEntryDate,
   formatBudgetMonthLabel,
   formatCents,
@@ -83,6 +84,15 @@ export function BudgetScreen({
     return totals;
   }, [entries, mainCategoryLookup, selectedGroup]);
 
+  // visibleEntries is already scoped to the selected main category (its
+  // subcategories AND any entries attached directly to the main category),
+  // so its total matches the "X ce mois-ci" figure in the header below —
+  // percentages here are share-of-category, not share-of-month.
+  const subcategoryBreakdown = useMemo(() => {
+    if (!selectedGroup) return [];
+    return buildSubcategoryBreakdown(visibleEntries, selectedGroup.subcategories);
+  }, [selectedGroup, visibleEntries]);
+
   const uncategorizedCents = categoryTotals.get("uncategorized") ?? 0;
   const newEntryDefaultDate = defaultBudgetEntryDate(month);
   const breakdown = useMemo(() => buildBudgetBreakdown(entries, categories), [entries, categories]);
@@ -147,6 +157,19 @@ export function BudgetScreen({
               </p>
             </div>
           </div>
+
+          {/* Répartition par sous-catégorie */}
+          <section>
+            <h2 className="text-[11px] font-bold uppercase tracking-[.05em] text-[var(--text-muted)] mb-3 px-1">
+              Répartition par sous-catégorie
+            </h2>
+            <Card className="!p-[16px]">
+              <BudgetBreakdownChart
+                breakdown={subcategoryBreakdown}
+                emptyStateTitle="Aucune dépense dans cette catégorie ce mois-ci."
+              />
+            </Card>
+          </section>
 
           {/* Subcategory totals */}
           <div className="flex flex-wrap gap-2">

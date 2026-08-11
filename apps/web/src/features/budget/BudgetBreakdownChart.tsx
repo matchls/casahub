@@ -4,7 +4,11 @@ import { formatCents } from "./budgetData";
 
 interface BudgetBreakdownChartProps {
   breakdown: BudgetBreakdownSlice[];
+  /** First line of the empty state; defaults to the monthly-overview wording. */
+  emptyStateTitle?: string;
 }
+
+const DEFAULT_EMPTY_STATE_TITLE = "Aucune dépense ce mois-ci.";
 
 // Reuses the app's existing per-module accent colors (shopping/notes/tasks/
 // agenda/links/budget) so the chart stays visually consistent with the rest
@@ -22,14 +26,17 @@ const RADIUS = 40;
 const STROKE_WIDTH = 16;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 
-export function BudgetBreakdownChart({ breakdown }: BudgetBreakdownChartProps) {
+export function BudgetBreakdownChart({
+  breakdown,
+  emptyStateTitle = DEFAULT_EMPTY_STATE_TITLE,
+}: BudgetBreakdownChartProps) {
   const totalCents = breakdown.reduce((sum, slice) => sum + slice.amountCents, 0);
 
   if (totalCents === 0) {
     return (
       <div className="flex flex-col items-center justify-center gap-2 py-10 text-center">
         <span className="text-[40px] opacity-40">📊</span>
-        <p className="text-[14px] font-semibold text-[var(--text-muted)]">Aucune dépense ce mois-ci.</p>
+        <p className="text-[14px] font-semibold text-[var(--text-muted)]">{emptyStateTitle}</p>
         <p className="text-[12.5px] text-[var(--text-soft)]">
           Ajoutez une dépense pour visualiser la répartition.
         </p>
