@@ -180,12 +180,20 @@ export function buildBudgetBreakdown(
  * the selected main category" figure already shown in the drill-down
  * header — not the whole month's budget. That keeps percentages as
  * subcategory / category-total, per issue #100, never subcategory /
- * month-total. A direct-to-main entry has no subcategory, so it counts in
- * the denominator but produces no slice of its own — same convention as
- * buildBudgetBreakdown excluding uncategorized entries from its slices.
+ * month-total.
+ *
+ * Entries attached directly to the main category (the "(général)" option
+ * in BudgetEntryForm) share the main category's own id as their
+ * categoryId. Those are represented as a synthetic "Général" slice
+ * appended after the real subcategories — purely client-derived, never
+ * persisted — so every cent counted in `totalCents` is also represented
+ * by a slice: donut geometry, legend amounts and percentages always sum
+ * to the full category total, and a category with only direct-to-main
+ * spending renders that slice instead of the empty state.
  */
 export function buildSubcategoryBreakdown(
   entries: BudgetEntry[],
+  mainCategory: BudgetCategory,
   subcategories: BudgetCategory[]
 ): BudgetBreakdownSlice[] {
   const totals = new Map<string, number>();
@@ -195,7 +203,15 @@ export function buildSubcategoryBreakdown(
   }
 
   const totalCents = entries.reduce((sum, entry) => sum + entry.amountCents, 0);
+  const generalSlice: BudgetCategory = {
+    id: mainCategory.id,
+    parentId: mainCategory.id,
+    name: "Général",
+    icon: "•",
+    sortOrder: Number.MAX_SAFE_INTEGER,
+  };
   const targets = [...subcategories].sort((a, b) => a.sortOrder - b.sortOrder);
+  targets.push(generalSlice);
 
   return toBreakdownSlices(targets, totals, totalCents);
 }

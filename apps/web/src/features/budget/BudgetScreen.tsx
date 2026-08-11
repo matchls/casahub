@@ -87,10 +87,13 @@ export function BudgetScreen({
   // visibleEntries is already scoped to the selected main category (its
   // subcategories AND any entries attached directly to the main category),
   // so its total matches the "X ce mois-ci" figure in the header below —
-  // percentages here are share-of-category, not share-of-month.
+  // percentages here are share-of-category, not share-of-month. Direct-to-
+  // main entries (the "(général)" option in BudgetEntryForm) are folded
+  // into a synthetic "Général" slice by buildSubcategoryBreakdown, so the
+  // donut always accounts for the full category total.
   const subcategoryBreakdown = useMemo(() => {
     if (!selectedGroup) return [];
-    return buildSubcategoryBreakdown(visibleEntries, selectedGroup.subcategories);
+    return buildSubcategoryBreakdown(visibleEntries, selectedGroup.main, selectedGroup.subcategories);
   }, [selectedGroup, visibleEntries]);
 
   const uncategorizedCents = categoryTotals.get("uncategorized") ?? 0;
