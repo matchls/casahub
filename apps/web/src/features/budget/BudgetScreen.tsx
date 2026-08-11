@@ -2,6 +2,7 @@
 import { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/Card";
+import { Modal } from "@/components/ui/Modal";
 import type { BudgetCategory, BudgetEntry } from "@/lib/domain/types";
 import type { BudgetEntryInput } from "@/lib/supabase/budget";
 import { BudgetBreakdownChart } from "./BudgetBreakdownChart";
@@ -45,6 +46,16 @@ export function BudgetScreen({
   onDelete,
 }: BudgetScreenProps) {
   const [selectedMainId, setSelectedMainId] = useState<string | null>(null);
+  const [addModalOpen, setAddModalOpen] = useState(false);
+
+  // Closes the modal only once the entry is actually saved — if onAdd
+  // rejects (validation/network failure), the throw propagates out before
+  // reaching setAddModalOpen(false), so BudgetEntryForm's own try/catch
+  // shows the error and the modal stays open, unchanged from before.
+  async function handleAddSubmit(input: BudgetEntryInput) {
+    await onAdd(input);
+    setAddModalOpen(false);
+  }
 
   const groups = useMemo(() => groupBudgetCategories(categories), [categories]);
   const mainCategoryLookup = useMemo(() => buildMainCategoryLookup(categories), [categories]);
@@ -191,15 +202,14 @@ export function BudgetScreen({
           </div>
 
           {/* Add entry */}
-          <Card className="!p-[14px]">
-            <BudgetEntryForm
-              categories={categories}
-              defaultCategoryId={selectedGroup.main.id}
-              defaultEntryDate={newEntryDefaultDate}
-              submitLabel="Ajouter"
-              onSubmit={onAdd}
-            />
-          </Card>
+          <button
+            type="button"
+            onClick={() => setAddModalOpen(true)}
+            className="inline-flex items-center justify-center gap-2 self-start rounded-[14px] bg-[var(--budget-accent)] text-white font-bold text-[14.5px] px-5 py-[13px] hover:opacity-90 transition-opacity cursor-pointer shadow-[0_8px_18px_-8px_rgba(79,143,132,.7)]"
+          >
+            <span className="text-[18px] leading-none">+</span>
+            Ajouter une dépense
+          </button>
         </>
       ) : (
         <>
@@ -256,16 +266,27 @@ export function BudgetScreen({
           )}
 
           {/* Add entry */}
-          <Card className="!p-[14px]">
-            <BudgetEntryForm
-              categories={categories}
-              defaultEntryDate={newEntryDefaultDate}
-              submitLabel="Ajouter une dépense"
-              onSubmit={onAdd}
-            />
-          </Card>
+          <button
+            type="button"
+            onClick={() => setAddModalOpen(true)}
+            className="inline-flex items-center justify-center gap-2 self-start rounded-[14px] bg-[var(--budget-accent)] text-white font-bold text-[14.5px] px-5 py-[13px] hover:opacity-90 transition-opacity cursor-pointer shadow-[0_8px_18px_-8px_rgba(79,143,132,.7)]"
+          >
+            <span className="text-[18px] leading-none">+</span>
+            Ajouter une dépense
+          </button>
         </>
       )}
+
+      <Modal open={addModalOpen} onClose={() => setAddModalOpen(false)} title="Ajouter une dépense">
+        <BudgetEntryForm
+          categories={categories}
+          defaultCategoryId={selectedGroup?.main.id}
+          defaultEntryDate={newEntryDefaultDate}
+          submitLabel="Ajouter"
+          onCancel={() => setAddModalOpen(false)}
+          onSubmit={handleAddSubmit}
+        />
+      </Modal>
 
       {/* Entries list */}
       <section>
