@@ -12,6 +12,7 @@ import {
   loadEvents,
   loadBudgetCategories,
   loadBudgetEntries,
+  loadBudgetEvolution,
 } from "@/lib/supabase/loaders";
 
 export const dynamic = "force-dynamic";
@@ -50,6 +51,7 @@ export default async function Home() {
   }
   const initialBudgetCategories = await loadBudgetCategories(supabase, householdId);
   const initialBudgetEntries = await loadBudgetEntries(supabase, householdId, currentBudgetMonth());
+  const initialBudgetEvolution = await loadBudgetEvolution(supabase, householdId, currentBudgetMonth());
 
   return (
     <AppShell
@@ -63,6 +65,7 @@ export default async function Home() {
       initialEvents={initialEvents}
       initialBudgetCategories={initialBudgetCategories}
       initialBudgetEntries={initialBudgetEntries}
+      initialBudgetEvolution={initialBudgetEvolution}
     />
   );
 }

@@ -82,6 +82,35 @@ export async function fetchBudgetEntriesForMonth(
   return (data ?? []).map(mapBudgetEntryRow);
 }
 
+export interface BudgetMonthTotalRow {
+  entryMonth: string;
+  amountCents: number;
+}
+
+/**
+ * Fetches only { entry_month, amount_cents } for entries within an inclusive
+ * month range — used to build the monthly evolution chart, which only needs
+ * per-month sums, not full entry details. Kept separate from
+ * fetchBudgetEntriesForMonth (which returns full BudgetEntry rows for a
+ * single month) to avoid pulling title/note/kind/etc. across several months
+ * just to add them up.
+ */
+export async function fetchBudgetEntriesForMonthRange(
+  householdId: string,
+  startMonth: string,
+  endMonth: string
+): Promise<BudgetMonthTotalRow[]> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("budget_entries")
+    .select("entry_month, amount_cents")
+    .eq("household_id", householdId)
+    .gte("entry_month", startMonth)
+    .lte("entry_month", endMonth);
+  if (error) throw new Error(error.message);
+  return (data ?? []).map((row) => ({ entryMonth: row.entry_month, amountCents: row.amount_cents }));
+}
+
 export interface BudgetEntryInput {
   title: string;
   amountCents: number;

@@ -15,6 +15,7 @@ import { mapTaskRow } from "./tasks";
 import { mapNoteRow } from "./notes";
 import { mapLinkRow } from "./links";
 import { mapBudgetCategoryRow, mapBudgetEntryRow } from "./budget";
+import { buildMonthlyEvolution, monthRangeEndingAt, type BudgetMonthlyEvolutionPoint } from "@/features/budget/budgetData";
 
 /** Resolves the household the current user belongs to, or null if they have none (caller should redirect to onboarding). */
 export async function loadCurrentUserHousehold(
@@ -202,4 +203,32 @@ export async function loadBudgetEntries(
   }
 
   return (data ?? []).map(mapBudgetEntryRow);
+}
+
+/** Per-month spending totals for the `monthCount` months ending at (and including) `month`, used by the monthly evolution chart. */
+export async function loadBudgetEvolution(
+  supabase: SupabaseClient,
+  householdId: string,
+  month: string,
+  monthCount: number = 6
+): Promise<BudgetMonthlyEvolutionPoint[]> {
+  const months = monthRangeEndingAt(month, monthCount);
+
+  const { data, error } = await supabase
+    .from("budget_entries")
+    .select("entry_month, amount_cents")
+    .eq("household_id", householdId)
+    .gte("entry_month", months[0])
+    .lte("entry_month", months[months.length - 1]);
+
+  if (error) {
+    console.error("[loaders] budget_entries range query failed:", error.message);
+  }
+
+  const rows = (data ?? []).map((row) => ({
+    entryMonth: row.entry_month as string,
+    amountCents: row.amount_cents as number,
+  }));
+
+  return buildMonthlyEvolution(months, rows);
 }

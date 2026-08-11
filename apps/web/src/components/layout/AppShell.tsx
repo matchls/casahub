@@ -23,6 +23,7 @@ import type {
   Task,
   UsefulLink,
 } from "@/lib/domain/types";
+import type { BudgetMonthlyEvolutionPoint } from "@/features/budget/budgetData";
 
 interface AppShellProps {
   initialProfile: HouseholdProfile;
@@ -35,6 +36,7 @@ interface AppShellProps {
   initialEvents: AgendaEvent[];
   initialBudgetCategories: BudgetCategory[];
   initialBudgetEntries: BudgetEntry[];
+  initialBudgetEvolution: BudgetMonthlyEvolutionPoint[];
 }
 
 export function AppShell({
@@ -48,6 +50,7 @@ export function AppShell({
   initialEvents,
   initialBudgetCategories,
   initialBudgetEntries,
+  initialBudgetEvolution,
 }: AppShellProps) {
   const {
     activeView,
@@ -62,6 +65,7 @@ export function AppShell({
     accountEmail,
     budgetCategories,
     budgetEntries,
+    budgetEvolution,
     budgetMonth,
     budgetMonthLoading,
     shoppingPendingCount,
@@ -103,6 +107,7 @@ export function AppShell({
     initialEvents,
     initialBudgetCategories,
     initialBudgetEntries,
+    initialBudgetEvolution,
   });
 
   const shoppingSubtitle =
@@ -217,6 +222,7 @@ export function AppShell({
         <BudgetScreen
           categories={budgetCategories}
           entries={budgetEntries}
+          evolution={budgetEvolution}
           month={budgetMonth}
           monthLoading={budgetMonthLoading}
           onMonthChange={setBudgetMonth}

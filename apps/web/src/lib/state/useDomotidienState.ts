@@ -50,11 +50,19 @@ import {
   updateBudgetEntry as updateBudgetEntryDb,
   deleteBudgetEntry as deleteBudgetEntryDb,
   fetchBudgetEntriesForMonth,
+  fetchBudgetEntriesForMonthRange,
   mapBudgetEntryRow,
   toEntryMonth,
   type BudgetEntryInput,
 } from "@/lib/supabase/budget";
-import { currentBudgetMonth } from "@/features/budget/budgetData";
+import {
+  buildMonthlyEvolution,
+  currentBudgetMonth,
+  monthRangeEndingAt,
+  type BudgetMonthlyEvolutionPoint,
+} from "@/features/budget/budgetData";
+
+const EVOLUTION_MONTH_COUNT = 6;
 
 interface DomotidienStateOptions {
   initialProfile: HouseholdProfile;
@@ -67,6 +75,7 @@ interface DomotidienStateOptions {
   initialEvents: AgendaEvent[];
   initialBudgetCategories: BudgetCategory[];
   initialBudgetEntries: BudgetEntry[];
+  initialBudgetEvolution: BudgetMonthlyEvolutionPoint[];
 }
 
 export function useDomotidienState({
@@ -80,6 +89,7 @@ export function useDomotidienState({
   initialEvents,
   initialBudgetCategories,
   initialBudgetEntries,
+  initialBudgetEvolution,
 }: DomotidienStateOptions) {
   // Navigation
   const [activeView, setActiveView] = useState<View>("home");
@@ -90,6 +100,9 @@ export function useDomotidienState({
   const [notes, setNotes] = useState<Note[]>(initialNotes ?? []);
   const [budgetCategories] = useState<BudgetCategory[]>(initialBudgetCategories ?? []);
   const [budgetEntries, setBudgetEntries] = useState<BudgetEntry[]>(initialBudgetEntries ?? []);
+  const [budgetEvolution, setBudgetEvolution] = useState<BudgetMonthlyEvolutionPoint[]>(
+    initialBudgetEvolution ?? []
+  );
   const [budgetMonth, setBudgetMonthState] = useState<string>(currentBudgetMonth());
   const [budgetMonthLoading, setBudgetMonthLoading] = useState(false);
   const [links, setLinks] = useState<UsefulLink[]>(initialLinks ?? []);
@@ -425,11 +438,34 @@ export function useDomotidienState({
   // Entries are fetched one month at a time rather than preloaded like the
   // other modules, so switching months re-fetches from Supabase instead of
   // filtering an already-loaded list.
+
+  // Re-fetches the 6-month evolution window ending at `centerMonth`. Used on
+  // month switch and after every add/edit/delete, since an entry's date can
+  // land anywhere (not just the currently viewed month), so patching the
+  // evolution totals in place isn't reliably correct — a small, cheap
+  // (entry_month + amount_cents only) re-fetch is simpler and always right.
+  async function refreshBudgetEvolution(centerMonth: string) {
+    const months = monthRangeEndingAt(centerMonth, EVOLUTION_MONTH_COUNT);
+    try {
+      const rows = await fetchBudgetEntriesForMonthRange(
+        householdId,
+        months[0],
+        months[months.length - 1]
+      );
+      setBudgetEvolution(buildMonthlyEvolution(months, rows));
+    } catch (err) {
+      console.error("[budget] evolution fetch failed:", err);
+    }
+  }
+
   async function setBudgetMonth(month: string) {
     setBudgetMonthState(month);
     setBudgetMonthLoading(true);
     try {
-      const freshEntries = await fetchBudgetEntriesForMonth(householdId, month);
+      const [freshEntries] = await Promise.all([
+        fetchBudgetEntriesForMonth(householdId, month),
+        refreshBudgetEvolution(month),
+      ]);
       setBudgetEntries(freshEntries);
     } catch (err) {
       console.error("[budget] month fetch failed:", err);
@@ -463,6 +499,7 @@ export function useDomotidienState({
       setBudgetEntries((prev) =>
         belongsToVisibleMonth ? prev.map((e) => (e.id === tempId ? saved : e)) : prev
       );
+      refreshBudgetEvolution(budgetMonth);
     } catch (err) {
       console.error("[budget] add failed:", err);
       if (belongsToVisibleMonth) {
@@ -495,6 +532,7 @@ export function useDomotidienState({
     });
     try {
       await updateBudgetEntryDb(id, input);
+      refreshBudgetEvolution(budgetMonth);
     } catch (err) {
       console.error("[budget] update failed:", err);
       setBudgetEntries(prevEntries);
@@ -507,6 +545,7 @@ export function useDomotidienState({
     setBudgetEntries((prev) => prev.filter((e) => e.id !== id));
     try {
       await deleteBudgetEntryDb(id);
+      refreshBudgetEvolution(budgetMonth);
     } catch (err) {
       console.error("[budget] delete failed:", err);
       setBudgetEntries(prevEntries);
@@ -543,6 +582,7 @@ export function useDomotidienState({
     accountEmail: initialAccountEmail,
     budgetCategories,
     budgetEntries,
+    budgetEvolution,
     budgetMonth,
     budgetMonthLoading,
 
