@@ -298,6 +298,33 @@ $$;
 
 
 -- =============================================================================
+-- ADVISORY LOCK HELPER
+-- ensure_budget_recurring_occurrences and delete_recurring_budget_occurrence
+-- must serialize against each other per recurring series, but a real row
+-- lock (SELECT ... FOR UPDATE) is not available to them: Postgres applies a
+-- table's UPDATE policy/privilege to FOR UPDATE locking, and
+-- budget_recurring_expenses deliberately has neither — there is no series-
+-- editing feature in this version, and granting UPDATE (or adding an UPDATE
+-- policy) purely to obtain a lock would open up direct series mutation we
+-- don't want. A session-independent, transaction-scoped advisory lock needs
+-- no table privilege at all and serves the same purpose here.
+--
+-- pg_advisory_xact_lock takes a bigint key; this derives one deterministically
+-- from a series id's own leading 64 bits (not a hash — hashing would add
+-- collision risk for no benefit, since a uuid's bits are already
+-- effectively random) so the same series id always maps to the same key,
+-- and different series map to different keys with overwhelming probability.
+-- =============================================================================
+CREATE OR REPLACE FUNCTION budget_recurring_expense_lock_key(target_recurring_expense_id uuid)
+RETURNS bigint
+LANGUAGE sql
+IMMUTABLE
+AS $$
+  SELECT ('x' || substr(replace(target_recurring_expense_id::text, '-', ''), 1, 16))::bit(64)::bigint;
+$$;
+
+
+-- =============================================================================
 -- RPC: ensure_budget_recurring_occurrences
 -- Materializes every missing occurrence, for every recurring series in the
 -- household, across [from_month, to_month] — one set-based INSERT, not a
@@ -306,7 +333,7 @@ $$;
 -- it twice — or concurrently from two tabs — never creates duplicates.
 --
 -- Also serialized against delete_recurring_budget_occurrence per series
--- (issue #105 follow-up) — see the FOR UPDATE lock below and the matching
+-- (issue #105 follow-up) — see the advisory lock below and the matching
 -- comment in that function. Without it, this function could read a
 -- pre-delete snapshot (the skip not yet visible) concurrently with a delete
 -- that inserts the skip and removes the occurrence, and recreate the very
@@ -335,6 +362,14 @@ BEGIN
     RAISE EXCEPTION 'Not a member of this household';
   END IF;
 
+  -- Normalize to first-of-month so a stray direct RPC call with e.g.
+  -- 2026-08-15 can't produce an entry_month that violates the Budget
+  -- month convention (every entry_month elsewhere in the app is always
+  -- the 1st) — GREATEST()/generate_series() below assume both bounds
+  -- already are first-of-month values.
+  from_month := date_trunc('month', from_month)::date;
+  to_month   := date_trunc('month', to_month)::date;
+
   IF from_month > to_month THEN
     RETURN;
   END IF;
@@ -345,20 +380,21 @@ BEGIN
     AND  user_id      = auth.uid()
   LIMIT 1;
 
-  -- Lock every candidate series for this household before generating,
-  -- in a stable id order so two concurrent ensure() calls always acquire
-  -- their locks in the same order and can never deadlock against each
-  -- other. delete_recurring_budget_occurrence locks exactly one series row
-  -- the same way, so whichever transaction (this one, or a concurrent
-  -- delete) commits first is authoritative for that series — the other
-  -- blocks here until it does, then re-reads the now-committed state in
-  -- the INSERT ... SELECT below (a fresh statement-level snapshot under
-  -- READ COMMITTED).
-  PERFORM 1
+  -- Acquire one transaction-scoped advisory lock per candidate series for
+  -- this household, in a stable id order so two concurrent ensure() calls
+  -- always acquire their locks in the same order and can never deadlock
+  -- against each other. delete_recurring_budget_occurrence locks exactly
+  -- one series the same way (same key derivation), so whichever
+  -- transaction (this one, or a concurrent delete) commits first is
+  -- authoritative for that series — the other blocks here until it does,
+  -- then re-reads the now-committed state in the INSERT ... SELECT below (a
+  -- fresh statement-level snapshot under READ COMMITTED). Unlike a row
+  -- lock, this needs no UPDATE privilege/policy on budget_recurring_expenses
+  -- and releases automatically at transaction end either way.
+  PERFORM pg_advisory_xact_lock(budget_recurring_expense_lock_key(id))
   FROM   budget_recurring_expenses
   WHERE  household_id = target_household_id
-  ORDER BY id
-  FOR UPDATE;
+  ORDER BY id;
 
   INSERT INTO budget_entries (
     household_id, category_id, title, amount_cents, entry_date, entry_month,
@@ -522,19 +558,21 @@ GRANT EXECUTE ON FUNCTION create_recurring_budget_expense(uuid, uuid, text, inte
 -- months are untouched — this never stops the series itself.
 --
 -- Also serialized against ensure_budget_recurring_occurrences per series
--- (issue #105 follow-up) — see the FOR UPDATE lock below and the matching
--- comment in that function. Locking the same series row before writing the
+-- (issue #105 follow-up) — see the advisory lock below and the matching
+-- comment in that function. Locking the same series before writing the
 -- skip/delete means: if this function wins the lock first, a concurrent
 -- ensure() blocks until it commits and then correctly sees the skip and
 -- does not recreate the occurrence; if ensure() wins first, this function
 -- blocks until it commits and then still records the skip and deletes
 -- whatever ensure() just (re)created — the final state is always deleted.
 --
--- SECURITY INVOKER: the initial SELECT, the lock, the skip INSERT and the
--- final DELETE all run as the calling member — budget_entries'/budget_
--- recurring_expense_skips' own RLS policies are the actual enforcement; the
--- checks below exist to raise a clear error rather than a silent "0 rows
--- affected".
+-- SECURITY INVOKER: the initial SELECT, the advisory lock, the skip INSERT
+-- and the final DELETE all run as the calling member — budget_entries'/
+-- budget_recurring_expense_skips' own RLS policies are the actual
+-- enforcement; the checks below exist to raise a clear error rather than a
+-- silent "0 rows affected". The advisory lock itself needs no table
+-- privilege (see budget_recurring_expense_lock_key's comment) — it's not a
+-- row lock, so it doesn't require UPDATE rights on budget_recurring_expenses.
 -- =============================================================================
 CREATE OR REPLACE FUNCTION delete_recurring_budget_occurrence(target_entry_id uuid)
 RETURNS void
@@ -563,7 +601,7 @@ BEGIN
     RAISE EXCEPTION 'Entry is not a recurring occurrence';
   END IF;
 
-  PERFORM 1 FROM budget_recurring_expenses WHERE id = v_recurring_id FOR UPDATE;
+  PERFORM pg_advisory_xact_lock(budget_recurring_expense_lock_key(v_recurring_id));
 
   INSERT INTO budget_recurring_expense_skips (recurring_expense_id, skip_month)
   VALUES (v_recurring_id, v_entry_month)
