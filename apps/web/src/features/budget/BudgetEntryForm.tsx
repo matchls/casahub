@@ -51,6 +51,14 @@ export function BudgetEntryForm({
   const [note, setNote] = useState(initial?.note ?? "");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Generated once when this form instance mounts and reused for every
+  // retry of the same submission (the modal stays open and this component
+  // stays mounted on a failed submit — see BudgetScreen's handleAddSubmit),
+  // so a network failure + retry reuses the recurring series the RPC
+  // already created instead of creating a duplicate (issue #105). A fresh
+  // value is generated automatically the next time a new instance mounts
+  // (new form / after a successful create closes the modal).
+  const [creationRequestId] = useState<string>(() => crypto.randomUUID());
 
   const groups = groupBudgetCategories(categories);
 
@@ -97,6 +105,7 @@ export function BudgetEntryForm({
         kind,
         note: note.trim() || undefined,
         recurrence: initial ? "once" : recurrence,
+        creationRequestId,
       });
       if (!initial) {
         setTitle("");

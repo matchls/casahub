@@ -33,25 +33,41 @@
 -- below) so e.g. day 31 lands on Feb 28/29 without special-casing callers.
 -- start_month is the first-of-month the series becomes applicable from —
 -- occurrences are never generated before it.
+--
+-- creation_request_id is a client-generated, per-submission-lifecycle UUID
+-- (not derived from title/amount/category/month, which would wrongly
+-- collide two genuinely identical subscriptions) — see the unique index
+-- below and create_recurring_budget_expense's use of it. Defaults to a
+-- fresh random value so any insert that doesn't explicitly supply one (e.g.
+-- a direct authenticated insert outside the RPC) still gets a value that's
+-- never NULL and never collides.
 -- -----------------------------------------------------------------------------
 CREATE TABLE budget_recurring_expenses (
-  id              uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
-  household_id    uuid        NOT NULL REFERENCES households(id)        ON DELETE CASCADE,
-  category_id     uuid        REFERENCES budget_categories(id)          ON DELETE SET NULL,
-  title           text        NOT NULL,
-  amount_cents    integer     NOT NULL CHECK (amount_cents >= 0),
-  kind            text        NOT NULL DEFAULT 'fixed'
-                  CHECK (kind IN ('fixed', 'variable')),
-  note            text,
-  recurrence_day  integer     NOT NULL CHECK (recurrence_day BETWEEN 1 AND 31),
-  start_month     date        NOT NULL CHECK (start_month = date_trunc('month', start_month)::date),
-  created_by      uuid        REFERENCES household_members(id)          ON DELETE SET NULL,
-  created_at      timestamptz NOT NULL DEFAULT now(),
-  updated_at      timestamptz NOT NULL DEFAULT now()
+  id                    uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+  household_id          uuid        NOT NULL REFERENCES households(id)        ON DELETE CASCADE,
+  category_id           uuid        REFERENCES budget_categories(id)          ON DELETE SET NULL,
+  title                 text        NOT NULL,
+  amount_cents          integer     NOT NULL CHECK (amount_cents >= 0),
+  kind                  text        NOT NULL DEFAULT 'fixed'
+                        CHECK (kind IN ('fixed', 'variable')),
+  note                  text,
+  recurrence_day        integer     NOT NULL CHECK (recurrence_day BETWEEN 1 AND 31),
+  start_month           date        NOT NULL CHECK (start_month = date_trunc('month', start_month)::date),
+  created_by            uuid        REFERENCES household_members(id)          ON DELETE SET NULL,
+  creation_request_id   uuid        NOT NULL DEFAULT gen_random_uuid(),
+  created_at            timestamptz NOT NULL DEFAULT now(),
+  updated_at            timestamptz NOT NULL DEFAULT now()
 );
 
 CREATE INDEX idx_budget_recurring_expenses_household_id ON budget_recurring_expenses (household_id);
 CREATE INDEX idx_budget_recurring_expenses_category_id  ON budget_recurring_expenses (category_id);
+
+-- Request idempotency (issue #105 follow-up): retrying the same client
+-- request (e.g. after the response was lost to a network failure) must
+-- reuse the series it already created rather than creating a second one.
+-- See create_recurring_budget_expense's ON CONFLICT handling below.
+CREATE UNIQUE INDEX idx_budget_recurring_expenses_household_request
+  ON budget_recurring_expenses (household_id, creation_request_id);
 
 CREATE TRIGGER trg_budget_recurring_expenses_updated_at
   BEFORE UPDATE ON budget_recurring_expenses
@@ -201,7 +217,11 @@ CREATE POLICY "members_can_insert_budget_recurring_expenses"
 -- POLICIES: budget_recurring_expense_skips
 -- Household-scoped through the parent series (no denormalized household_id
 -- column — this table is small and always looked up by series). No UPDATE
--- policy: a skip is permanent for V1, matching "no unskip" in the issue.
+-- and no DELETE policy: a skip means "this series/month must never
+-- regenerate," permanently — V1 has no "restore occurrence" / "unskip"
+-- feature, so members must not be able to remove a skip row once it exists
+-- (that would defeat the whole guarantee this table exists to provide).
+-- delete_recurring_budget_occurrence only ever needs to INSERT a skip.
 -- -----------------------------------------------------------------------------
 CREATE POLICY "members_can_select_budget_recurring_expense_skips"
   ON budget_recurring_expense_skips
@@ -217,16 +237,6 @@ CREATE POLICY "members_can_insert_budget_recurring_expense_skips"
   ON budget_recurring_expense_skips
   FOR INSERT TO authenticated
   WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM budget_recurring_expenses r
-      WHERE r.id = recurring_expense_id AND is_household_member(r.household_id)
-    )
-  );
-
-CREATE POLICY "members_can_delete_budget_recurring_expense_skips"
-  ON budget_recurring_expense_skips
-  FOR DELETE TO authenticated
-  USING (
     EXISTS (
       SELECT 1 FROM budget_recurring_expenses r
       WHERE r.id = recurring_expense_id AND is_household_member(r.household_id)
@@ -264,7 +274,7 @@ ALTER POLICY "members_can_update_budget_entries"
 -- =============================================================================
 
 GRANT SELECT, INSERT               ON TABLE budget_recurring_expenses      TO authenticated;
-GRANT SELECT, INSERT, DELETE       ON TABLE budget_recurring_expense_skips TO authenticated;
+GRANT SELECT, INSERT               ON TABLE budget_recurring_expense_skips TO authenticated;
 
 
 -- =============================================================================
@@ -294,6 +304,13 @@ $$;
 -- month-by-month loop. Safe to call repeatedly (idempotent): the partial
 -- unique index on budget_entries plus ON CONFLICT DO NOTHING means calling
 -- it twice — or concurrently from two tabs — never creates duplicates.
+--
+-- Also serialized against delete_recurring_budget_occurrence per series
+-- (issue #105 follow-up) — see the FOR UPDATE lock below and the matching
+-- comment in that function. Without it, this function could read a
+-- pre-delete snapshot (the skip not yet visible) concurrently with a delete
+-- that inserts the skip and removes the occurrence, and recreate the very
+-- occurrence the delete just removed.
 --
 -- SECURITY INVOKER (the default — no SECURITY DEFINER): the INSERT below
 -- runs as the calling household member, so the existing budget_entries RLS
@@ -327,6 +344,21 @@ BEGIN
   WHERE  household_id = target_household_id
     AND  user_id      = auth.uid()
   LIMIT 1;
+
+  -- Lock every candidate series for this household before generating,
+  -- in a stable id order so two concurrent ensure() calls always acquire
+  -- their locks in the same order and can never deadlock against each
+  -- other. delete_recurring_budget_occurrence locks exactly one series row
+  -- the same way, so whichever transaction (this one, or a concurrent
+  -- delete) commits first is authoritative for that series — the other
+  -- blocks here until it does, then re-reads the now-committed state in
+  -- the INSERT ... SELECT below (a fresh statement-level snapshot under
+  -- READ COMMITTED).
+  PERFORM 1
+  FROM   budget_recurring_expenses
+  WHERE  household_id = target_household_id
+  ORDER BY id
+  FOR UPDATE;
 
   INSERT INTO budget_entries (
     household_id, category_id, title, amount_cents, entry_date, entry_month,
@@ -370,14 +402,30 @@ GRANT EXECUTE ON FUNCTION ensure_budget_recurring_occurrences(uuid, date, date) 
 -- failure can never leave a template without its first occurrence (or vice
 -- versa); the client either sees the created entry or sees nothing at all.
 --
+-- Also idempotent across request retries (issue #105 follow-up), which is a
+-- different guarantee from the atomicity above: atomicity alone doesn't
+-- stop a client that never saw the (successful) response from retrying and
+-- creating a *second* series. target_request_id is a UUID the client
+-- generates once per add-form submission lifecycle and keeps stable across
+-- retries of that same submission (see BudgetEntryForm) — the ON CONFLICT
+-- below means a retry with the same request id reuses the series it already
+-- created instead of creating a duplicate, using an atomic
+-- INSERT ... ON CONFLICT DO NOTHING RETURNING rather than a check-then-act
+-- SELECT-then-INSERT, so two truly concurrent retries can't both race past
+-- a plain existence check. Two genuinely separate, identical-looking
+-- expenses (e.g. two Netflix subscriptions) still get their own series,
+-- because each submission generates its own fresh request id — only a
+-- *retry* of the same submission repeats it.
+--
 -- SECURITY INVOKER: both INSERTs run as the calling member, so
 -- budget_recurring_expenses' and budget_entries' own RLS policies enforce
 -- household membership and category ownership — this function adds no
 -- privilege the caller didn't already have.
 --
--- Returns the created budget_entries row (not the series) so the client can
--- feed it straight through the same mapBudgetEntryRow()/optimistic-update
--- path used for a plain Ponctuelle entry, no parallel result shape needed.
+-- Returns the created (or, on a retried request, the already-existing)
+-- budget_entries row (not the series) so the client can feed it straight
+-- through the same mapBudgetEntryRow()/optimistic-update path used for a
+-- plain Ponctuelle entry, no parallel result shape needed.
 -- =============================================================================
 CREATE OR REPLACE FUNCTION create_recurring_budget_expense(
   target_household_id    uuid,
@@ -387,7 +435,8 @@ CREATE OR REPLACE FUNCTION create_recurring_budget_expense(
   target_kind             text,
   target_note             text,
   target_recurrence_day   integer,
-  target_start_month      date
+  target_start_month      date,
+  target_request_id       uuid
 )
 RETURNS SETOF budget_entries
 LANGUAGE plpgsql
@@ -401,6 +450,10 @@ BEGIN
     RAISE EXCEPTION 'Not a member of this household';
   END IF;
 
+  IF target_request_id IS NULL THEN
+    RAISE EXCEPTION 'target_request_id is required';
+  END IF;
+
   SELECT id INTO v_member_id
   FROM   household_members
   WHERE  household_id = target_household_id
@@ -409,35 +462,56 @@ BEGIN
 
   INSERT INTO budget_recurring_expenses (
     household_id, category_id, title, amount_cents, kind, note,
-    recurrence_day, start_month, created_by
+    recurrence_day, start_month, created_by, creation_request_id
   ) VALUES (
     target_household_id, target_category_id, target_title, target_amount_cents,
-    target_kind, target_note, target_recurrence_day, target_start_month, v_member_id
+    target_kind, target_note, target_recurrence_day, target_start_month, v_member_id,
+    target_request_id
   )
+  ON CONFLICT (household_id, creation_request_id) DO NOTHING
   RETURNING id INTO v_series_id;
 
+  IF v_series_id IS NOT NULL THEN
+    -- We won: target_request_id was genuinely new, so this is a fresh
+    -- series — create its first occurrence.
+    RETURN QUERY
+    INSERT INTO budget_entries (
+      household_id, category_id, title, amount_cents, entry_date, entry_month,
+      kind, note, created_by, recurring_expense_id
+    ) VALUES (
+      target_household_id,
+      target_category_id,
+      target_title,
+      target_amount_cents,
+      budget_recurring_occurrence_date(target_start_month, target_recurrence_day),
+      target_start_month,
+      target_kind,
+      target_note,
+      v_member_id,
+      v_series_id
+    )
+    RETURNING *;
+    RETURN;
+  END IF;
+
+  -- Conflict: this exact request id already created a series (a retried
+  -- submission whose earlier response the client never saw). Return the
+  -- existing first occurrence instead of creating a duplicate series.
+  SELECT id INTO v_series_id
+  FROM   budget_recurring_expenses
+  WHERE  household_id = target_household_id
+    AND  creation_request_id = target_request_id;
+
   RETURN QUERY
-  INSERT INTO budget_entries (
-    household_id, category_id, title, amount_cents, entry_date, entry_month,
-    kind, note, created_by, recurring_expense_id
-  ) VALUES (
-    target_household_id,
-    target_category_id,
-    target_title,
-    target_amount_cents,
-    budget_recurring_occurrence_date(target_start_month, target_recurrence_day),
-    target_start_month,
-    target_kind,
-    target_note,
-    v_member_id,
-    v_series_id
-  )
-  RETURNING *;
+    SELECT * FROM budget_entries
+    WHERE  recurring_expense_id = v_series_id
+    ORDER BY entry_date
+    LIMIT 1;
 END;
 $$;
 
-REVOKE ALL ON FUNCTION create_recurring_budget_expense(uuid, uuid, text, integer, text, text, integer, date) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION create_recurring_budget_expense(uuid, uuid, text, integer, text, text, integer, date) TO authenticated;
+REVOKE ALL ON FUNCTION create_recurring_budget_expense(uuid, uuid, text, integer, text, text, integer, date, uuid) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION create_recurring_budget_expense(uuid, uuid, text, integer, text, text, integer, date, uuid) TO authenticated;
 
 
 -- =============================================================================
@@ -447,10 +521,20 @@ GRANT EXECUTE ON FUNCTION create_recurring_budget_expense(uuid, uuid, text, inte
 -- that month is a no-op instead of recreating what was just deleted. Future
 -- months are untouched — this never stops the series itself.
 --
--- SECURITY INVOKER: the initial SELECT, the skip INSERT and the final DELETE
--- all run as the calling member — budget_entries'/budget_recurring_expense_
--- skips' own RLS policies are the actual enforcement; the checks below exist
--- to raise a clear error rather than a silent "0 rows affected".
+-- Also serialized against ensure_budget_recurring_occurrences per series
+-- (issue #105 follow-up) — see the FOR UPDATE lock below and the matching
+-- comment in that function. Locking the same series row before writing the
+-- skip/delete means: if this function wins the lock first, a concurrent
+-- ensure() blocks until it commits and then correctly sees the skip and
+-- does not recreate the occurrence; if ensure() wins first, this function
+-- blocks until it commits and then still records the skip and deletes
+-- whatever ensure() just (re)created — the final state is always deleted.
+--
+-- SECURITY INVOKER: the initial SELECT, the lock, the skip INSERT and the
+-- final DELETE all run as the calling member — budget_entries'/budget_
+-- recurring_expense_skips' own RLS policies are the actual enforcement; the
+-- checks below exist to raise a clear error rather than a silent "0 rows
+-- affected".
 -- =============================================================================
 CREATE OR REPLACE FUNCTION delete_recurring_budget_occurrence(target_entry_id uuid)
 RETURNS void
@@ -478,6 +562,8 @@ BEGIN
   IF v_recurring_id IS NULL THEN
     RAISE EXCEPTION 'Entry is not a recurring occurrence';
   END IF;
+
+  PERFORM 1 FROM budget_recurring_expenses WHERE id = v_recurring_id FOR UPDATE;
 
   INSERT INTO budget_recurring_expense_skips (recurring_expense_id, skip_month)
   VALUES (v_recurring_id, v_entry_month)

@@ -217,6 +217,13 @@ export async function loadBudgetEntries(
  * across [fromMonth, toMonth] (both "YYYY-MM-01") — must run before
  * loadBudgetEntries/loadBudgetEvolution below, otherwise a month that was
  * never manually opened before would be undercounted (issue #105).
+ *
+ * Fails closed: if the RPC errors, this throws rather than logging and
+ * continuing. Swallowing the error would let the server load proceed as if
+ * materialization succeeded, silently rendering an incomplete household
+ * budget — a visible load failure here is preferable to that. Matches
+ * ensureBudgetRecurringOccurrences() in lib/supabase/budget.ts, which
+ * already throws on the client for the same reason.
  */
 export async function ensureBudgetRecurringOccurrences(
   supabase: SupabaseClient,
@@ -232,6 +239,7 @@ export async function ensureBudgetRecurringOccurrences(
 
   if (error) {
     console.error("[loaders] ensure_budget_recurring_occurrences failed:", error.message);
+    throw new Error(`Failed to materialize recurring budget occurrences: ${error.message}`);
   }
 }
 

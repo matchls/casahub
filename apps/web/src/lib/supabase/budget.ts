@@ -179,9 +179,17 @@ export async function deleteBudgetEntry(id: string): Promise<void> {
  * "Mensuelle") only ever matters at creation time (issue #105) — editing an
  * existing occurrence never converts it into/out of a recurring series, so
  * updateBudgetEntry() intentionally keeps taking the plain BudgetEntryInput.
+ *
+ * creationRequestId is a UUID generated once per add-form submission
+ * lifecycle (see BudgetEntryForm) and kept stable across retries of that
+ * same submission. It's only actually used server-side when recurrence is
+ * "monthly" (see createRecurringBudgetExpense below) — included
+ * unconditionally here just to keep a single payload shape for both
+ * recurrence values.
  */
 export interface CreateBudgetEntryInput extends BudgetEntryInput {
   recurrence: BudgetEntryRecurrence;
+  creationRequestId: string;
 }
 
 /**
@@ -191,10 +199,17 @@ export interface CreateBudgetEntryInput extends BudgetEntryInput {
  * input.entryDate, matching how BudgetEntryForm collects a single date for
  * a "Mensuelle" entry. Returns the created occurrence row so callers can
  * feed it through mapBudgetEntryRow() exactly like addBudgetEntry().
+ *
+ * requestId makes retries of the same submission idempotent server-side: if
+ * the client never saw a prior successful response and calls this again
+ * with the same requestId, the RPC returns the series it already created
+ * instead of creating a second one — see the RPC's own comment for why this
+ * is a distinct guarantee from its atomicity.
  */
 export async function createRecurringBudgetExpense(
   householdId: string,
-  input: BudgetEntryInput
+  input: BudgetEntryInput,
+  requestId: string
 ): Promise<BudgetEntryRow> {
   const supabase = createClient();
   const { data, error } = await supabase
@@ -207,6 +222,7 @@ export async function createRecurringBudgetExpense(
       target_note: input.note || null,
       target_recurrence_day: Number(input.entryDate.slice(8, 10)),
       target_start_month: toEntryMonth(input.entryDate),
+      target_request_id: requestId,
     })
     .select(BUDGET_ENTRY_COLUMNS)
     .single();

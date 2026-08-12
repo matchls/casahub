@@ -512,7 +512,7 @@ export function useDomotidienState({
     try {
       const row =
         input.recurrence === "monthly"
-          ? await createRecurringBudgetExpenseDb(householdId, input)
+          ? await createRecurringBudgetExpenseDb(householdId, input, input.creationRequestId)
           : await addBudgetEntryDb(householdId, input);
       const saved = mapBudgetEntryRow(row);
       setBudgetEntries((prev) =>
