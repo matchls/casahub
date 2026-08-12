@@ -14,6 +14,7 @@ import {
   buildBudgetBreakdown,
   buildMainCategoryLookup,
   buildSubcategoryBreakdown,
+  calculatePerPersonCents,
   defaultBudgetEntryDate,
   formatBudgetMonthLabel,
   formatCents,
@@ -28,6 +29,8 @@ interface BudgetScreenProps {
   evolution: BudgetMonthlyEvolutionPoint[];
   month: string;
   monthLoading: boolean;
+  /** Active household member count, for the informational "Par personne" split. */
+  householdMemberCount: number;
   onMonthChange: (month: string) => void;
   onAdd: (input: BudgetEntryInput) => Promise<void>;
   onUpdate: (id: string, input: BudgetEntryInput) => Promise<void>;
@@ -40,6 +43,7 @@ export function BudgetScreen({
   evolution,
   month,
   monthLoading,
+  householdMemberCount,
   onMonthChange,
   onAdd,
   onUpdate,
@@ -65,6 +69,11 @@ export function BudgetScreen({
     [entries]
   );
 
+  const perPersonCents = useMemo(
+    () => calculatePerPersonCents(totalCents, householdMemberCount),
+    [totalCents, householdMemberCount]
+  );
+
   const categoryTotals = useMemo(() => {
     const totals = new Map<string, number>();
     for (const entry of entries) {
@@ -76,6 +85,14 @@ export function BudgetScreen({
   }, [entries, mainCategoryLookup]);
 
   const selectedGroup = groups.find((g) => g.main.id === selectedMainId);
+
+  const selectedGroupPerPersonCents = useMemo(
+    () =>
+      selectedGroup
+        ? calculatePerPersonCents(categoryTotals.get(selectedGroup.main.id) ?? 0, householdMemberCount)
+        : null,
+    [selectedGroup, categoryTotals, householdMemberCount]
+  );
 
   const visibleEntries = selectedMainId
     ? entries.filter(
@@ -147,6 +164,11 @@ export function BudgetScreen({
         >
           {monthLoading ? "…" : formatCents(totalCents)}
         </p>
+        {!monthLoading && perPersonCents !== null && (
+          <p className="text-[13px] font-semibold mt-[2px] tabular-nums text-[var(--budget-text)] opacity-70">
+            Par personne : {formatCents(perPersonCents)}
+          </p>
+        )}
       </Card>
 
       {selectedGroup ? (
@@ -169,6 +191,11 @@ export function BudgetScreen({
               <p className="text-[13px] text-[var(--text-muted)]">
                 {formatCents(categoryTotals.get(selectedGroup.main.id) ?? 0)} ce mois-ci
               </p>
+              {selectedGroupPerPersonCents !== null && (
+                <p className="text-[12px] font-semibold text-[var(--text-soft)]">
+                  Par personne : {formatCents(selectedGroupPerPersonCents)}
+                </p>
+              )}
             </div>
           </div>
 
@@ -252,6 +279,7 @@ export function BudgetScreen({
                     category={main}
                     totalCents={catTotal}
                     sharePercent={share}
+                    perPersonCents={calculatePerPersonCents(catTotal, householdMemberCount)}
                     onClick={() => setSelectedMainId(main.id)}
                   />
                 );

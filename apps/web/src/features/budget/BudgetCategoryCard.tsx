@@ -6,6 +6,8 @@ interface BudgetCategoryCardProps {
   category: BudgetCategory;
   totalCents: number;
   sharePercent: number;
+  /** Equal per-person share, in cents — omitted (null) when it can't be validly computed. */
+  perPersonCents: number | null;
   onClick: () => void;
 }
 
@@ -13,6 +15,7 @@ export function BudgetCategoryCard({
   category,
   totalCents,
   sharePercent,
+  perPersonCents,
   onClick,
 }: BudgetCategoryCardProps) {
   return (
@@ -38,6 +41,11 @@ export function BudgetCategoryCard({
       <div className="text-[15px] font-bold mt-[2px] tabular-nums" style={{ color: "#3A7A70" }}>
         {formatCents(totalCents)}
       </div>
+      {perPersonCents !== null && (
+        <div className="text-[11px] font-semibold mt-[1px] tabular-nums text-[var(--budget-text)] opacity-60">
+          {formatCents(perPersonCents)} / personne
+        </div>
+      )}
     </button>
   );
 }
