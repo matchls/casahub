@@ -333,11 +333,26 @@ $$;
 -- it twice — or concurrently from two tabs — never creates duplicates.
 --
 -- Also serialized against delete_recurring_budget_occurrence per series
--- (issue #105 follow-up) — see the advisory lock below and the matching
--- comment in that function. Without it, this function could read a
+-- (issue #105 follow-up) — see the advisory lock loop below and the
+-- matching comment in that function. Without it, this function could read a
 -- pre-delete snapshot (the skip not yet visible) concurrently with a delete
 -- that inserts the skip and removes the occurrence, and recreate the very
 -- occurrence the delete just removed.
+--
+-- Locking and generation are deliberately split into three steps — snapshot
+-- candidate ids, lock exactly those ids, generate strictly within that
+-- captured set — rather than locking via one query and generating via a
+-- second, independent query against the live table. Under READ COMMITTED
+-- every statement gets its own fresh snapshot, so the naive two-query
+-- version could have its (later) generation query see a series that wasn't
+-- part of the (earlier) locking query's result — e.g. one committed by a
+-- concurrent create_recurring_budget_expense in between the two statements.
+-- That series would never have been advisory-locked, silently reopening the
+-- exact race these locks exist to close. Restricting generation to
+-- r.id = ANY(v_series_ids) guarantees it only ever touches series this
+-- transaction actually locked; a series created after the snapshot is left
+-- for the next ensure() call, which is fine — its first occurrence was
+-- already created atomically by create_recurring_budget_expense.
 --
 -- SECURITY INVOKER (the default — no SECURITY DEFINER): the INSERT below
 -- runs as the calling household member, so the existing budget_entries RLS
@@ -356,7 +371,9 @@ LANGUAGE plpgsql
 SET search_path = public
 AS $$
 DECLARE
-  v_member_id uuid;
+  v_member_id  uuid;
+  v_series_ids uuid[];
+  v_series_id  uuid;
 BEGIN
   IF NOT is_household_member(target_household_id) THEN
     RAISE EXCEPTION 'Not a member of this household';
@@ -380,22 +397,37 @@ BEGIN
     AND  user_id      = auth.uid()
   LIMIT 1;
 
-  -- Acquire one transaction-scoped advisory lock per candidate series for
-  -- this household, in a stable id order so two concurrent ensure() calls
-  -- always acquire their locks in the same order and can never deadlock
-  -- against each other. delete_recurring_budget_occurrence locks exactly
-  -- one series the same way (same key derivation), so whichever
-  -- transaction (this one, or a concurrent delete) commits first is
-  -- authoritative for that series — the other blocks here until it does,
-  -- then re-reads the now-committed state in the INSERT ... SELECT below (a
-  -- fresh statement-level snapshot under READ COMMITTED). Unlike a row
-  -- lock, this needs no UPDATE privilege/policy on budget_recurring_expenses
-  -- and releases automatically at transaction end either way.
-  PERFORM pg_advisory_xact_lock(budget_recurring_expense_lock_key(id))
+  -- Step 1: snapshot the candidate series ids for this household/range,
+  -- in a stable ascending order (array_agg's own ORDER BY, not an outer
+  -- query ORDER BY, since this aggregates into a single array value).
+  -- start_month > to_month is excluded up front — such a series can't
+  -- produce any occurrence in [from_month, to_month] regardless (see
+  -- GREATEST() below), so there's no reason to lock or later scan it.
+  SELECT array_agg(id ORDER BY id)
+  INTO   v_series_ids
   FROM   budget_recurring_expenses
   WHERE  household_id = target_household_id
-  ORDER BY id;
+    AND  start_month  <= to_month;
 
+  -- Step 2: acquire one transaction-scoped advisory lock per captured id,
+  -- in that same stable order, so two concurrent ensure() calls (or an
+  -- ensure() and a delete()) can never deadlock against each other.
+  -- delete_recurring_budget_occurrence locks exactly one series the same
+  -- way (same key derivation) before writing its skip and deleting —
+  -- whichever transaction commits first for a given series is authoritative,
+  -- and the other blocks here until it does, then re-reads the now-
+  -- committed state in the generation query below (a fresh statement-level
+  -- snapshot under READ COMMITTED). An explicit loop over the array
+  -- captured in step 1 (rather than a fresh query) makes "lock exactly
+  -- these ids, in this order" unambiguous and ties the lock set to the
+  -- exact set step 3 is about to generate for. Unlike a row lock, this
+  -- needs no UPDATE privilege/policy on budget_recurring_expenses and
+  -- releases automatically at transaction end.
+  FOREACH v_series_id IN ARRAY COALESCE(v_series_ids, ARRAY[]::uuid[]) LOOP
+    PERFORM pg_advisory_xact_lock(budget_recurring_expense_lock_key(v_series_id));
+  END LOOP;
+
+  -- Step 3: generate strictly within the captured, now-locked id set.
   INSERT INTO budget_entries (
     household_id, category_id, title, amount_cents, entry_date, entry_month,
     kind, note, created_by, recurring_expense_id
@@ -417,7 +449,7 @@ BEGIN
     to_month,
     interval '1 month'
   ) AS m(month)
-  WHERE r.household_id = target_household_id
+  WHERE r.id = ANY(v_series_ids)
     AND NOT EXISTS (
       SELECT 1 FROM budget_recurring_expense_skips s
       WHERE s.recurring_expense_id = r.id AND s.skip_month = m.month::date
