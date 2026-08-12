@@ -89,6 +89,9 @@ export interface BudgetCategory {
 
 export type BudgetEntryKind = "fixed" | "variable";
 
+/** "Ponctuelle" (once) vs "Mensuelle" (monthly) — independent of BudgetEntryKind (Fixe/Variable). */
+export type BudgetEntryRecurrence = "once" | "monthly";
+
 export interface BudgetEntry {
   id: string;
   title: string;
@@ -103,6 +106,8 @@ export interface BudgetEntry {
   kind: BudgetEntryKind;
   note?: string;
   createdBy?: MemberId;
+  /** Set when this entry was generated from a monthly recurring series ("Mensuelle"); undefined for a one-off ("Ponctuelle") entry. */
+  recurringExpenseId?: string;
 }
 
 export interface HouseholdProfile {

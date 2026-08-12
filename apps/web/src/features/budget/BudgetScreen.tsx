@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/Card";
 import { Modal } from "@/components/ui/Modal";
 import type { BudgetCategory, BudgetEntry } from "@/lib/domain/types";
-import type { BudgetEntryInput } from "@/lib/supabase/budget";
+import type { BudgetEntryInput, CreateBudgetEntryInput } from "@/lib/supabase/budget";
 import { BudgetBreakdownChart } from "./BudgetBreakdownChart";
 import { BudgetCategoryCard } from "./BudgetCategoryCard";
 import { BudgetEntryForm } from "./BudgetEntryForm";
@@ -32,7 +32,7 @@ interface BudgetScreenProps {
   /** Active household member count, for the informational "Par personne" split. */
   householdMemberCount: number;
   onMonthChange: (month: string) => void;
-  onAdd: (input: BudgetEntryInput) => Promise<void>;
+  onAdd: (input: CreateBudgetEntryInput) => Promise<void>;
   onUpdate: (id: string, input: BudgetEntryInput) => Promise<void>;
   onDelete: (id: string) => void;
 }
@@ -56,7 +56,7 @@ export function BudgetScreen({
   // rejects (validation/network failure), the throw propagates out before
   // reaching setAddModalOpen(false), so BudgetEntryForm's own try/catch
   // shows the error and the modal stays open, unchanged from before.
-  async function handleAddSubmit(input: BudgetEntryInput) {
+  async function handleAddSubmit(input: CreateBudgetEntryInput) {
     await onAdd(input);
     setAddModalOpen(false);
   }

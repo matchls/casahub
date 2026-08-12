@@ -49,20 +49,23 @@ import {
   addBudgetEntry as addBudgetEntryDb,
   updateBudgetEntry as updateBudgetEntryDb,
   deleteBudgetEntry as deleteBudgetEntryDb,
+  createRecurringBudgetExpense as createRecurringBudgetExpenseDb,
+  ensureBudgetRecurringOccurrences as ensureBudgetRecurringOccurrencesDb,
+  deleteRecurringBudgetOccurrence as deleteRecurringBudgetOccurrenceDb,
   fetchBudgetEntriesForMonth,
   fetchBudgetEntriesForMonthRange,
   mapBudgetEntryRow,
   toEntryMonth,
   type BudgetEntryInput,
+  type CreateBudgetEntryInput,
 } from "@/lib/supabase/budget";
 import {
   buildMonthlyEvolution,
   currentBudgetMonth,
   monthRangeEndingAt,
+  BUDGET_EVOLUTION_MONTH_COUNT,
   type BudgetMonthlyEvolutionPoint,
 } from "@/features/budget/budgetData";
-
-const EVOLUTION_MONTH_COUNT = 6;
 
 interface DomotidienStateOptions {
   initialProfile: HouseholdProfile;
@@ -439,14 +442,26 @@ export function useDomotidienState({
   // other modules, so switching months re-fetches from Supabase instead of
   // filtering an already-loaded list.
 
+  // Materializes any missing recurring occurrences across the 6-month
+  // evolution window ending at `centerMonth`, then returns that window.
+  // Must run before every read that depends on recurring occurrences being
+  // present, so a month that was never manually opened before isn't
+  // undercounted (issue #105) — mirrors the ensure-then-load ordering used
+  // by the initial server load in app/page.tsx.
+  async function ensureRecurringOccurrences(centerMonth: string): Promise<string[]> {
+    const months = monthRangeEndingAt(centerMonth, BUDGET_EVOLUTION_MONTH_COUNT);
+    await ensureBudgetRecurringOccurrencesDb(householdId, months[0], months[months.length - 1]);
+    return months;
+  }
+
   // Re-fetches the 6-month evolution window ending at `centerMonth`. Used on
   // month switch and after every add/edit/delete, since an entry's date can
   // land anywhere (not just the currently viewed month), so patching the
   // evolution totals in place isn't reliably correct — a small, cheap
   // (entry_month + amount_cents only) re-fetch is simpler and always right.
   async function refreshBudgetEvolution(centerMonth: string) {
-    const months = monthRangeEndingAt(centerMonth, EVOLUTION_MONTH_COUNT);
     try {
+      const months = await ensureRecurringOccurrences(centerMonth);
       const rows = await fetchBudgetEntriesForMonthRange(
         householdId,
         months[0],
@@ -462,6 +477,7 @@ export function useDomotidienState({
     setBudgetMonthState(month);
     setBudgetMonthLoading(true);
     try {
+      await ensureRecurringOccurrences(month);
       const [freshEntries] = await Promise.all([
         fetchBudgetEntriesForMonth(householdId, month),
         refreshBudgetEvolution(month),
@@ -474,7 +490,7 @@ export function useDomotidienState({
     }
   }
 
-  async function addBudgetEntry(input: BudgetEntryInput) {
+  async function addBudgetEntry(input: CreateBudgetEntryInput) {
     const tempId = `temp-${Date.now()}`;
     const entryMonth = toEntryMonth(input.entryDate);
     const belongsToVisibleMonth = entryMonth === budgetMonth;
@@ -494,7 +510,10 @@ export function useDomotidienState({
       ]);
     }
     try {
-      const row = await addBudgetEntryDb(householdId, input);
+      const row =
+        input.recurrence === "monthly"
+          ? await createRecurringBudgetExpenseDb(householdId, input)
+          : await addBudgetEntryDb(householdId, input);
       const saved = mapBudgetEntryRow(row);
       setBudgetEntries((prev) =>
         belongsToVisibleMonth ? prev.map((e) => (e.id === tempId ? saved : e)) : prev
@@ -542,9 +561,17 @@ export function useDomotidienState({
 
   async function deleteBudgetEntry(id: string) {
     const prevEntries = budgetEntries;
+    const target = budgetEntries.find((e) => e.id === id);
     setBudgetEntries((prev) => prev.filter((e) => e.id !== id));
     try {
-      await deleteBudgetEntryDb(id);
+      // A recurring occurrence must register a durable skip alongside its
+      // deletion, or the next ensureRecurringOccurrences call recreates it
+      // (issue #105) — a plain one-off entry keeps today's behavior exactly.
+      if (target?.recurringExpenseId) {
+        await deleteRecurringBudgetOccurrenceDb(id);
+      } else {
+        await deleteBudgetEntryDb(id);
+      }
       refreshBudgetEvolution(budgetMonth);
     } catch (err) {
       console.error("[budget] delete failed:", err);

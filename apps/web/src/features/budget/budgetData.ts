@@ -1,4 +1,7 @@
-import type { BudgetCategory, BudgetEntry, BudgetEntryKind } from "@/lib/domain/types";
+import type { BudgetCategory, BudgetEntry, BudgetEntryKind, BudgetEntryRecurrence } from "@/lib/domain/types";
+
+/** Width of the monthly evolution window — shared so the server loader (loaders.ts) and the recurring-occurrence materialization range it depends on can never silently drift apart. */
+export const BUDGET_EVOLUTION_MONTH_COUNT = 6;
 
 /** Today's date, as the first-of-month Postgres `date` string ("YYYY-MM-01"). */
 export function currentBudgetMonth(): string {
@@ -30,6 +33,13 @@ export function shiftBudgetMonth(month: string, delta: number): string {
   const [year, monthIndex] = month.split("-").map(Number);
   const shifted = new Date(year, monthIndex - 1 + delta, 1);
   return `${shifted.getFullYear()}-${String(shifted.getMonth() + 1).padStart(2, "0")}-01`;
+}
+
+/** Last calendar day of the month containing `entryDate` ("YYYY-MM-DD"), as an ISO date string — used to bound the date input when editing a recurring occurrence (issue #105: it may move within its month, never to another one). */
+export function lastDayOfBudgetMonth(entryDate: string): string {
+  const [year, monthIndex] = entryDate.slice(0, 7).split("-").map(Number);
+  const lastDay = new Date(year, monthIndex, 0);
+  return `${lastDay.getFullYear()}-${String(lastDay.getMonth() + 1).padStart(2, "0")}-${String(lastDay.getDate()).padStart(2, "0")}`;
 }
 
 /** "2026-08-01" -> "août 2026" */
@@ -97,6 +107,11 @@ export function calculatePerPersonCents(totalCents: number, memberCount: number)
 export const KIND_LABELS: Record<BudgetEntryKind, string> = {
   fixed: "Fixe",
   variable: "Variable",
+};
+
+export const RECURRENCE_LABELS: Record<BudgetEntryRecurrence, string> = {
+  once: "Ponctuelle",
+  monthly: "Mensuelle",
 };
 
 export interface BudgetCategoryGroup {

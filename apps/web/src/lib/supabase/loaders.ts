@@ -15,7 +15,12 @@ import { mapTaskRow } from "./tasks";
 import { mapNoteRow } from "./notes";
 import { mapLinkRow } from "./links";
 import { mapBudgetCategoryRow, mapBudgetEntryRow } from "./budget";
-import { buildMonthlyEvolution, monthRangeEndingAt, type BudgetMonthlyEvolutionPoint } from "@/features/budget/budgetData";
+import {
+  buildMonthlyEvolution,
+  monthRangeEndingAt,
+  BUDGET_EVOLUTION_MONTH_COUNT,
+  type BudgetMonthlyEvolutionPoint,
+} from "@/features/budget/budgetData";
 
 /** Resolves the household the current user belongs to, or null if they have none (caller should redirect to onboarding). */
 export async function loadCurrentUserHousehold(
@@ -193,7 +198,9 @@ export async function loadBudgetEntries(
 ): Promise<BudgetEntry[]> {
   const { data, error } = await supabase
     .from("budget_entries")
-    .select("id, title, amount_cents, category_id, entry_date, entry_month, kind, note, created_by")
+    .select(
+      "id, title, amount_cents, category_id, entry_date, entry_month, kind, note, created_by, recurring_expense_id"
+    )
     .eq("household_id", householdId)
     .eq("entry_month", entryMonth)
     .order("entry_date", { ascending: false });
@@ -205,12 +212,35 @@ export async function loadBudgetEntries(
   return (data ?? []).map(mapBudgetEntryRow);
 }
 
+/**
+ * Materializes any missing monthly-recurring occurrences for the household
+ * across [fromMonth, toMonth] (both "YYYY-MM-01") — must run before
+ * loadBudgetEntries/loadBudgetEvolution below, otherwise a month that was
+ * never manually opened before would be undercounted (issue #105).
+ */
+export async function ensureBudgetRecurringOccurrences(
+  supabase: SupabaseClient,
+  householdId: string,
+  fromMonth: string,
+  toMonth: string
+): Promise<void> {
+  const { error } = await supabase.rpc("ensure_budget_recurring_occurrences", {
+    target_household_id: householdId,
+    from_month: fromMonth,
+    to_month: toMonth,
+  });
+
+  if (error) {
+    console.error("[loaders] ensure_budget_recurring_occurrences failed:", error.message);
+  }
+}
+
 /** Per-month spending totals for the `monthCount` months ending at (and including) `month`, used by the monthly evolution chart. */
 export async function loadBudgetEvolution(
   supabase: SupabaseClient,
   householdId: string,
   month: string,
-  monthCount: number = 6
+  monthCount: number = BUDGET_EVOLUTION_MONTH_COUNT
 ): Promise<BudgetMonthlyEvolutionPoint[]> {
   const months = monthRangeEndingAt(month, monthCount);
 
