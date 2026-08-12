@@ -225,6 +225,7 @@ export function AppShell({
           evolution={budgetEvolution}
           month={budgetMonth}
           monthLoading={budgetMonthLoading}
+          householdMemberCount={profile.members.length}
           onMonthChange={setBudgetMonth}
           onAdd={addBudgetEntry}
           onUpdate={updateBudgetEntry}

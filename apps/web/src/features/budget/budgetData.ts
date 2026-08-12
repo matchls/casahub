@@ -81,6 +81,19 @@ export function formatCentsCompact(amountCents: number): string {
   return CENTS_FORMATTER_COMPACT.format(amountCents / 100);
 }
 
+/**
+ * Equal per-person share of a total, in cents. Informational only — it does
+ * not track who actually paid. Returns null (rather than NaN/Infinity) when
+ * `memberCount` is missing or invalid, so callers can omit the "Par
+ * personne" line entirely instead of rendering a bogus figure.
+ */
+export function calculatePerPersonCents(totalCents: number, memberCount: number): number | null {
+  if (!Number.isFinite(totalCents) || !Number.isInteger(memberCount) || memberCount <= 0) {
+    return null;
+  }
+  return Math.round(totalCents / memberCount);
+}
+
 export const KIND_LABELS: Record<BudgetEntryKind, string> = {
   fixed: "Fixe",
   variable: "Variable",
