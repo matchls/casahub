@@ -1,5 +1,5 @@
 import { createClient } from "./client";
-import type { BudgetCategory, BudgetEntry, BudgetEntryKind } from "@/lib/domain/types";
+import type { BudgetCategory, BudgetEntry, BudgetEntryKind, BudgetEntryRecurrence } from "@/lib/domain/types";
 
 export interface BudgetCategoryRow {
   id: string;
@@ -29,10 +29,11 @@ export interface BudgetEntryRow {
   kind: string;
   note: string | null;
   created_by: string | null;
+  recurring_expense_id: string | null;
 }
 
 const BUDGET_ENTRY_COLUMNS =
-  "id, title, amount_cents, category_id, entry_date, entry_month, kind, note, created_by";
+  "id, title, amount_cents, category_id, entry_date, entry_month, kind, note, created_by, recurring_expense_id";
 
 export function mapBudgetEntryRow(row: BudgetEntryRow): BudgetEntry {
   return {
@@ -45,6 +46,7 @@ export function mapBudgetEntryRow(row: BudgetEntryRow): BudgetEntry {
     kind: row.kind as BudgetEntryKind,
     note: row.note ?? undefined,
     createdBy: row.created_by ?? undefined,
+    recurringExpenseId: row.recurring_expense_id ?? undefined,
   };
 }
 
@@ -169,5 +171,98 @@ export async function updateBudgetEntry(
 export async function deleteBudgetEntry(id: string): Promise<void> {
   const supabase = createClient();
   const { error } = await supabase.from("budget_entries").delete().eq("id", id);
+  if (error) throw new Error(error.message);
+}
+
+/**
+ * Create-only extension of BudgetEntryInput: recurrence ("Ponctuelle" vs
+ * "Mensuelle") only ever matters at creation time (issue #105) — editing an
+ * existing occurrence never converts it into/out of a recurring series, so
+ * updateBudgetEntry() intentionally keeps taking the plain BudgetEntryInput.
+ *
+ * creationRequestId is a UUID generated once per add-form submission
+ * lifecycle (see BudgetEntryForm) and kept stable across retries of that
+ * same submission. It's only actually used server-side when recurrence is
+ * "monthly" (see createRecurringBudgetExpense below) — included
+ * unconditionally here just to keep a single payload shape for both
+ * recurrence values.
+ */
+export interface CreateBudgetEntryInput extends BudgetEntryInput {
+  recurrence: BudgetEntryRecurrence;
+  creationRequestId: string;
+}
+
+/**
+ * Atomically creates a monthly recurring series and its first occurrence
+ * (see create_recurring_budget_expense in supabase/budget_recurring_expenses.sql).
+ * The requested day-of-month and start month are both derived from
+ * input.entryDate, matching how BudgetEntryForm collects a single date for
+ * a "Mensuelle" entry. Returns the created occurrence row so callers can
+ * feed it through mapBudgetEntryRow() exactly like addBudgetEntry().
+ *
+ * requestId makes retries of the same submission idempotent server-side: if
+ * the client never saw a prior successful response and calls this again
+ * with the same requestId, the RPC returns the series it already created
+ * instead of creating a second one — see the RPC's own comment for why this
+ * is a distinct guarantee from its atomicity.
+ */
+export async function createRecurringBudgetExpense(
+  householdId: string,
+  input: BudgetEntryInput,
+  requestId: string
+): Promise<BudgetEntryRow> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .rpc("create_recurring_budget_expense", {
+      target_household_id: householdId,
+      target_category_id: input.categoryId ?? null,
+      target_title: input.title,
+      target_amount_cents: input.amountCents,
+      target_kind: input.kind,
+      target_note: input.note || null,
+      target_recurrence_day: Number(input.entryDate.slice(8, 10)),
+      target_start_month: toEntryMonth(input.entryDate),
+      target_request_id: requestId,
+    })
+    .select(BUDGET_ENTRY_COLUMNS)
+    .single();
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+/**
+ * Materializes any missing occurrences for every recurring series in the
+ * household across [fromMonth, toMonth] (inclusive, both "YYYY-MM-01").
+ * Idempotent and safe to call before every read that depends on recurring
+ * occurrences being present — initial load, month switch, and the 6-month
+ * evolution range — per issue #105's "materialize before totals are read"
+ * requirement.
+ */
+export async function ensureBudgetRecurringOccurrences(
+  householdId: string,
+  fromMonth: string,
+  toMonth: string
+): Promise<void> {
+  const supabase = createClient();
+  const { error } = await supabase.rpc("ensure_budget_recurring_occurrences", {
+    target_household_id: householdId,
+    from_month: fromMonth,
+    to_month: toMonth,
+  });
+  if (error) throw new Error(error.message);
+}
+
+/**
+ * Deletes a single recurring occurrence and durably marks its (series,
+ * month) as skipped, so the next ensureBudgetRecurringOccurrences call never
+ * recreates it — future months keep generating normally. Must be used
+ * instead of deleteBudgetEntry() for any entry with a recurringExpenseId; a
+ * plain delete would leave the month looking merely "not yet generated".
+ */
+export async function deleteRecurringBudgetOccurrence(entryId: string): Promise<void> {
+  const supabase = createClient();
+  const { error } = await supabase.rpc("delete_recurring_budget_occurrence", {
+    target_entry_id: entryId,
+  });
   if (error) throw new Error(error.message);
 }

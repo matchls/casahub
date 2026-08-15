@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { AppShell } from "@/components/layout/AppShell";
-import { currentBudgetMonth } from "@/features/budget/budgetData";
+import { currentBudgetMonth, monthRangeEndingAt, BUDGET_EVOLUTION_MONTH_COUNT } from "@/features/budget/budgetData";
 import {
   loadCurrentUserHousehold,
   loadHouseholdProfile,
@@ -13,6 +13,7 @@ import {
   loadBudgetCategories,
   loadBudgetEntries,
   loadBudgetEvolution,
+  ensureBudgetRecurringOccurrences,
 } from "@/lib/supabase/loaders";
 
 export const dynamic = "force-dynamic";
@@ -49,9 +50,22 @@ export default async function Home() {
       ensureBudgetCategoriesError.message
     );
   }
+
+  const budgetMonth = currentBudgetMonth();
+  const evolutionMonths = monthRangeEndingAt(budgetMonth, BUDGET_EVOLUTION_MONTH_COUNT);
+  // Materialize recurring occurrences for the whole evolution window before
+  // reading any totals — otherwise a month that was never manually opened
+  // before would be undercounted (issue #105).
+  await ensureBudgetRecurringOccurrences(
+    supabase,
+    householdId,
+    evolutionMonths[0],
+    evolutionMonths[evolutionMonths.length - 1]
+  );
+
   const initialBudgetCategories = await loadBudgetCategories(supabase, householdId);
-  const initialBudgetEntries = await loadBudgetEntries(supabase, householdId, currentBudgetMonth());
-  const initialBudgetEvolution = await loadBudgetEvolution(supabase, householdId, currentBudgetMonth());
+  const initialBudgetEntries = await loadBudgetEntries(supabase, householdId, budgetMonth);
+  const initialBudgetEvolution = await loadBudgetEvolution(supabase, householdId, budgetMonth);
 
   return (
     <AppShell

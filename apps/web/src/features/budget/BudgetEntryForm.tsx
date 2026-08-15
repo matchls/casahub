@@ -1,9 +1,9 @@
 "use client";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
-import type { BudgetEntryInput } from "@/lib/supabase/budget";
-import type { BudgetCategory, BudgetEntryKind } from "@/lib/domain/types";
-import { groupBudgetCategories, todayIsoDate } from "./budgetData";
+import type { CreateBudgetEntryInput } from "@/lib/supabase/budget";
+import type { BudgetCategory, BudgetEntryKind, BudgetEntryRecurrence } from "@/lib/domain/types";
+import { groupBudgetCategories, lastDayOfBudgetMonth, RECURRENCE_LABELS, todayIsoDate } from "./budgetData";
 
 interface BudgetEntryFormProps {
   categories: BudgetCategory[];
@@ -17,8 +17,10 @@ interface BudgetEntryFormProps {
     entryDate: string;
     kind: BudgetEntryKind;
     note?: string;
+    /** Set when editing a generated recurring occurrence — restricts the date input to its own month (issue #105) and hides the recurrence selector, which only applies at creation time. */
+    recurringExpenseId?: string;
   };
-  onSubmit: (input: BudgetEntryInput) => Promise<void>;
+  onSubmit: (input: CreateBudgetEntryInput) => Promise<void>;
   onCancel?: () => void;
   submitLabel: string;
 }
@@ -45,11 +47,28 @@ export function BudgetEntryForm({
   const [categoryId, setCategoryId] = useState(initial?.categoryId ?? defaultCategoryId ?? "");
   const [entryDate, setEntryDate] = useState(initial?.entryDate ?? defaultEntryDate ?? todayIsoDate());
   const [kind, setKind] = useState<BudgetEntryKind>(initial?.kind ?? "fixed");
+  const [recurrence, setRecurrence] = useState<BudgetEntryRecurrence>("once");
   const [note, setNote] = useState(initial?.note ?? "");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Generated once when this form instance mounts and reused for every
+  // retry of the same submission (the modal stays open and this component
+  // stays mounted on a failed submit — see BudgetScreen's handleAddSubmit),
+  // so a network failure + retry reuses the recurring series the RPC
+  // already created instead of creating a duplicate (issue #105). A fresh
+  // value is generated automatically the next time a new instance mounts
+  // (new form / after a successful create closes the modal).
+  const [creationRequestId] = useState<string>(() => crypto.randomUUID());
 
   const groups = groupBudgetCategories(categories);
+
+  // A generated recurring occurrence may move within its own month but must
+  // never change entry_month (issue #105) — the DB enforces this too (see
+  // guard_recurring_budget_entry_update in budget_recurring_expenses.sql),
+  // this is just the friendly client-side half of that guarantee.
+  const isRecurringOccurrence = !!initial?.recurringExpenseId;
+  const recurringMonthMin = isRecurringOccurrence ? `${initial!.entryDate.slice(0, 7)}-01` : undefined;
+  const recurringMonthMax = isRecurringOccurrence ? lastDayOfBudgetMonth(initial!.entryDate) : undefined;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -71,6 +90,10 @@ export function BudgetEntryForm({
       setError("La date est obligatoire.");
       return;
     }
+    if (isRecurringOccurrence && entryDate.slice(0, 7) !== initial!.entryDate.slice(0, 7)) {
+      setError("Une occurrence récurrente ne peut pas être déplacée vers un autre mois.");
+      return;
+    }
     setSubmitting(true);
     setError(null);
     try {
@@ -81,6 +104,8 @@ export function BudgetEntryForm({
         entryDate,
         kind,
         note: note.trim() || undefined,
+        recurrence: initial ? "once" : recurrence,
+        creationRequestId,
       });
       if (!initial) {
         setTitle("");
@@ -141,9 +166,17 @@ export function BudgetEntryForm({
           value={entryDate}
           onChange={(e) => setEntryDate(e.target.value)}
           disabled={submitting}
+          min={recurringMonthMin}
+          max={recurringMonthMax}
           className={cn(inputClass, "w-[150px]")}
         />
       </div>
+
+      {isRecurringOccurrence && (
+        <p className="text-[12px] text-[var(--text-muted)]">
+          🔄 Occurrence d’une dépense récurrente mensuelle — modifiable uniquement dans son mois.
+        </p>
+      )}
 
       <div className="flex items-center gap-2">
         {(["fixed", "variable"] as const).map((k) => (
@@ -164,6 +197,29 @@ export function BudgetEntryForm({
           </button>
         ))}
       </div>
+
+      {/* Récurrence: independent of Fixe/Variable (kind) — only settable at creation, per issue #105. */}
+      {!initial && (
+        <div className="flex items-center gap-2">
+          {(["once", "monthly"] as const).map((r) => (
+            <button
+              key={r}
+              type="button"
+              onClick={() => setRecurrence(r)}
+              disabled={submitting}
+              aria-pressed={recurrence === r}
+              className={cn(
+                "px-3 py-[6px] rounded-full text-[13px] font-semibold cursor-pointer transition-colors",
+                recurrence === r
+                  ? "bg-[var(--budget-accent)] text-white"
+                  : "bg-[var(--budget-bg)] text-[var(--budget-text)] opacity-60 hover:opacity-100"
+              )}
+            >
+              {RECURRENCE_LABELS[r]}
+            </button>
+          ))}
+        </div>
+      )}
 
       <input
         type="text"

@@ -44,6 +44,7 @@ export function BudgetEntryRow({ entry, categories, onUpdate, onDelete }: Budget
             entryDate: entry.entryDate,
             kind: entry.kind,
             note: entry.note,
+            recurringExpenseId: entry.recurringExpenseId,
           }}
           submitLabel="Enregistrer"
           onCancel={() => setEditing(false)}
@@ -68,6 +69,12 @@ export function BudgetEntryRow({ entry, categories, onUpdate, onDelete }: Budget
           <span>{category?.name ?? "Sans catégorie"}</span>
           <span>·</span>
           <span>{formatEntryDate(entry.entryDate)}</span>
+          {entry.recurringExpenseId && (
+            <>
+              <span>·</span>
+              <span title="Dépense récurrente mensuelle">🔄 Mensuelle</span>
+            </>
+          )}
           {entry.note && (
             <>
               <span>·</span>
