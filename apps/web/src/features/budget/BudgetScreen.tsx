@@ -3,15 +3,18 @@ import { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/Card";
 import { Modal } from "@/components/ui/Modal";
-import type { BudgetCategory, BudgetEntry } from "@/lib/domain/types";
+import type { BudgetCategory, BudgetEntry, BudgetMonthlyTarget } from "@/lib/domain/types";
 import type { BudgetEntryInput, CreateBudgetEntryInput } from "@/lib/supabase/budget";
 import { BudgetBreakdownChart } from "./BudgetBreakdownChart";
 import { BudgetCategoryCard } from "./BudgetCategoryCard";
 import { BudgetEntryForm } from "./BudgetEntryForm";
 import { BudgetEntryRow } from "./BudgetEntryRow";
 import { BudgetMonthlyEvolution } from "./BudgetMonthlyEvolution";
+import { BudgetTargetsForm } from "./BudgetTargetsForm";
 import {
   buildBudgetBreakdown,
+  buildBudgetTargetLookup,
+  buildBudgetTargetStatus,
   buildMainCategoryLookup,
   buildSubcategoryBreakdown,
   calculatePerPersonCents,
@@ -20,6 +23,7 @@ import {
   formatCents,
   groupBudgetCategories,
   shiftBudgetMonth,
+  sumBudgetTargets,
   type BudgetMonthlyEvolutionPoint,
   type BudgetSeriesScope,
 } from "./budgetData";
@@ -28,6 +32,8 @@ interface BudgetScreenProps {
   categories: BudgetCategory[];
   entries: BudgetEntry[];
   evolution: BudgetMonthlyEvolutionPoint[];
+  /** Every planned amount configured for `month` (issue #113) — one per MAIN category that has a target. */
+  targets: BudgetMonthlyTarget[];
   month: string;
   monthLoading: boolean;
   /** Effective Budget share count ("parts", issue #109) — already resolved to the explicit value or the active member-count fallback. */
@@ -41,12 +47,15 @@ interface BudgetScreenProps {
   onUpdateSeries: (id: string, input: BudgetEntryInput) => Promise<void>;
   onDelete: (id: string, scope?: BudgetSeriesScope) => void;
   onBudgetShareCountChange: (count: number) => void;
+  /** Persists the target editor's changes (issue #113) — rejecting keeps the editor modal open with an inline error. */
+  onSaveTargets: (changes: { categoryId: string; amountCents: number | null }[]) => Promise<void>;
 }
 
 export function BudgetScreen({
   categories,
   entries,
   evolution,
+  targets,
   month,
   monthLoading,
   budgetShareCount,
@@ -57,9 +66,11 @@ export function BudgetScreen({
   onUpdateSeries,
   onDelete,
   onBudgetShareCountChange,
+  onSaveTargets,
 }: BudgetScreenProps) {
   const [selectedMainId, setSelectedMainId] = useState<string | null>(null);
   const [addModalOpen, setAddModalOpen] = useState(false);
+  const [targetsModalOpen, setTargetsModalOpen] = useState(false);
 
   // Closes the modal only once the entry is actually saved — if onAdd
   // rejects (validation/network failure), the throw propagates out before
@@ -93,7 +104,26 @@ export function BudgetScreen({
     return totals;
   }, [entries, mainCategoryLookup]);
 
+  // Issue #113: the overall planned budget is always DERIVED as the sum of
+  // configured category targets, never stored/read as its own value — see
+  // sumBudgetTargets. `targets` being empty means no plan exists yet for
+  // this month at all, which the overview treats differently from "planned
+  // to spend 0" (see the hasTargets branch below).
+  const targetLookup = useMemo(() => buildBudgetTargetLookup(targets), [targets]);
+  const hasTargets = targets.length > 0;
+  const overallTargetStatus = useMemo(
+    () => (hasTargets ? buildBudgetTargetStatus(totalCents, sumBudgetTargets(targets)) : null),
+    [hasTargets, totalCents, targets]
+  );
+
   const selectedGroup = groups.find((g) => g.main.id === selectedMainId);
+
+  const selectedGroupTargetStatus = useMemo(() => {
+    if (!selectedGroup) return null;
+    const plannedCents = targetLookup.get(selectedGroup.main.id);
+    if (plannedCents === undefined) return null;
+    return buildBudgetTargetStatus(categoryTotals.get(selectedGroup.main.id) ?? 0, plannedCents);
+  }, [selectedGroup, targetLookup, categoryTotals]);
 
   const selectedGroupPerPersonCents = useMemo(
     () =>
@@ -162,17 +192,58 @@ export function BudgetScreen({
         </button>
       </div>
 
-      {/* Total spent */}
+      {/* Total spent + planned budget (issue #113) */}
       <Card className="!p-[20px] bg-[var(--budget-bg)]">
-        <p className="text-[12px] font-bold uppercase tracking-[.05em] text-[var(--budget-text)] opacity-70">
-          Total dépensé
-        </p>
-        <p
-          className="text-[32px] font-extrabold mt-[4px] tabular-nums text-[var(--budget-text)]"
-          style={{ fontFamily: "var(--font-display)" }}
-        >
-          {monthLoading ? "…" : formatCents(totalCents)}
-        </p>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="text-[12px] font-bold uppercase tracking-[.05em] text-[var(--budget-text)] opacity-70">
+              {hasTargets ? "Dépensé" : "Total dépensé"}
+            </p>
+            <p
+              className="text-[32px] font-extrabold mt-[4px] tabular-nums text-[var(--budget-text)]"
+              style={{ fontFamily: "var(--font-display)" }}
+            >
+              {monthLoading ? "…" : formatCents(totalCents)}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setTargetsModalOpen(true)}
+            className="shrink-0 rounded-full bg-white/60 hover:bg-white/90 text-[var(--budget-text)] text-[12px] font-bold px-3 py-[7px] transition-colors cursor-pointer"
+          >
+            {hasTargets ? "Modifier le budget" : "Définir le budget du mois"}
+          </button>
+        </div>
+
+        {/* "Budget prévu: 0 €" would wrongly imply a real zero plan — only
+            shown once at least one category target exists this month. */}
+        {!monthLoading && overallTargetStatus && (
+          <div className="flex items-center gap-4 mt-3 flex-wrap">
+            <div>
+              <p className="text-[11px] font-bold uppercase tracking-[.04em] text-[var(--budget-text)] opacity-60">
+                Budget prévu
+              </p>
+              <p className="text-[15px] font-bold tabular-nums text-[var(--budget-text)]">
+                {formatCents(overallTargetStatus.plannedCents)}
+              </p>
+            </div>
+            <div>
+              <p className="text-[11px] font-bold uppercase tracking-[.04em] text-[var(--budget-text)] opacity-60">
+                {overallTargetStatus.isOverspent ? "Dépassement" : "Reste"}
+              </p>
+              <p
+                className={cn(
+                  "text-[15px] font-bold tabular-nums",
+                  overallTargetStatus.isOverspent ? "text-red-500" : "text-[var(--budget-text)]"
+                )}
+              >
+                {formatCents(overallTargetStatus.gapCents)}
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* "Par personne" stays derived from actual spending only — never affected by targets. */}
         {!monthLoading && perPersonCents !== null && (
           <div className="flex items-center gap-3 mt-[4px] flex-wrap">
             <p className="text-[13px] font-semibold tabular-nums text-[var(--budget-text)] opacity-70">
@@ -227,9 +298,27 @@ export function BudgetScreen({
               <h2 className="text-[17px] font-extrabold text-[var(--text-primary)]" style={{ fontFamily: "var(--font-display)" }}>
                 {selectedGroup.main.name}
               </h2>
-              <p className="text-[13px] text-[var(--text-muted)]">
-                {formatCents(categoryTotals.get(selectedGroup.main.id) ?? 0)} ce mois-ci
-              </p>
+              {selectedGroupTargetStatus ? (
+                <>
+                  <p className="text-[13px] text-[var(--text-muted)]">
+                    Dépensé : {formatCents(selectedGroupTargetStatus.actualCents)} · Budget prévu :{" "}
+                    {formatCents(selectedGroupTargetStatus.plannedCents)}
+                  </p>
+                  <p
+                    className={cn(
+                      "text-[12px] font-semibold",
+                      selectedGroupTargetStatus.isOverspent ? "text-red-500" : "text-[var(--text-soft)]"
+                    )}
+                  >
+                    {selectedGroupTargetStatus.isOverspent ? "Dépassement" : "Reste"} :{" "}
+                    {formatCents(selectedGroupTargetStatus.gapCents)}
+                  </p>
+                </>
+              ) : (
+                <p className="text-[13px] text-[var(--text-muted)]">
+                  {formatCents(categoryTotals.get(selectedGroup.main.id) ?? 0)} ce mois-ci
+                </p>
+              )}
               {selectedGroupPerPersonCents !== null && (
                 <p className="text-[12px] font-semibold text-[var(--text-soft)]">
                   Par personne : {formatCents(selectedGroupPerPersonCents)}
@@ -312,6 +401,7 @@ export function BudgetScreen({
               {groups.map(({ main }) => {
                 const catTotal = categoryTotals.get(main.id) ?? 0;
                 const share = totalCents > 0 ? Math.round((catTotal / totalCents) * 100) : 0;
+                const plannedCents = targetLookup.get(main.id);
                 return (
                   <BudgetCategoryCard
                     key={main.id}
@@ -319,6 +409,7 @@ export function BudgetScreen({
                     totalCents={catTotal}
                     sharePercent={share}
                     perPersonCents={calculatePerPersonCents(catTotal, budgetShareCount)}
+                    targetStatus={plannedCents !== undefined ? buildBudgetTargetStatus(catTotal, plannedCents) : undefined}
                     onClick={() => setSelectedMainId(main.id)}
                   />
                 );
@@ -352,6 +443,19 @@ export function BudgetScreen({
           submitLabel="Ajouter"
           onCancel={() => setAddModalOpen(false)}
           onSubmit={handleAddSubmit}
+        />
+      </Modal>
+
+      <Modal
+        open={targetsModalOpen}
+        onClose={() => setTargetsModalOpen(false)}
+        title={`Budget du mois — ${formatBudgetMonthLabel(month)}`}
+      >
+        <BudgetTargetsForm
+          categories={categories}
+          targets={targets}
+          onSave={onSaveTargets}
+          onCancel={() => setTargetsModalOpen(false)}
         />
       </Modal>
 

@@ -1,5 +1,11 @@
 import { createClient } from "./client";
-import type { BudgetCategory, BudgetEntry, BudgetEntryKind, BudgetEntryRecurrence } from "@/lib/domain/types";
+import type {
+  BudgetCategory,
+  BudgetEntry,
+  BudgetEntryKind,
+  BudgetEntryRecurrence,
+  BudgetMonthlyTarget,
+} from "@/lib/domain/types";
 
 export interface BudgetCategoryRow {
   id: string;
@@ -307,5 +313,95 @@ export async function stopRecurringBudgetExpenseSeries(entryId: string): Promise
   const { error } = await supabase.rpc("stop_recurring_budget_expense_series", {
     target_entry_id: entryId,
   });
+  if (error) throw new Error(error.message);
+}
+
+export interface BudgetMonthlyTargetRow {
+  id: string;
+  category_id: string;
+  target_month: string;
+  amount_cents: number;
+}
+
+const BUDGET_MONTHLY_TARGET_COLUMNS = "id, category_id, target_month, amount_cents";
+
+export function mapBudgetMonthlyTargetRow(row: BudgetMonthlyTargetRow): BudgetMonthlyTarget {
+  return {
+    id: row.id,
+    categoryId: row.category_id,
+    targetMonth: row.target_month,
+    amountCents: row.amount_cents,
+  };
+}
+
+/**
+ * Every planned amount a household has set for `month` (issue #113), one row
+ * per MAIN category that has a target — a category with no row simply has
+ * no plan defined for that month, never a plan of 0.
+ */
+export async function fetchBudgetMonthlyTargets(
+  householdId: string,
+  month: string
+): Promise<BudgetMonthlyTarget[]> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("budget_monthly_targets")
+    .select(BUDGET_MONTHLY_TARGET_COLUMNS)
+    .eq("household_id", householdId)
+    .eq("target_month", month);
+  if (error) throw new Error(error.message);
+  return (data ?? []).map(mapBudgetMonthlyTargetRow);
+}
+
+/**
+ * Sets (creating or replacing) the planned amount for one category/month —
+ * relies on budget_monthly_targets' UNIQUE (household_id, category_id,
+ * target_month) constraint to make this a true upsert. Callers must never
+ * invoke this with amountCents <= 0 (that means "no target" — see
+ * deleteBudgetMonthlyTarget below); the DB's own amount_cents > 0 check
+ * constraint is the backstop, not the primary guard.
+ */
+export async function upsertBudgetMonthlyTarget(
+  householdId: string,
+  categoryId: string,
+  month: string,
+  amountCents: number
+): Promise<BudgetMonthlyTargetRow> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("budget_monthly_targets")
+    .upsert(
+      {
+        household_id: householdId,
+        category_id: categoryId,
+        target_month: month,
+        amount_cents: amountCents,
+      },
+      { onConflict: "household_id,category_id,target_month" }
+    )
+    .select(BUDGET_MONTHLY_TARGET_COLUMNS)
+    .single();
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+/**
+ * Clears a category's target for a month — used whenever the editor's field
+ * is left blank or set to 0 (issue #113: a zero target is never stored, it
+ * means "no target"). A no-op if no target row existed for that category/
+ * month to begin with.
+ */
+export async function deleteBudgetMonthlyTarget(
+  householdId: string,
+  categoryId: string,
+  month: string
+): Promise<void> {
+  const supabase = createClient();
+  const { error } = await supabase
+    .from("budget_monthly_targets")
+    .delete()
+    .eq("household_id", householdId)
+    .eq("category_id", categoryId)
+    .eq("target_month", month);
   if (error) throw new Error(error.message);
 }

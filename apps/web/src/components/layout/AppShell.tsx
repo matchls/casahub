@@ -17,6 +17,7 @@ import type {
   AgendaEvent,
   BudgetCategory,
   BudgetEntry,
+  BudgetMonthlyTarget,
   HouseholdProfile,
   Note,
   ShoppingItem,
@@ -37,6 +38,7 @@ interface AppShellProps {
   initialBudgetCategories: BudgetCategory[];
   initialBudgetEntries: BudgetEntry[];
   initialBudgetEvolution: BudgetMonthlyEvolutionPoint[];
+  initialBudgetMonthlyTargets: BudgetMonthlyTarget[];
 }
 
 export function AppShell({
@@ -51,6 +53,7 @@ export function AppShell({
   initialBudgetCategories,
   initialBudgetEntries,
   initialBudgetEvolution,
+  initialBudgetMonthlyTargets,
 }: AppShellProps) {
   const {
     activeView,
@@ -66,6 +69,7 @@ export function AppShell({
     budgetCategories,
     budgetEntries,
     budgetEvolution,
+    budgetMonthlyTargets,
     budgetMonth,
     budgetMonthLoading,
     effectiveBudgetShareCount,
@@ -98,6 +102,7 @@ export function AppShell({
     updateBudgetEntry,
     updateBudgetEntrySeries,
     deleteBudgetEntry,
+    saveBudgetMonthlyTargets,
     updateHouseholdName,
     updateBudgetShareCount,
   } = useDomotidienState({
@@ -112,6 +117,7 @@ export function AppShell({
     initialBudgetCategories,
     initialBudgetEntries,
     initialBudgetEvolution,
+    initialBudgetMonthlyTargets,
   });
 
   const shoppingSubtitle =
@@ -227,6 +233,7 @@ export function AppShell({
           categories={budgetCategories}
           entries={budgetEntries}
           evolution={budgetEvolution}
+          targets={budgetMonthlyTargets}
           month={budgetMonth}
           monthLoading={budgetMonthLoading}
           budgetShareCount={effectiveBudgetShareCount}
@@ -236,6 +243,7 @@ export function AppShell({
           onUpdate={updateBudgetEntry}
           onUpdateSeries={updateBudgetEntrySeries}
           onDelete={deleteBudgetEntry}
+          onSaveTargets={saveBudgetMonthlyTargets}
           onBudgetShareCountChange={updateBudgetShareCount}
         />
       );

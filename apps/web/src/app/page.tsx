@@ -13,6 +13,7 @@ import {
   loadBudgetCategories,
   loadBudgetEntries,
   loadBudgetEvolution,
+  loadBudgetMonthlyTargets,
   ensureBudgetRecurringOccurrences,
 } from "@/lib/supabase/loaders";
 
@@ -66,6 +67,7 @@ export default async function Home() {
   const initialBudgetCategories = await loadBudgetCategories(supabase, householdId);
   const initialBudgetEntries = await loadBudgetEntries(supabase, householdId, budgetMonth);
   const initialBudgetEvolution = await loadBudgetEvolution(supabase, householdId, budgetMonth);
+  const initialBudgetMonthlyTargets = await loadBudgetMonthlyTargets(supabase, householdId, budgetMonth);
 
   return (
     <AppShell
@@ -80,6 +82,7 @@ export default async function Home() {
       initialBudgetCategories={initialBudgetCategories}
       initialBudgetEntries={initialBudgetEntries}
       initialBudgetEvolution={initialBudgetEvolution}
+      initialBudgetMonthlyTargets={initialBudgetMonthlyTargets}
     />
   );
 }

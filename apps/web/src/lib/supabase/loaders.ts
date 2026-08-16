@@ -3,6 +3,7 @@ import type {
   AgendaEvent,
   BudgetCategory,
   BudgetEntry,
+  BudgetMonthlyTarget,
   HouseholdProfile,
   Note,
   ShoppingItem,
@@ -14,7 +15,7 @@ import { mapShoppingRow } from "./shopping";
 import { mapTaskRow } from "./tasks";
 import { mapNoteRow } from "./notes";
 import { mapLinkRow } from "./links";
-import { mapBudgetCategoryRow, mapBudgetEntryRow } from "./budget";
+import { mapBudgetCategoryRow, mapBudgetEntryRow, mapBudgetMonthlyTargetRow } from "./budget";
 import {
   buildMonthlyEvolution,
   monthRangeEndingAt,
@@ -242,6 +243,30 @@ export async function ensureBudgetRecurringOccurrences(
     console.error("[loaders] ensure_budget_recurring_occurrences failed:", error.message);
     throw new Error(`Failed to materialize recurring budget occurrences: ${error.message}`);
   }
+}
+
+/**
+ * Every planned amount the household has set for `month` (issue #113) —
+ * one row per MAIN category with a target. Deliberately not folded into the
+ * 6-month evolution range fetch: targets aren't displayed on that chart, so
+ * there's no reason to fetch a whole month range of them up front.
+ */
+export async function loadBudgetMonthlyTargets(
+  supabase: SupabaseClient,
+  householdId: string,
+  month: string
+): Promise<BudgetMonthlyTarget[]> {
+  const { data, error } = await supabase
+    .from("budget_monthly_targets")
+    .select("id, category_id, target_month, amount_cents")
+    .eq("household_id", householdId)
+    .eq("target_month", month);
+
+  if (error) {
+    console.error("[loaders] budget_monthly_targets query failed:", error.message);
+  }
+
+  return (data ?? []).map(mapBudgetMonthlyTargetRow);
 }
 
 /** Per-month spending totals for the `monthCount` months ending at (and including) `month`, used by the monthly evolution chart. */

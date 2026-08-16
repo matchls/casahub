@@ -5,6 +5,7 @@ import type {
   AgendaEvent,
   BudgetCategory,
   BudgetEntry,
+  BudgetMonthlyTarget,
   HouseholdProfile,
   LinkCategory,
   Note,
@@ -59,6 +60,9 @@ import {
   stopRecurringBudgetExpenseSeries as stopRecurringBudgetExpenseSeriesDb,
   fetchBudgetEntriesForMonth,
   fetchBudgetEntriesForMonthRange,
+  fetchBudgetMonthlyTargets,
+  upsertBudgetMonthlyTarget as upsertBudgetMonthlyTargetDb,
+  deleteBudgetMonthlyTarget as deleteBudgetMonthlyTargetDb,
   mapBudgetEntryRow,
   toEntryMonth,
   type BudgetEntryInput,
@@ -86,6 +90,7 @@ interface DomotidienStateOptions {
   initialBudgetCategories: BudgetCategory[];
   initialBudgetEntries: BudgetEntry[];
   initialBudgetEvolution: BudgetMonthlyEvolutionPoint[];
+  initialBudgetMonthlyTargets: BudgetMonthlyTarget[];
 }
 
 export function useDomotidienState({
@@ -100,6 +105,7 @@ export function useDomotidienState({
   initialBudgetCategories,
   initialBudgetEntries,
   initialBudgetEvolution,
+  initialBudgetMonthlyTargets,
 }: DomotidienStateOptions) {
   // Navigation
   const [activeView, setActiveView] = useState<View>("home");
@@ -112,6 +118,9 @@ export function useDomotidienState({
   const [budgetEntries, setBudgetEntries] = useState<BudgetEntry[]>(initialBudgetEntries ?? []);
   const [budgetEvolution, setBudgetEvolution] = useState<BudgetMonthlyEvolutionPoint[]>(
     initialBudgetEvolution ?? []
+  );
+  const [budgetMonthlyTargets, setBudgetMonthlyTargets] = useState<BudgetMonthlyTarget[]>(
+    initialBudgetMonthlyTargets ?? []
   );
   const [budgetMonth, setBudgetMonthState] = useState<string>(currentBudgetMonth());
   const [budgetMonthLoading, setBudgetMonthLoading] = useState(false);
@@ -496,11 +505,13 @@ export function useDomotidienState({
     setBudgetMonthLoading(true);
     try {
       await ensureRecurringOccurrences(month);
-      const [freshEntries] = await Promise.all([
+      const [freshEntries, freshTargets] = await Promise.all([
         fetchBudgetEntriesForMonth(householdId, month),
+        fetchBudgetMonthlyTargets(householdId, month),
         refreshBudgetEvolution(month),
       ]);
       setBudgetEntries(freshEntries);
+      setBudgetMonthlyTargets(freshTargets);
     } catch (err) {
       console.error("[budget] month fetch failed:", err);
     } finally {
@@ -634,6 +645,30 @@ export function useDomotidienState({
     }
   }
 
+  // Sets/clears the current month's planned amount for each changed MAIN
+  // category (issue #113) — `amountCents` null or <= 0 means "clear the
+  // target" (blank/zero in the editor never persists a meaningless zero
+  // row), anything else means "set it". No optimistic update: this can
+  // touch several categories' rows at once, so it's simplest and safest to
+  // just persist then re-fetch the authoritative state, exactly like
+  // setBudgetMonth already does for entries. Left uncaught on purpose — the
+  // modal awaits this call and only closes on success, showing its own
+  // inline error otherwise, the same convention BudgetEntryForm uses for
+  // updateBudgetEntry.
+  async function saveBudgetMonthlyTargets(
+    changes: { categoryId: string; amountCents: number | null }[]
+  ) {
+    await Promise.all(
+      changes.map(({ categoryId, amountCents }) =>
+        amountCents && amountCents > 0
+          ? upsertBudgetMonthlyTargetDb(householdId, categoryId, budgetMonth, amountCents)
+          : deleteBudgetMonthlyTargetDb(householdId, categoryId, budgetMonth)
+      )
+    );
+    const freshTargets = await fetchBudgetMonthlyTargets(householdId, budgetMonth);
+    setBudgetMonthlyTargets(freshTargets);
+  }
+
   // Actions — household (Supabase-backed with optimistic update)
   async function updateHouseholdName(name: string) {
     const prevProfile = profile;
@@ -684,6 +719,7 @@ export function useDomotidienState({
     budgetCategories,
     budgetEntries,
     budgetEvolution,
+    budgetMonthlyTargets,
     budgetMonth,
     budgetMonthLoading,
     effectiveBudgetShareCount,
@@ -720,6 +756,7 @@ export function useDomotidienState({
     updateBudgetEntry,
     updateBudgetEntrySeries,
     deleteBudgetEntry,
+    saveBudgetMonthlyTargets,
     updateHouseholdName,
     updateBudgetShareCount,
   };

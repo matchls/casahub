@@ -110,6 +110,22 @@ export interface BudgetEntry {
   recurringExpenseId?: string;
 }
 
+/**
+ * A household's planned spending for one MAIN Budget category in one month
+ * (issue #113). Never exists for a subcategory — the DB enforces that via
+ * budget_main_category_in_household(). Absence of a target for a given
+ * category/month (no BudgetMonthlyTarget in the loaded list) means "no plan
+ * defined", not "planned to spend 0" — a target row is never created for a
+ * zero amount (see upsertBudgetMonthlyTarget in lib/supabase/budget.ts).
+ */
+export interface BudgetMonthlyTarget {
+  id: string;
+  categoryId: string;
+  /** First-of-month Postgres `date` string ("YYYY-MM-01"), same convention as BudgetEntry.entryMonth. */
+  targetMonth: string;
+  amountCents: number;
+}
+
 export interface HouseholdProfile {
   name: string;
   type: "Couple" | "Colocation" | "Famille";
