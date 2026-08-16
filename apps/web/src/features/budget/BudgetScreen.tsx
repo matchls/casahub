@@ -29,12 +29,15 @@ interface BudgetScreenProps {
   evolution: BudgetMonthlyEvolutionPoint[];
   month: string;
   monthLoading: boolean;
-  /** Active household member count, for the informational "Par personne" split. */
-  householdMemberCount: number;
+  /** Effective Budget share count ("parts", issue #109) — already resolved to the explicit value or the active member-count fallback. */
+  budgetShareCount: number;
+  /** True while a share-count update is in flight — disables the +/- control so rapid clicks don't fire duplicate writes. */
+  budgetShareCountPending: boolean;
   onMonthChange: (month: string) => void;
   onAdd: (input: CreateBudgetEntryInput) => Promise<void>;
   onUpdate: (id: string, input: BudgetEntryInput) => Promise<void>;
   onDelete: (id: string) => void;
+  onBudgetShareCountChange: (count: number) => void;
 }
 
 export function BudgetScreen({
@@ -43,11 +46,13 @@ export function BudgetScreen({
   evolution,
   month,
   monthLoading,
-  householdMemberCount,
+  budgetShareCount,
+  budgetShareCountPending,
   onMonthChange,
   onAdd,
   onUpdate,
   onDelete,
+  onBudgetShareCountChange,
 }: BudgetScreenProps) {
   const [selectedMainId, setSelectedMainId] = useState<string | null>(null);
   const [addModalOpen, setAddModalOpen] = useState(false);
@@ -70,8 +75,8 @@ export function BudgetScreen({
   );
 
   const perPersonCents = useMemo(
-    () => calculatePerPersonCents(totalCents, householdMemberCount),
-    [totalCents, householdMemberCount]
+    () => calculatePerPersonCents(totalCents, budgetShareCount),
+    [totalCents, budgetShareCount]
   );
 
   const categoryTotals = useMemo(() => {
@@ -89,9 +94,9 @@ export function BudgetScreen({
   const selectedGroupPerPersonCents = useMemo(
     () =>
       selectedGroup
-        ? calculatePerPersonCents(categoryTotals.get(selectedGroup.main.id) ?? 0, householdMemberCount)
+        ? calculatePerPersonCents(categoryTotals.get(selectedGroup.main.id) ?? 0, budgetShareCount)
         : null,
-    [selectedGroup, categoryTotals, householdMemberCount]
+    [selectedGroup, categoryTotals, budgetShareCount]
   );
 
   const visibleEntries = selectedMainId
@@ -165,9 +170,39 @@ export function BudgetScreen({
           {monthLoading ? "…" : formatCents(totalCents)}
         </p>
         {!monthLoading && perPersonCents !== null && (
-          <p className="text-[13px] font-semibold mt-[2px] tabular-nums text-[var(--budget-text)] opacity-70">
-            Par personne : {formatCents(perPersonCents)}
-          </p>
+          <div className="flex items-center gap-3 mt-[4px] flex-wrap">
+            <p className="text-[13px] font-semibold tabular-nums text-[var(--budget-text)] opacity-70">
+              Par personne : {formatCents(perPersonCents)}
+            </p>
+            <div className="flex items-center gap-[6px]">
+              <span className="text-[11px] font-bold uppercase tracking-[.04em] text-[var(--budget-text)] opacity-60">
+                Parts
+              </span>
+              <div className="flex items-center gap-[2px] rounded-full bg-black/[.04] p-[2px]">
+                <button
+                  type="button"
+                  aria-label="Diminuer le nombre de parts"
+                  disabled={budgetShareCount <= 1 || budgetShareCountPending}
+                  onClick={() => onBudgetShareCountChange(budgetShareCount - 1)}
+                  className="w-[22px] h-[22px] rounded-full flex items-center justify-center text-[14px] font-bold leading-none text-[var(--budget-text)] hover:bg-white/70 transition-colors disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--budget-accent)]"
+                >
+                  −
+                </button>
+                <span className="w-[18px] text-center text-[13px] font-bold tabular-nums text-[var(--budget-text)]">
+                  {budgetShareCount}
+                </span>
+                <button
+                  type="button"
+                  aria-label="Augmenter le nombre de parts"
+                  disabled={budgetShareCountPending}
+                  onClick={() => onBudgetShareCountChange(budgetShareCount + 1)}
+                  className="w-[22px] h-[22px] rounded-full flex items-center justify-center text-[14px] font-bold leading-none text-[var(--budget-text)] hover:bg-white/70 transition-colors disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--budget-accent)]"
+                >
+                  +
+                </button>
+              </div>
+            </div>
+          </div>
         )}
       </Card>
 
@@ -279,7 +314,7 @@ export function BudgetScreen({
                     category={main}
                     totalCents={catTotal}
                     sharePercent={share}
-                    perPersonCents={calculatePerPersonCents(catTotal, householdMemberCount)}
+                    perPersonCents={calculatePerPersonCents(catTotal, budgetShareCount)}
                     onClick={() => setSelectedMainId(main.id)}
                   />
                 );

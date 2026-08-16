@@ -117,4 +117,10 @@ export interface HouseholdProfile {
   /** Whether the currently signed-in user is an admin of this household. */
   currentUserIsAdmin: boolean;
   members: HouseholdMember[];
+  /**
+   * Explicitly configured Budget share count ("parts"), or null if the
+   * household has never set one — callers should fall back to the active
+   * member count in that case (issue #109). See resolveBudgetShareCount().
+   */
+  budgetShareCount: number | null;
 }
