@@ -1,10 +1,11 @@
 "use client";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import type { View } from "@/components/layout/types";
 import type {
   AgendaEvent,
   BudgetCategory,
   BudgetEntry,
+  BudgetMonthlyTarget,
   HouseholdProfile,
   LinkCategory,
   Note,
@@ -59,6 +60,9 @@ import {
   stopRecurringBudgetExpenseSeries as stopRecurringBudgetExpenseSeriesDb,
   fetchBudgetEntriesForMonth,
   fetchBudgetEntriesForMonthRange,
+  fetchBudgetMonthlyTargets,
+  upsertBudgetMonthlyTarget as upsertBudgetMonthlyTargetDb,
+  deleteBudgetMonthlyTarget as deleteBudgetMonthlyTargetDb,
   mapBudgetEntryRow,
   toEntryMonth,
   type BudgetEntryInput,
@@ -86,6 +90,7 @@ interface DomotidienStateOptions {
   initialBudgetCategories: BudgetCategory[];
   initialBudgetEntries: BudgetEntry[];
   initialBudgetEvolution: BudgetMonthlyEvolutionPoint[];
+  initialBudgetMonthlyTargets: BudgetMonthlyTarget[];
 }
 
 export function useDomotidienState({
@@ -100,6 +105,7 @@ export function useDomotidienState({
   initialBudgetCategories,
   initialBudgetEntries,
   initialBudgetEvolution,
+  initialBudgetMonthlyTargets,
 }: DomotidienStateOptions) {
   // Navigation
   const [activeView, setActiveView] = useState<View>("home");
@@ -113,8 +119,18 @@ export function useDomotidienState({
   const [budgetEvolution, setBudgetEvolution] = useState<BudgetMonthlyEvolutionPoint[]>(
     initialBudgetEvolution ?? []
   );
+  const [budgetMonthlyTargets, setBudgetMonthlyTargets] = useState<BudgetMonthlyTarget[]>(
+    initialBudgetMonthlyTargets ?? []
+  );
   const [budgetMonth, setBudgetMonthState] = useState<string>(currentBudgetMonth());
   const [budgetMonthLoading, setBudgetMonthLoading] = useState(false);
+  // Tracks the most recently REQUESTED month, independent of React's render
+  // cycle — setBudgetMonth reads/writes this synchronously on every call so
+  // a slower, now-superseded fetch (e.g. August resolving after a quick
+  // August -> September -> August round trip) can detect it's stale and
+  // discard its results instead of clobbering whatever the latest request
+  // already applied.
+  const latestBudgetMonthRequestRef = useRef<string>(currentBudgetMonth());
   const [links, setLinks] = useState<UsefulLink[]>(initialLinks ?? []);
   const [events, setEvents] = useState<AgendaEvent[]>(initialEvents ?? []);
   const [profile, setProfile] = useState<HouseholdProfile>(initialProfile);
@@ -492,19 +508,36 @@ export function useDomotidienState({
   }
 
   async function setBudgetMonth(month: string) {
+    latestBudgetMonthRequestRef.current = month;
     setBudgetMonthState(month);
     setBudgetMonthLoading(true);
+    // Clear immediately, not just on a successful fetch: while loading, the
+    // previously loaded month's targets must never be shown as if they
+    // belonged to `month` (issue #113 review — a household member could
+    // otherwise open the target editor mid-load and see/save the wrong
+    // month's values). This also hides "Budget prévu" and disables the
+    // editor button (see BudgetScreen) for the whole loading window.
+    setBudgetMonthlyTargets([]);
     try {
       await ensureRecurringOccurrences(month);
-      const [freshEntries] = await Promise.all([
+      const [freshEntries, freshTargets] = await Promise.all([
         fetchBudgetEntriesForMonth(householdId, month),
+        fetchBudgetMonthlyTargets(householdId, month),
         refreshBudgetEvolution(month),
       ]);
+      // A newer setBudgetMonth call already superseded this one (the user
+      // navigated again before this fetch resolved) — its own results are
+      // authoritative, so applying these older, now-stale ones would
+      // silently revert the UI to a month the user already moved past.
+      if (latestBudgetMonthRequestRef.current !== month) return;
       setBudgetEntries(freshEntries);
+      setBudgetMonthlyTargets(freshTargets);
     } catch (err) {
       console.error("[budget] month fetch failed:", err);
     } finally {
-      setBudgetMonthLoading(false);
+      if (latestBudgetMonthRequestRef.current === month) {
+        setBudgetMonthLoading(false);
+      }
     }
   }
 
@@ -634,6 +667,30 @@ export function useDomotidienState({
     }
   }
 
+  // Sets/clears the current month's planned amount for each changed MAIN
+  // category (issue #113) — `amountCents` null or <= 0 means "clear the
+  // target" (blank/zero in the editor never persists a meaningless zero
+  // row), anything else means "set it". No optimistic update: this can
+  // touch several categories' rows at once, so it's simplest and safest to
+  // just persist then re-fetch the authoritative state, exactly like
+  // setBudgetMonth already does for entries. Left uncaught on purpose — the
+  // modal awaits this call and only closes on success, showing its own
+  // inline error otherwise, the same convention BudgetEntryForm uses for
+  // updateBudgetEntry.
+  async function saveBudgetMonthlyTargets(
+    changes: { categoryId: string; amountCents: number | null }[]
+  ) {
+    await Promise.all(
+      changes.map(({ categoryId, amountCents }) =>
+        amountCents && amountCents > 0
+          ? upsertBudgetMonthlyTargetDb(householdId, categoryId, budgetMonth, amountCents)
+          : deleteBudgetMonthlyTargetDb(householdId, categoryId, budgetMonth)
+      )
+    );
+    const freshTargets = await fetchBudgetMonthlyTargets(householdId, budgetMonth);
+    setBudgetMonthlyTargets(freshTargets);
+  }
+
   // Actions — household (Supabase-backed with optimistic update)
   async function updateHouseholdName(name: string) {
     const prevProfile = profile;
@@ -684,6 +741,7 @@ export function useDomotidienState({
     budgetCategories,
     budgetEntries,
     budgetEvolution,
+    budgetMonthlyTargets,
     budgetMonth,
     budgetMonthLoading,
     effectiveBudgetShareCount,
@@ -720,6 +778,7 @@ export function useDomotidienState({
     updateBudgetEntry,
     updateBudgetEntrySeries,
     deleteBudgetEntry,
+    saveBudgetMonthlyTargets,
     updateHouseholdName,
     updateBudgetShareCount,
   };

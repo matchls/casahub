@@ -1,4 +1,10 @@
-import type { BudgetCategory, BudgetEntry, BudgetEntryKind, BudgetEntryRecurrence } from "@/lib/domain/types";
+import type {
+  BudgetCategory,
+  BudgetEntry,
+  BudgetEntryKind,
+  BudgetEntryRecurrence,
+  BudgetMonthlyTarget,
+} from "@/lib/domain/types";
 
 /** Width of the monthly evolution window — shared so the server loader (loaders.ts) and the recurring-occurrence materialization range it depends on can never silently drift apart. */
 export const BUDGET_EVOLUTION_MONTH_COUNT = 6;
@@ -309,4 +315,49 @@ export function buildMonthlyEvolution(
     totals.set(entry.entryMonth, (totals.get(entry.entryMonth) ?? 0) + entry.amountCents);
   }
   return months.map((month) => ({ month, amountCents: totals.get(month) ?? 0 }));
+}
+
+/**
+ * Maps each MAIN category id to its planned amount for the currently loaded
+ * month (issue #113). A category absent from this map has no target — never
+ * treat a missing entry as a target of 0.
+ */
+export function buildBudgetTargetLookup(targets: BudgetMonthlyTarget[]): Map<string, number> {
+  const map = new Map<string, number>();
+  for (const target of targets) {
+    map.set(target.categoryId, target.amountCents);
+  }
+  return map;
+}
+
+/** Sum of every configured category target for the month — the DERIVED overall planned budget (issue #113: never stored as its own value). */
+export function sumBudgetTargets(targets: BudgetMonthlyTarget[]): number {
+  return targets.reduce((sum, target) => sum + target.amountCents, 0);
+}
+
+export interface BudgetTargetStatus {
+  plannedCents: number;
+  actualCents: number;
+  /** Absolute gap between planned and actual, in cents — always >= 0; pair with `isOverspent` to know whether it's a "Reste" or a "Dépassement". */
+  gapCents: number;
+  isOverspent: boolean;
+  /** actual/planned as a 0-100 percent, capped at 100 for progress-bar width — actual spending can still exceed planned (see `isOverspent`), the bar just can't visually overflow its track. */
+  progressPercent: number;
+}
+
+/**
+ * Compares actual spending against a planned target for one scope (a single
+ * category, or the whole month) — the one place issue #113's "Reste" vs
+ * "Dépassement" rule lives, so every caller (overview, category cards,
+ * drill-down) renders the same rule instead of re-deriving it in JSX.
+ */
+export function buildBudgetTargetStatus(actualCents: number, plannedCents: number): BudgetTargetStatus {
+  const differenceCents = plannedCents - actualCents;
+  return {
+    plannedCents,
+    actualCents,
+    gapCents: Math.abs(differenceCents),
+    isOverspent: differenceCents < 0,
+    progressPercent: plannedCents > 0 ? Math.min(100, Math.round((actualCents / plannedCents) * 100)) : 0,
+  };
 }
