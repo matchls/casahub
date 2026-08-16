@@ -55,6 +55,8 @@ import {
   createRecurringBudgetExpense as createRecurringBudgetExpenseDb,
   ensureBudgetRecurringOccurrences as ensureBudgetRecurringOccurrencesDb,
   deleteRecurringBudgetOccurrence as deleteRecurringBudgetOccurrenceDb,
+  editRecurringBudgetExpenseSeries as editRecurringBudgetExpenseSeriesDb,
+  stopRecurringBudgetExpenseSeries as stopRecurringBudgetExpenseSeriesDb,
   fetchBudgetEntriesForMonth,
   fetchBudgetEntriesForMonthRange,
   mapBudgetEntryRow,
@@ -69,6 +71,7 @@ import {
   resolveBudgetShareCount,
   BUDGET_EVOLUTION_MONTH_COUNT,
   type BudgetMonthlyEvolutionPoint,
+  type BudgetSeriesScope,
 } from "@/features/budget/budgetData";
 
 interface DomotidienStateOptions {
@@ -543,7 +546,15 @@ export function useDomotidienState({
     }
   }
 
-  async function updateBudgetEntry(id: string, input: BudgetEntryInput) {
+  // Shared by updateBudgetEntry and updateBudgetEntrySeries: both apply the
+  // same optimistic local edit to the currently visible month and the same
+  // rollback-on-failure, differing only in which RPC actually persists the
+  // change (single occurrence vs. whole series from this month onward).
+  async function applyBudgetEntryEdit(
+    id: string,
+    input: BudgetEntryInput,
+    persist: () => Promise<unknown>
+  ) {
     const prevEntries = budgetEntries;
     const entryMonth = toEntryMonth(input.entryDate);
     setBudgetEntries((prev) => {
@@ -565,7 +576,11 @@ export function useDomotidienState({
       );
     });
     try {
-      await updateBudgetEntryDb(id, input);
+      await persist();
+      // A whole-series edit can silently change amounts in already-
+      // materialized future months too (issue #110) — re-fetching the
+      // evolution window (not just patching this month's total) is what
+      // keeps the chart correct without any series-aware math of its own.
       refreshBudgetEvolution(budgetMonth);
     } catch (err) {
       console.error("[budget] update failed:", err);
@@ -574,16 +589,40 @@ export function useDomotidienState({
     }
   }
 
-  async function deleteBudgetEntry(id: string) {
+  async function updateBudgetEntry(id: string, input: BudgetEntryInput) {
+    await applyBudgetEntryEdit(id, input, () => updateBudgetEntryDb(id, input));
+  }
+
+  // "Ce mois et les suivants" (issue #110) — id is the recurring occurrence
+  // the member was editing; the server derives the series and effective
+  // month from it. Only this month's row (the one actually in view) needs a
+  // client-side patch — already-materialized future months are updated in
+  // the database but aren't part of the currently loaded single-month
+  // state, so they simply show their new values whenever next viewed.
+  async function updateBudgetEntrySeries(id: string, input: BudgetEntryInput) {
+    await applyBudgetEntryEdit(id, input, () => editRecurringBudgetExpenseSeriesDb(id, input));
+  }
+
+  async function deleteBudgetEntry(id: string, scope: BudgetSeriesScope = "occurrence") {
     const prevEntries = budgetEntries;
     const target = budgetEntries.find((e) => e.id === id);
     setBudgetEntries((prev) => prev.filter((e) => e.id !== id));
     try {
-      // A recurring occurrence must register a durable skip alongside its
-      // deletion, or the next ensureRecurringOccurrences call recreates it
-      // (issue #105) — a plain one-off entry keeps today's behavior exactly.
       if (target?.recurringExpenseId) {
-        await deleteRecurringBudgetOccurrenceDb(id);
+        if (scope === "series") {
+          // "Arrêter à partir de ce mois" (issue #110): stops the series
+          // and removes this and every later already-materialized
+          // occurrence. Only this month's row is in the currently loaded
+          // state (see updateBudgetEntrySeries above), so the plain filter
+          // above already reflects it correctly — later months disappear
+          // from the evolution chart via the refresh below.
+          await stopRecurringBudgetExpenseSeriesDb(id);
+        } else {
+          // A recurring occurrence must register a durable skip alongside
+          // its deletion, or the next ensureRecurringOccurrences call
+          // recreates it (issue #105).
+          await deleteRecurringBudgetOccurrenceDb(id);
+        }
       } else {
         await deleteBudgetEntryDb(id);
       }
@@ -679,6 +718,7 @@ export function useDomotidienState({
     setBudgetMonth,
     addBudgetEntry,
     updateBudgetEntry,
+    updateBudgetEntrySeries,
     deleteBudgetEntry,
     updateHouseholdName,
     updateBudgetShareCount,

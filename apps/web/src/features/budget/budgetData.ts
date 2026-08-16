@@ -138,6 +138,27 @@ export const RECURRENCE_LABELS: Record<BudgetEntryRecurrence, string> = {
   monthly: "Mensuelle",
 };
 
+/**
+ * Scope a member picks when editing or deleting a recurring occurrence
+ * (issue #110): "occurrence" reuses the existing issue #105 single-month
+ * behaviour exactly; "series" reaches the whole series from the selected
+ * month onward. Shared between edit and delete since both mutations are
+ * anchored the same way (on the occurrence the member started from) even
+ * though their server-side effects differ (edit rewrites values, delete
+ * stops future generation).
+ */
+export type BudgetSeriesScope = "occurrence" | "series";
+
+export const EDIT_SCOPE_LABELS: Record<BudgetSeriesScope, string> = {
+  occurrence: "Ce mois uniquement",
+  series: "Ce mois et les suivants",
+};
+
+export const DELETE_SCOPE_LABELS: Record<BudgetSeriesScope, string> = {
+  occurrence: "Ce mois uniquement",
+  series: "Arrêter à partir de ce mois",
+};
+
 export interface BudgetCategoryGroup {
   main: BudgetCategory;
   subcategories: BudgetCategory[];

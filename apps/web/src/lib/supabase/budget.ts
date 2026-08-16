@@ -266,3 +266,46 @@ export async function deleteRecurringBudgetOccurrence(entryId: string): Promise<
   });
   if (error) throw new Error(error.message);
 }
+
+/**
+ * "Ce mois et les suivants" (issue #110): updates the recurring template AND
+ * every already-materialized occurrence from entryId's own month onward
+ * (never past months, never a stopped series' end boundary). entryId is the
+ * recurring occurrence the member was editing — it alone determines which
+ * series and which month is the effective anchor server-side, matching
+ * deleteRecurringBudgetOccurrence's anchoring style. Future months not yet
+ * materialized pick up the new template automatically the next time
+ * ensureBudgetRecurringOccurrences runs, with no extra work needed here.
+ */
+export async function editRecurringBudgetExpenseSeries(
+  entryId: string,
+  input: BudgetEntryInput
+): Promise<void> {
+  const supabase = createClient();
+  const { error } = await supabase.rpc("edit_recurring_budget_expense_series", {
+    target_entry_id: entryId,
+    target_category_id: input.categoryId ?? null,
+    target_title: input.title,
+    target_amount_cents: input.amountCents,
+    target_kind: input.kind,
+    target_note: input.note || null,
+    target_entry_date: input.entryDate,
+  });
+  if (error) throw new Error(error.message);
+}
+
+/**
+ * "Arrêter à partir de ce mois" (issue #110): sets the series' end_month to
+ * entryId's own month (an exclusive boundary — that month itself is
+ * removed) and deletes every already-materialized occurrence from that
+ * month onward. The series/template row and every occurrence before the
+ * stop month are left untouched, so history keeps showing exactly what was
+ * paid.
+ */
+export async function stopRecurringBudgetExpenseSeries(entryId: string): Promise<void> {
+  const supabase = createClient();
+  const { error } = await supabase.rpc("stop_recurring_budget_expense_series", {
+    target_entry_id: entryId,
+  });
+  if (error) throw new Error(error.message);
+}

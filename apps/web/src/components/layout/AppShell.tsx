@@ -96,6 +96,7 @@ export function AppShell({
     setBudgetMonth,
     addBudgetEntry,
     updateBudgetEntry,
+    updateBudgetEntrySeries,
     deleteBudgetEntry,
     updateHouseholdName,
     updateBudgetShareCount,
@@ -233,6 +234,7 @@ export function AppShell({
           onMonthChange={setBudgetMonth}
           onAdd={addBudgetEntry}
           onUpdate={updateBudgetEntry}
+          onUpdateSeries={updateBudgetEntrySeries}
           onDelete={deleteBudgetEntry}
           onBudgetShareCountChange={updateBudgetShareCount}
         />
