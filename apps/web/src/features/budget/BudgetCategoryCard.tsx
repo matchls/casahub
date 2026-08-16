@@ -54,14 +54,22 @@ export function BudgetCategoryCard({
               style={{ width: `${targetStatus.progressPercent}%` }}
             />
           </div>
-          <div
-            className={cn(
-              "text-[11px] font-semibold mt-[4px] tabular-nums",
-              targetStatus.isOverspent ? "text-red-500" : "text-[var(--budget-text)] opacity-60"
+          <div className="flex items-center gap-[6px] flex-wrap mt-[4px]">
+            <span
+              className={cn(
+                "text-[11px] font-semibold tabular-nums",
+                targetStatus.isOverspent ? "text-red-500" : "text-[var(--budget-text)] opacity-60"
+              )}
+            >
+              {targetStatus.isOverspent ? "Dépassement " : "Reste "}
+              {formatCents(targetStatus.gapCents)}
+            </span>
+            {/* Always ACTUAL / Budget shares (issue #109) — a target never changes what "per person" means, it only adds a second, independent comparison. */}
+            {perPersonCents !== null && (
+              <span className="text-[11px] font-semibold tabular-nums text-[var(--budget-text)] opacity-60">
+                · {formatCents(perPersonCents)}/personne
+              </span>
             )}
-          >
-            {targetStatus.isOverspent ? "Dépassement " : "Reste "}
-            {formatCents(targetStatus.gapCents)}
           </div>
         </>
       ) : (

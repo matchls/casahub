@@ -209,7 +209,12 @@ export function BudgetScreen({
           <button
             type="button"
             onClick={() => setTargetsModalOpen(true)}
-            className="shrink-0 rounded-full bg-white/60 hover:bg-white/90 text-[var(--budget-text)] text-[12px] font-bold px-3 py-[7px] transition-colors cursor-pointer"
+            // Disabled while this month's data is loading — budgetMonthlyTargets
+            // is cleared for the whole loading window (see setBudgetMonth), so
+            // opening the editor here could only ever show/save an empty or
+            // (once the fetch lands) briefly-wrong-month state (issue #113 review).
+            disabled={monthLoading}
+            className="shrink-0 rounded-full bg-white/60 hover:bg-white/90 text-[var(--budget-text)] text-[12px] font-bold px-3 py-[7px] transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white/60"
           >
             {hasTargets ? "Modifier le budget" : "Définir le budget du mois"}
           </button>
