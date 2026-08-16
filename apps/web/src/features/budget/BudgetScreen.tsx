@@ -21,6 +21,7 @@ import {
   groupBudgetCategories,
   shiftBudgetMonth,
   type BudgetMonthlyEvolutionPoint,
+  type BudgetSeriesScope,
 } from "./budgetData";
 
 interface BudgetScreenProps {
@@ -36,7 +37,9 @@ interface BudgetScreenProps {
   onMonthChange: (month: string) => void;
   onAdd: (input: CreateBudgetEntryInput) => Promise<void>;
   onUpdate: (id: string, input: BudgetEntryInput) => Promise<void>;
-  onDelete: (id: string) => void;
+  /** "Ce mois et les suivants" (issue #110) — id is the recurring occurrence being edited; only shown as a choice for recurring entries. */
+  onUpdateSeries: (id: string, input: BudgetEntryInput) => Promise<void>;
+  onDelete: (id: string, scope?: BudgetSeriesScope) => void;
   onBudgetShareCountChange: (count: number) => void;
 }
 
@@ -51,6 +54,7 @@ export function BudgetScreen({
   onMonthChange,
   onAdd,
   onUpdate,
+  onUpdateSeries,
   onDelete,
   onBudgetShareCountChange,
 }: BudgetScreenProps) {
@@ -376,7 +380,13 @@ export function BudgetScreen({
           >
             {visibleEntries.map((entry, index) => (
               <div key={entry.id} className={index > 0 ? "border-t border-[rgba(44,38,34,0.06)]" : ""}>
-                <BudgetEntryRow entry={entry} categories={categories} onUpdate={onUpdate} onDelete={onDelete} />
+                <BudgetEntryRow
+                  entry={entry}
+                  categories={categories}
+                  onUpdate={onUpdate}
+                  onUpdateSeries={onUpdateSeries}
+                  onDelete={onDelete}
+                />
               </div>
             ))}
           </div>
