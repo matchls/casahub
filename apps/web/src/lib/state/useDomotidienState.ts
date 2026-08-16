@@ -43,7 +43,10 @@ import {
   mapLinkRow,
 } from "@/lib/supabase/links";
 import { addEvent as addEventDb, updateEvent as updateEventDb, deleteEvent as deleteEventDb } from "@/lib/supabase/events";
-import { updateHouseholdName as updateHouseholdNameDb } from "@/lib/supabase/households";
+import {
+  updateHouseholdName as updateHouseholdNameDb,
+  updateHouseholdBudgetShareCount as updateHouseholdBudgetShareCountDb,
+} from "@/lib/supabase/households";
 import { insertEventSorted, mapEventRow, type EventRow } from "@/lib/domain/agenda";
 import {
   addBudgetEntry as addBudgetEntryDb,
@@ -63,6 +66,7 @@ import {
   buildMonthlyEvolution,
   currentBudgetMonth,
   monthRangeEndingAt,
+  resolveBudgetShareCount,
   BUDGET_EVOLUTION_MONTH_COUNT,
   type BudgetMonthlyEvolutionPoint,
 } from "@/features/budget/budgetData";
@@ -111,6 +115,9 @@ export function useDomotidienState({
   const [links, setLinks] = useState<UsefulLink[]>(initialLinks ?? []);
   const [events, setEvents] = useState<AgendaEvent[]>(initialEvents ?? []);
   const [profile, setProfile] = useState<HouseholdProfile>(initialProfile);
+  // Guards against rapid duplicate writes while a Budget share count update
+  // is in flight (issue #109) — the +/- control disables itself on this flag.
+  const [budgetShareCountPending, setBudgetShareCountPending] = useState(false);
 
   // "La journée" — derived from today's real events and incomplete tasks (no mock data).
   const dayItems = useMemo<TimelineItem[]>(() => {
@@ -150,6 +157,14 @@ export function useDomotidienState({
   const linksCount = links.length;
   const dayItemsCount = dayItems.length;
   const agendaEventsCount = events.length;
+
+  // Single resolved source for the Budget divisor (issue #109) — every "Par
+  // personne" figure in BudgetScreen threads through this one value instead
+  // of each re-deriving the explicit-vs-member-count fallback itself.
+  const effectiveBudgetShareCount = useMemo(
+    () => resolveBudgetShareCount(profile.budgetShareCount, profile.members.length),
+    [profile.budgetShareCount, profile.members.length]
+  );
 
   // Actions — shopping (Supabase-backed with optimistic updates)
   async function toggleShoppingItem(id: string) {
@@ -593,6 +608,26 @@ export function useDomotidienState({
     }
   }
 
+  // Persists an explicit Budget share count (issue #109). Guards against
+  // rapid duplicate writes (e.g. holding down +/-) with budgetShareCountPending
+  // rather than debouncing, so every click still lands as its own request in
+  // order — the UI just ignores clicks while one is already in flight.
+  async function updateBudgetShareCount(count: number) {
+    if (budgetShareCountPending) return;
+    const prevProfile = profile;
+    setBudgetShareCountPending(true);
+    setProfile((p) => ({ ...p, budgetShareCount: count }));
+    try {
+      await updateHouseholdBudgetShareCountDb(householdId, count);
+    } catch (err) {
+      console.error("[household] update budget share count failed:", err);
+      setProfile(prevProfile);
+      alert("La mise à jour du nombre de parts a échoué. Réessayez.");
+    } finally {
+      setBudgetShareCountPending(false);
+    }
+  }
+
   return {
     // Navigation
     activeView,
@@ -612,6 +647,8 @@ export function useDomotidienState({
     budgetEvolution,
     budgetMonth,
     budgetMonthLoading,
+    effectiveBudgetShareCount,
+    budgetShareCountPending,
 
     // Computed counters
     shoppingPendingCount,
@@ -644,5 +681,6 @@ export function useDomotidienState({
     updateBudgetEntry,
     deleteBudgetEntry,
     updateHouseholdName,
+    updateBudgetShareCount,
   };
 }

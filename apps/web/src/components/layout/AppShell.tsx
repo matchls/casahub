@@ -68,6 +68,8 @@ export function AppShell({
     budgetEvolution,
     budgetMonth,
     budgetMonthLoading,
+    effectiveBudgetShareCount,
+    budgetShareCountPending,
     shoppingPendingCount,
     tasksPendingCount,
     notesCount,
@@ -96,6 +98,7 @@ export function AppShell({
     updateBudgetEntry,
     deleteBudgetEntry,
     updateHouseholdName,
+    updateBudgetShareCount,
   } = useDomotidienState({
     initialProfile,
     initialAccountEmail,
@@ -225,11 +228,13 @@ export function AppShell({
           evolution={budgetEvolution}
           month={budgetMonth}
           monthLoading={budgetMonthLoading}
-          householdMemberCount={profile.members.length}
+          budgetShareCount={effectiveBudgetShareCount}
+          budgetShareCountPending={budgetShareCountPending}
           onMonthChange={setBudgetMonth}
           onAdd={addBudgetEntry}
           onUpdate={updateBudgetEntry}
           onDelete={deleteBudgetEntry}
+          onBudgetShareCountChange={updateBudgetShareCount}
         />
       );
     }

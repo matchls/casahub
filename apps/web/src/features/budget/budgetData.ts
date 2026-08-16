@@ -92,16 +92,40 @@ export function formatCentsCompact(amountCents: number): string {
 }
 
 /**
- * Equal per-person share of a total, in cents. Informational only — it does
- * not track who actually paid. Returns null (rather than NaN/Infinity) when
- * `memberCount` is missing or invalid, so callers can omit the "Par
- * personne" line entirely instead of rendering a bogus figure.
+ * Equal share of a total across `shareCount` Budget shares, in cents.
+ * Informational only — it does not track who actually paid. `shareCount` is
+ * the household's effective Budget share count (issue #109): either an
+ * explicitly configured "parts" value, or (by default) the active household
+ * member count — see resolveBudgetShareCount(). Returns null (rather than
+ * NaN/Infinity) when `shareCount` is missing or invalid, so callers can omit
+ * the "Par personne" line entirely instead of rendering a bogus figure.
  */
-export function calculatePerPersonCents(totalCents: number, memberCount: number): number | null {
-  if (!Number.isFinite(totalCents) || !Number.isInteger(memberCount) || memberCount <= 0) {
+export function calculatePerPersonCents(totalCents: number, shareCount: number): number | null {
+  if (!Number.isFinite(totalCents) || !Number.isInteger(shareCount) || shareCount <= 0) {
     return null;
   }
-  return Math.round(totalCents / memberCount);
+  return Math.round(totalCents / shareCount);
+}
+
+/**
+ * Resolves the household's effective Budget share count ("parts", issue
+ * #109): the explicitly saved value if one has ever been set, otherwise the
+ * active household member count — so a household that never touches the
+ * setting keeps behaving exactly as before (e.g. an existing couple
+ * automatically behaves as 2 parts). Floors at 1 so a household with zero
+ * active members (edge case, never expected in steady state) still yields a
+ * usable divisor. This is the single source of truth for the fallback — call
+ * it once and thread the result through, rather than re-deriving it in every
+ * component that needs a "Par personne" figure.
+ */
+export function resolveBudgetShareCount(
+  explicitShareCount: number | null | undefined,
+  activeMemberCount: number
+): number {
+  if (Number.isInteger(explicitShareCount) && (explicitShareCount as number) >= 1) {
+    return explicitShareCount as number;
+  }
+  return Math.max(1, activeMemberCount);
 }
 
 export const KIND_LABELS: Record<BudgetEntryKind, string> = {

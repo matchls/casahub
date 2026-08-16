@@ -50,7 +50,7 @@ export async function loadHouseholdProfile(
 ): Promise<HouseholdProfile | null> {
   const { data: household } = await supabase
     .from("households")
-    .select("id, name, type, created_at")
+    .select("id, name, type, created_at, budget_share_count")
     .eq("id", householdId)
     .single();
 
@@ -83,6 +83,7 @@ export async function loadHouseholdProfile(
       initial: m.initial,
       color: m.color,
     })),
+    budgetShareCount: household.budget_share_count ?? null,
   };
 }
 
