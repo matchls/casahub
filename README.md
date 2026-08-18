@@ -1,185 +1,165 @@
 # Kasaly
 
-Kasaly is a shared home management hub for couples, families, and roommates: one place to track the shopping list, tasks, notes, calendar events, and useful links for a household.
-
-## Product overview
-
-A household signs up, creates (or joins) a household during onboarding, and gets a shared dashboard with widgets for each area of daily life. Everyone in the household shares the same persisted data through Supabase.
+Kasaly is a shared home management hub for couples, families, and roommates. It centralizes day-to-day household information and actions in one Supabase-backed application.
 
 ## Main features
 
-- **Auth** — email/password signup and login (Supabase Auth, email confirmation required)
-- **Onboarding** — create a household and become its first admin member
-- **Dashboard** — overview of the household with per-feature widgets
-- **Shopping list** — shared, persisted shopping items
-- **Tasks** — shared household to-dos
-- **Notes** — categorized shared notes
-- **Useful links** — shared bookmarks for the household
-- **Agenda** — shared calendar/events, ordered by date
-- **Profile** — household member profile (name, initial, color); an admin
-  can also rename the household
-- **Member invitations** — an admin generates a copyable invite link from
-  Profile; no automatic email sending in V1
+- **Auth** — email/password signup and login with Supabase Auth.
+- **Onboarding** — create a household and become its first admin member.
+- **Dashboard** — shared overview of the household.
+- **Shopping list** — shared persisted items with edit/delete flows.
+- **Tasks** — shared household to-dos.
+- **Notes** — categorized shared notes.
+- **Useful links** — shared household bookmarks.
+- **Agenda** — shared calendar/events.
+- **Profile** — member identity and admin household-name editing.
+- **Member invitations** — admin-generated copyable invite links.
+- **Budget** — category/subcategory expenses, fixed/variable classification, one-off or monthly recurrence, 6-month evolution, per-person shares, recurring-series management, and monthly planned targets versus actual spending.
 
-All of the above are implemented and backed by Supabase (see [V1 status](#roadmap--v1-status)).
+All household data is persisted in Supabase and scoped by Row Level Security (RLS).
 
 ## Tech stack
 
 - **Framework:** Next.js 16 (App Router), React 19, TypeScript
-- **Styling:** Tailwind CSS v4, CSS variables design tokens
-- **Backend:** Supabase (Postgres, Auth, Row Level Security)
+- **Styling:** Tailwind CSS v4
+- **Backend:** Supabase Auth + Postgres + RLS
 - **Deployment:** Vercel
-- **CI:** GitHub Actions (lint + build)
+- **CI:** GitHub Actions (`lint` + `build`)
 
 ## Repository structure
 
-```
+```text
 casahub/
 ├── apps/
-│   └── web/                  # Next.js app — the actual product (see below)
+│   └── web/                              # Next.js application (Vercel root)
 ├── packages/
-│   └── shared/                # Placeholder for future shared types/schemas/utils
+│   └── shared/                           # Reserved shared package
 ├── supabase/
-│   ├── schema.sql              # Tables + RLS policies
-│   ├── grants.sql               # Table-level privileges for `authenticated`
-│   ├── household-rpc.sql         # create_household_with_member RPC
-│   └── household-invitations.sql # Invitation table + create/accept RPCs
+│   ├── schema.sql                        # Core household tables + RLS helpers/policies
+│   ├── grants.sql                        # Core authenticated table grants
+│   ├── household-rpc.sql                 # Atomic household creation + one-household-per-user guard
+│   ├── household-invitations.sql         # Invitation table + RPC-only access
+│   ├── budget.sql                        # Budget categories + entries
+│   ├── budget_recurring_expenses.sql     # Monthly recurring templates, skips and occurrence generation
+│   ├── budget_recurring_series_management.sql # Edit/stop recurring series
+│   ├── budget_recurring_series_management_fix.sql # Legacy corrective migration only
+│   ├── budget_shares.sql                 # Configurable Budget share count
+│   └── budget_monthly_targets.sql        # Planned amount per main category/month
 ├── docs/
-│   ├── data-model.md          # Entity/column reference for the Supabase schema
-│   ├── deployment.md          # Vercel setup, env vars, Node version
-│   ├── qa-v1.md               # Manual QA + deployment readiness checklists
-│   └── design/                # Design tokens, handoff spec, reference screenshots
-├── .github/workflows/ci.yml   # Lint + build on every push/PR to main
-└── AGENTS.md                  # Contribution workflow & constraints for contributors/agents
+│   ├── data-model.md                     # Current persisted Supabase model
+│   ├── deployment.md                     # Vercel + Supabase setup
+│   ├── qa-v1.md                          # Manual V1 regression checklist
+│   └── design/
+├── .github/workflows/ci.yml
+└── AGENTS.md
 ```
 
-`apps/web` is a self-contained Next.js app with its own `package.json` and lockfile — this is **not** an npm-workspaces monorepo. The root `package.json` only proxies scripts into `apps/web`.
-
-```
-apps/web/src/
-├── app/          # Routes, layout, global CSS (App Router)
-├── features/     # auth, onboarding, dashboard, shopping, tasks, notes, links, agenda, profile
-├── components/
-│   └── ui/       # Shared primitives: Button, Card, Input, Badge, Avatar
-└── lib/          # Utilities and the Supabase client
-```
-
-## Prerequisites
-
-- Node.js v18+ (CI runs on Node 24 — see [docs/deployment.md](docs/deployment.md))
-- npm v9+
-- A Supabase project (see [Supabase setup](#supabase-setup))
+`apps/web` is a self-contained Next.js app with its own `package.json` and lockfile. The repository is not configured as an npm-workspaces monorepo.
 
 ## Local setup
 
 ```bash
 git clone https://github.com/matchls/casahub.git
-cd casahub
-cd apps/web && npm install
-```
-
-Copy the env file and fill in your Supabase project values:
-
-```bash
-cp apps/web/.env.local.example apps/web/.env.local
-```
-
-Run the dev server from the repository root:
-
-```bash
+cd casahub/apps/web
+npm install
+cp .env.local.example .env.local
 npm run dev
 ```
 
-Or from `apps/web` directly (`npm install` must have been run there first):
-
-```bash
-cd apps/web
-npm run dev
-```
-
-The app is available at [http://localhost:3000](http://localhost:3000).
+The application is then available at `http://localhost:3000`.
 
 ## Environment variables
 
-Set these in `apps/web/.env.local` for local dev, and in Vercel → Project Settings → Environment Variables for deployed environments. Both are safe to expose to the browser (public/anon keys, protected by Row Level Security).
+Only these public Supabase values are required by the application:
 
 | Variable | Description |
 |---|---|
 | `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL |
-| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Supabase publishable (anon) key |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Supabase publishable/anon key |
 
-**Never** put the Supabase `service_role` / secret key in this repo, in `.env.local`, or in Vercel. No frontend code in this project needs it — see [Security notes](#security-notes).
+**Never add `SUPABASE_SERVICE_ROLE_KEY` (or another Supabase secret/service-role key) to frontend code, `.env.local`, or public Vercel configuration.** The application is designed to use the publishable key together with RLS and narrowly scoped RPCs.
 
 ## Available scripts
 
-Run from the repository root (each proxies into `apps/web`):
+Run from `apps/web`:
 
-| Script | Description |
-|---|---|
-| `npm run dev` | Start the Next.js dev server |
-| `npm run build` | Production build |
-| `npm run lint` | Run ESLint |
+```bash
+npm run dev
+npm run lint
+npm run build
+npm run start
+```
 
-Equivalent commands also work from `apps/web` directly (e.g. `npm run start` to serve a production build after `npm run build`).
+The root package also proxies the main scripts into `apps/web`.
 
 ## Supabase setup
 
-Apply the SQL files in order via the Supabase SQL Editor on a fresh project:
+### Fresh project
 
-1. [`supabase/schema.sql`](supabase/schema.sql) — tables and Row Level Security (RLS) policies. RLS is enabled on every table (`households`, `household_members`, `shopping_items`, `tasks`, `events`, `notes`, `useful_links`); access is scoped per household member.
-2. [`supabase/grants.sql`](supabase/grants.sql) — table-level `GRANT`s for the `authenticated` role (required in addition to RLS).
-3. [`supabase/household-rpc.sql`](supabase/household-rpc.sql) — `create_household_with_member` RPC used by onboarding to atomically create a household and its first admin member. Also drops the legacy direct-INSERT policy on `households`, so re-running it on an existing project applies the hardening from issue #61.
-4. [`supabase/household-invitations.sql`](supabase/household-invitations.sql) — `household_invitations` table (RLS enabled, no direct-access policies) plus the `create_household_invitation` / `get_household_invitation` / `accept_household_invitation` RPCs used by the member invitation flow.
+Apply the SQL files in this order in the Supabase SQL Editor:
 
-See [docs/data-model.md](docs/data-model.md) for the entity/column reference.
+1. `supabase/schema.sql`
+2. `supabase/grants.sql`
+3. `supabase/household-rpc.sql`
+4. `supabase/household-invitations.sql`
+5. `supabase/budget.sql`
+6. `supabase/budget_recurring_expenses.sql`
+7. `supabase/budget_recurring_series_management.sql`
+8. `supabase/budget_shares.sql`
+9. `supabase/budget_monthly_targets.sql`
 
-The app only ever uses the **publishable (anon) key** on the frontend — never the `service_role` key (see [Security notes](#security-notes)).
+`budget_recurring_series_management_fix.sql` is **not part of a fresh setup**. It exists only as the corrective migration for an already-provisioned database that received the earlier faulty version of `budget_recurring_series_management.sql`. The current main migration already contains the corrected implementation.
+
+See [docs/deployment.md](docs/deployment.md) for the complete post-SQL verification checklist and [docs/data-model.md](docs/data-model.md) for the current data model.
 
 ## Development workflow
 
-Full contributor/agent instructions — branch naming, project constraints, design handoff references — live in [AGENTS.md](AGENTS.md). Summary of the day-to-day loop:
+Contributor/agent constraints live in [AGENTS.md](AGENTS.md). The project follows:
 
 1. Start from an up-to-date `main`.
-2. Work on a dedicated branch per issue.
-3. Run `npm run lint` and `npm run build` before requesting review.
-4. Open a PR, wait for CI, merge, then clean up the branch.
+2. One issue → one dedicated branch → one PR.
+3. Keep scope limited to the issue.
+4. Run `npm run lint` and `npm run build` from `apps/web`.
+5. Review the exact PR head before merge.
+6. Keep manual human QA for functional/visual changes.
+7. Never merge automatically.
 
-### Branch / PR workflow
-
-- **One issue → one branch → one PR.**
-- Branch naming: `type/issue-number-short-description` (e.g. `docs/45-professional-readme`).
-- PR title: short, imperative, prefixed by type (`feat:`, `fix:`, `docs:`, `chore:`…).
-- PR description includes `Closes #<issue-number>`.
-- After merge: delete the remote and local branch.
+For schema changes, migrations are reviewed in code first and then applied manually to Supabase before merge when the application depends on them.
 
 ## CI
 
-[`.github/workflows/ci.yml`](.github/workflows/ci.yml) runs on every push and PR to `main`: install (`npm ci`), lint, and build, all `working-directory: apps/web` on Node 24. Both lint and build must pass before merging.
+`.github/workflows/ci.yml` runs install, lint and production build for pushes/PRs targeting `main`, using `apps/web` as the working directory.
 
 ## Deployment
 
-Deployed to Vercel with **Root Directory** set to `apps/web`. Full setup steps, required environment variables, and Supabase Auth redirect URL configuration are documented in [docs/deployment.md](docs/deployment.md).
+Kasaly is deployed on Vercel with:
 
-## QA
+- **Root Directory:** `apps/web`
+- **Framework:** Next.js
+- **Environment variables:** only the two `NEXT_PUBLIC_SUPABASE_*` values listed above
 
-Manual QA and deployment-readiness checklists live in [docs/qa-v1.md](docs/qa-v1.md), including a known limitation around Supabase email confirmation blocking fresh-signup login testing.
+See [docs/deployment.md](docs/deployment.md).
 
-## Roadmap / V1 status
+## QA / V1 status
 
-All core features are implemented and connected to Supabase: auth, onboarding, dashboard, shopping list, tasks, notes, useful links, and agenda. Remaining V1 work is deployment/QA hardening — see the checklists in [docs/qa-v1.md](docs/qa-v1.md).
+The core V1 feature set is implemented. Current priority is **stabilization**: real-use QA, mobile behavior, state/error handling, cross-household permissions/RLS checks, and regression fixes rather than large new Budget features.
+
+The manual release checklist is in [docs/qa-v1.md](docs/qa-v1.md), including dedicated Budget recurrence/targets/share tests.
 
 ## Security notes
 
-- Row Level Security is enabled on every table; policies scope reads/writes to a user's own household (see [`supabase/schema.sql`](supabase/schema.sql)).
-- Households can only be created through the `create_household_with_member` RPC ([`supabase/household-rpc.sql`](supabase/household-rpc.sql)), which atomically creates the household and its first admin member. There is no RLS policy allowing a direct `INSERT` into `households` from an authenticated client, preventing orphan households with no admin member.
-- `household_invitations` ([`supabase/household-invitations.sql`](supabase/household-invitations.sql)) has RLS enabled with **no** SELECT/INSERT/UPDATE/DELETE policies at all — every read and write goes through its `SECURITY DEFINER` RPCs, which enforce admin-only invite creation, expiry/one-time-use on acceptance, and the one-household-per-user rule server-side.
-- The frontend uses only the Supabase **publishable/anon key**. The `service_role` key must never be added to this repo, `.env.local`, or Vercel.
-- Don't commit `.env.local` or any file containing real Supabase credentials.
+- RLS is enabled on all household-scoped application tables.
+- Direct household creation is blocked; `create_household_with_member` creates the household and its first admin atomically.
+- A user is limited to one household by a database unique index on `household_members.user_id`.
+- `household_invitations` has RLS enabled with no direct table policies; invitation access goes through validated `SECURITY DEFINER` RPCs.
+- Budget entries/categories/targets are household-scoped by RLS.
+- Recurring-series mutations that require elevated writes are exposed only through narrowly scoped RPCs that validate membership and preserve series invariants.
+- `SUPABASE_SERVICE_ROLE_KEY` must never be exposed to the browser or public Vercel environment.
 
-## Useful documentation links
+## Documentation
 
-- [AGENTS.md](AGENTS.md) — contribution workflow, project constraints, design handoff references
-- [docs/data-model.md](docs/data-model.md) — Supabase schema reference
-- [docs/deployment.md](docs/deployment.md) — Vercel deployment guide
-- [docs/qa-v1.md](docs/qa-v1.md) — manual QA and deployment readiness checklists
-- [docs/design/](docs/design/) — design tokens and handoff spec
+- [AGENTS.md](AGENTS.md) — contribution workflow and constraints
+- [docs/data-model.md](docs/data-model.md) — current Supabase schema overview
+- [docs/deployment.md](docs/deployment.md) — deployment and database provisioning
+- [docs/qa-v1.md](docs/qa-v1.md) — manual regression/deployment readiness checklist
+- [docs/design/](docs/design/) — design references
