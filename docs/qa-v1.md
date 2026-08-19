@@ -1,195 +1,166 @@
-# V1 QA checklist
+# V1 manual QA checklist
 
-Manual QA to run against a deployed (or local) build before/after each V1
-release. Use a real Supabase-backed environment — these flows exercise
-live database reads/writes, not mocked data.
+Run this against a deployed or local build backed by a real Supabase project. These checks exercise real reads/writes, RLS and RPCs; lint/build alone do not validate UX.
 
-> **Known limitation:** Supabase email confirmation is enabled on this
-> project, so a brand-new signup has no session until the confirmation link
-> is clicked. Use a pre-confirmed test account for login-gated steps below,
-> or complete the confirmation link manually from the test inbox.
+> Supabase email confirmation is enabled on the current project. A brand-new signup has no session until the confirmation link is used. Keep at least one confirmed test account available, and use two accounts when testing invitations/shared state.
 
-## Functional walkthrough
+## Auth and onboarding
 
-- [ ] **Signup** — create a new account with email + password; confirmation
-      message is shown (no crash, no unhandled error).
-- [ ] **Login** — log in with a confirmed test account; redirected to the
-      dashboard.
-- [ ] **Logout / login persistence** — log out, then log back in with the
-      same account; shopping list, tasks, notes, links, agenda, and member
-      list are all unchanged from before logout.
-- [ ] **Onboarding — household creation** — a user with no household is
-      redirected to `/onboarding`; creating a household succeeds and lands
-      on the dashboard.
-- [ ] **Dashboard** — household profile, members, and all widgets load
-      without errors for a user with a household.
-- [ ] **Profile — household name edit** — an admin renames the household
-      from Profile (Modifier → input → Enregistrer); the new name updates
-      immediately in Sidebar/Header/Profile and still shows after a hard
-      refresh. A non-admin does not see the "Modifier" control.
-- [ ] **Shopping list** — add an item, toggle it done/undone, hard refresh —
-      state persists.
-- [ ] **Tasks** — add a task, toggle done/undone, hard refresh — state
-      persists.
-- [ ] **Notes** — add a note under each category, hard refresh — notes
-      persist and stay grouped by category.
-- [ ] **Useful links** — add a link, hard refresh — link persists.
-- [ ] **Agenda** — add an event, hard refresh — event persists and appears
-      in the correct date order.
-- [ ] **Member invitations** — an admin creates an invitation from
-      Profile / Membres and gets a copyable link (V1 uses copyable links
-      only — there is no automatic email sending). A second account opens
-      the link, logs in or signs up, accepts the invitation, and lands in
-      the same household with the same shared data. See
-      [Invitation flow](#invitation-flow) below for the full checklist.
+- [ ] **Signup** — create a new account; confirmation message is shown without a crash/unhandled error.
+- [ ] **Login** — confirmed account logs in and reaches the application.
+- [ ] **Logout / persistence** — log out and back in; persisted household data is unchanged.
+- [ ] **No household** — authenticated user without a household is redirected to `/onboarding`.
+- [ ] **Create household** — onboarding creates one household plus one admin member atomically and lands on the dashboard.
+- [ ] **Already in a household** — verify the app does not allow creating/joining a second household.
 
-## Delete flows (issue #78)
+## Core feature walkthrough
 
-Each item type below is deletable via a small, discreet control (e.g. `×`)
-without disrupting existing interactions on the same row/card.
+- [ ] **Dashboard** — household profile, members and widgets load without errors.
+- [ ] **Profile** — admin can rename the household; the new name persists after hard refresh.
+- [ ] **Profile permissions** — non-admin cannot use the admin-only household edit control.
+- [ ] **Shopping list** — add, edit, toggle and delete an item; hard refresh preserves the expected result.
+- [ ] **Tasks** — add, edit, toggle and delete a task; hard refresh preserves the expected result.
+- [ ] **Notes** — add/edit/delete notes across categories; grouping and persistence stay correct.
+- [ ] **Useful links** — add/edit/delete a link; URL/title persist and delete does not accidentally navigate.
+- [ ] **Agenda** — add/edit/delete an event; date/time/location persist and date edits move it to the correct group/order.
 
-- [ ] **Delete shopping item** — add an item, delete it, hard refresh — it
-      does not reappear.
-- [ ] **Delete task** — add a task, delete it, hard refresh — it does not
-      reappear.
-- [ ] **Delete note** — add a note, delete it (confirm dialog if shown),
-      hard refresh — it does not reappear.
-- [ ] **Delete useful link / shared code** — add a link, delete it (confirm
-      dialog if shown), hard refresh — it does not reappear.
-- [ ] **Delete agenda event** — add an event, delete it (confirm dialog if
-      shown), hard refresh — it does not reappear.
-- [ ] **No accidental side effects** — deleting a shopping item or task does
-      not toggle its done state; deleting a useful link does not open or
-      navigate to its URL.
-- [ ] **Delete failure handling** — if the Supabase delete call fails, the
-      item reappears in the UI (rollback) and a clear error is shown/logged,
-      instead of silently disappearing for good.
-- [ ] **Cross-household protection** — a member of one household cannot
-      delete another household's item (RLS blocks it — verify with a direct
-      API/SQL attempt as in [Access protection](#access-protection) below).
+## Generic edit/delete/error behavior
 
-## Edit flows (issue #81)
+- [ ] Cancelling an edit restores the previous value and performs no write.
+- [ ] Required empty/invalid values are rejected with a clear message.
+- [ ] Edit/delete controls do not trigger unrelated row actions (toggle, navigation, etc.).
+- [ ] If an optimistic Supabase update/delete fails, UI state is rolled back instead of silently diverging from the database.
+- [ ] Hard refresh after each CRUD flow matches the database state.
 
-Each item type below is editable in place via a small, discreet control (e.g.
-`✎` / "Modifier") without disrupting existing interactions on the same
-row/card. Edits use a compact inline form with "Enregistrer" / "Annuler" —
-no modal.
+## Household invitation flow
 
-- [ ] **Edit shopping item** — add an item, edit its label (and quantity if
-      set), save, hard refresh — the edit remains.
-- [ ] **Edit task** — add a task, edit its title, save, hard refresh — the
-      edit remains.
-- [ ] **Edit note** — add a note, edit its title/content, save, hard
-      refresh — the edit remains and the note stays in its category.
-- [ ] **Edit useful link** — add a link, edit its title/URL, save, hard
-      refresh — the edit remains.
-- [ ] **Edit agenda event** — add an event, edit its title/date/time/
-      location, save, hard refresh — the edit remains and the event appears
-      in the correct date group (including when the edited date moves it to
-      a different group, e.g. "aujourd'hui" → "cette semaine").
-- [ ] **Cancel restores original value** — start editing any item above,
-      change the value, click "Annuler" — the original value is shown
-      unchanged (no partial save).
-- [ ] **Empty/invalid values rejected** — clearing a required field
-      (label/title) and saving shows a clear inline error instead of
-      submitting; the previous value is kept.
-- [ ] **No accidental side effects** — clicking the edit control on a
-      shopping item or task does not toggle its done state; clicking the
-      edit control on a useful link does not open or navigate to its URL;
-      clicking edit does not trigger delete.
-- [ ] **Edit failure handling** — if the Supabase update call fails, the
-      form keeps/restores the previous value and shows a clear inline
-      error, instead of silently discarding the edit.
-- [ ] **Cross-household protection** — a member of one household cannot
-      edit another household's item (RLS blocks it — verify with a direct
-      API/SQL attempt as in [Access protection](#access-protection) below).
+Use two accounts.
 
-## Invitation flow
+- [ ] **Create invitation (admin)** — admin enters an email and receives a copyable link.
+- [ ] **Create invitation (non-admin)** — non-admin has no usable invite control; direct `create_household_invitation` call fails.
+- [ ] **Logged-out invite** — `/invite/<token>` shows login/signup actions rather than losing the token/path.
+- [ ] **Login round trip** — login returns to the invite route.
+- [ ] **Signup round trip** — after required email confirmation/login, returning to the invite route works.
+- [ ] **Accept success** — invited account joins as `member`, lands in the household and sees shared data.
+- [ ] **Already belongs elsewhere** — acceptance fails clearly and does not create a second membership.
+- [ ] **Expired token** — clear expired state.
+- [ ] **Already-used token** — clear already-used state.
+- [ ] **Shared state** — both accounts see the same shopping/tasks/notes/links/agenda/Budget data after refresh.
 
-- [ ] **Create invitation (admin)** — from Profile / Membres, an admin
-      enters an email and creates an invitation; a copyable invite link is
-      shown.
-- [ ] **Create invitation (non-admin)** — a non-admin member does not see
-      the invite control; calling `create_household_invitation` directly
-      for a non-admin fails.
-- [ ] **Accept — logged out** — opening `/invite/<token>` while logged out
-      shows a "log in or sign up" screen instead of the app's normal
-      logged-out redirect.
-- [ ] **Accept — login round trip** — logging in from that screen returns
-      to `/invite/<token>` afterward (not the dashboard).
-- [ ] **Accept — signup round trip** — signing up from that screen (with
-      email confirmation off, or after confirming) returns to
-      `/invite/<token>` and skips `/onboarding`.
-- [ ] **Accept — success** — a logged-in invited user sees the household
-      name and a "Rejoindre le foyer" button; accepting adds them as a
-      `household_members` row with role `member` and redirects to `/`.
-- [ ] **Accept — already in a household** — a logged-in user who already
-      belongs to a household gets a clear error when accepting, and is not
-      added to a second household.
-- [ ] **Accept — expired invite** — an invitation past `expires_at` shows a
-      clear "expired" message, not a generic error.
-- [ ] **Accept — already accepted** — reusing a token that was already
-      accepted shows a clear "already used" message.
-- [ ] **Shared data after joining** — the new member sees the same
-      shopping list / tasks / notes / links / agenda as the existing admin,
-      and the admin sees the new member appear in the member list.
+## Budget — one-off expenses and totals
 
-## Access protection
+- [ ] Open Budget with a newly created household; default category tree is available exactly once (no duplicate categories after reload/concurrent opens).
+- [ ] New expense defaults to **Ponctuelle**.
+- [ ] Create a one-off fixed expense and a one-off variable expense.
+- [ ] Edit a one-off expense (title/amount/category/kind/note/date as supported) and verify persistence.
+- [ ] Delete a one-off expense and verify it stays deleted after hard refresh.
+- [ ] Main-category totals include their subcategory expenses.
+- [ ] Main donut/subcategory breakdown match the visible entries.
+- [ ] Six-month evolution matches actual materialized spending.
+- [ ] Switching Budget months shows the correct independent month data.
 
-- [ ] **Logged-out access** — visiting `/` while logged out redirects to
-      `/login`.
-- [ ] **No household** — a logged-in user with no household is redirected
-      to `/onboarding` when visiting `/`.
-- [ ] **Already has a household** — a logged-in user with a household who
-      navigates to `/onboarding` is redirected away, *if that redirect is
-      implemented*. (Not implemented as of this checklist — confirm current
-      behavior and file a follow-up issue if it should be added.)
-- [ ] **Direct household insert is blocked** — as an authenticated client
-      (e.g. Supabase SQL Editor running `set role authenticated;` or the API
-      with a user's access token), attempt
-      `insert into households (name, type) values ('x', 'Couple');` — it must
-      fail with a permission/RLS error, not succeed.
-- [ ] **RPC household creation still works** — `create_household_with_member`
-      still creates a household plus exactly one admin `household_members`
-      row for a user with no existing household (covered by the onboarding
-      flow above, or callable directly via `supabase.rpc(...)`).
+## Budget — monthly recurrence
 
-## Cross-cutting checks
+- [ ] Create a **Mensuelle** expense and confirm its recurring indicator is visible.
+- [ ] The creation produces only one series/first occurrence even if the same request is retried/double-submitted.
+- [ ] Two separate identical-looking recurring submissions still create two independent series.
+- [ ] Navigate forward several months: exactly one occurrence exists per applicable month.
+- [ ] Hard reload/repeated month loads never create duplicate occurrences.
+- [ ] No occurrence exists before the series `start_month`.
+- [ ] Day 31 clamps correctly in 30-day months and February (28/29) without permanently changing the requested recurrence day.
+- [ ] Recurring occurrences are included in total, category totals/donuts and six-month evolution.
 
-- [ ] **Responsive/mobile sanity check** — dashboard and forms are usable
-      at mobile width (below the 880px breakpoint): bottom nav present,
-      bento grid collapses to 2 columns, no horizontal scroll/overlap.
-- [ ] **Hard refresh smoke test** — hard-refresh (not client navigation) on
-      `/`, `/login`, `/signup`, and `/onboarding` each load correctly.
-- [ ] **No console Supabase permission errors** — browser console is free of
-      Supabase/RLS permission errors (e.g. `permission denied for table …`)
-      across all pages above.
-- [ ] **No fake placeholders visible** — no hardcoded/mock content remains
-      anywhere in the app: no fake member names or avatars, no mock
-      timeline items in "La journée", no buttons styled as clickable that
-      don't do anything. This guards against regressions of the cleanup in
-      PR #67 and PR #69.
+### Recurring edit scope
+
+- [ ] **Ce mois uniquement** — only the selected occurrence changes; past/future template behavior is unchanged.
+- [ ] **Ce mois et les suivants** — selected month and later generated/future occurrences use the new values; earlier months remain historical.
+- [ ] Editing amount/title only on a clamped February occurrence does not accidentally change a day-31 series to day 28.
+- [ ] Explicitly changing the occurrence date with “Ce mois et les suivants” updates the recurrence day for later months.
+- [ ] A previously unmaterialized historical month remains based on the old template after a later whole-series edit (history is frozen, not rewritten).
+
+### Recurring delete/stop scope
+
+- [ ] **Ce mois uniquement** — selected occurrence disappears, a skip tombstone prevents regeneration, later recurrence continues.
+- [ ] **Arrêter à partir de ce mois** — selected month and later occurrences disappear; earlier history remains.
+- [ ] Stopped series never regenerates at/after its exclusive `end_month`.
+- [ ] Previously skipped months remain skipped after whole-series edits/stops.
+
+## Budget — shares (“Par personne”)
+
+- [ ] With no explicit Budget share count, divisor falls back to the active household member count.
+- [ ] Set Parts to 3: monthly/category “Par personne” values use 3 everywhere.
+- [ ] Share count persists across month switches, reloads and a second household member.
+- [ ] Decrement is disabled at 1.
+- [ ] Changing Parts does not change raw spending totals, donuts or evolution.
+
+## Budget — monthly planned targets
+
+- [ ] Month with no targets does not display a fake “planned = 0” total.
+- [ ] Set targets for multiple main categories; overall planned Budget equals their sum.
+- [ ] Actual below target shows the correct **Reste** amount.
+- [ ] Actual above target shows the correct **Dépassement** amount.
+- [ ] Category progress remains visually bounded while overspend state is still represented correctly.
+- [ ] Clearing/zeroing a target removes the row and reduces the overall planned sum.
+- [ ] Targets are independent by month and persist after reload.
+- [ ] A second member sees/edits the same household targets.
+- [ ] UI never offers a target for a subcategory; a direct invalid write is rejected by the database.
+- [ ] Switching months quickly never displays/saves one month's targets under another month.
+- [ ] During a target month load, editing controls do not allow stale target state to be submitted.
+
+## State, concurrency and failure cases
+
+- [ ] Rapid month back/forward navigation does not mix entries/evolution/targets between months.
+- [ ] Double-clicking save/add controls does not create duplicate recurring data.
+- [ ] Reload during normal usage leaves the app in a coherent persisted state.
+- [ ] Simulated Supabase failure surfaces a useful error and does not leave optimistic state permanently incorrect.
+- [ ] Two members can use the same household without obvious stale-state corruption; refresh reconciles to the same database truth.
+- [ ] Recurrence generation vs occurrence deletion/series edit/series stop produces no duplicate or resurrected rows under repeated/concurrent actions.
+
+## Access protection / RLS
+
+Prefer two separate households for cross-household checks.
+
+- [ ] Logged-out `/` redirects to `/login`.
+- [ ] Direct authenticated `INSERT` into `households` is rejected; household creation RPC still works.
+- [ ] Account A cannot read account B household rows through direct Supabase queries.
+- [ ] Account A cannot edit/delete B's shopping/tasks/notes/links/events.
+- [ ] Account A cannot read/create/edit/delete B's Budget entries/categories/targets.
+- [ ] Account A cannot materialize or mutate B's recurring expense series by supplying B identifiers to RPCs.
+- [ ] Budget target write using another household's category id is rejected.
+- [ ] Recurring entry cannot be attached to a recurring series from another household.
+- [ ] Non-admin cannot bypass invitation or household admin restrictions through direct RPC/table calls.
+
+## Cross-cutting UI checks
+
+- [ ] **Mobile** — below the app breakpoint, bottom navigation and forms remain usable; no horizontal overflow/overlap.
+- [ ] Test Budget cards, modals, charts, long labels and recurrence scope dialogs at mobile width.
+- [ ] **Hard refresh** — `/`, `/login`, `/signup`, `/onboarding` and an invite route load correctly when directly refreshed.
+- [ ] Browser console has no unexpected Supabase/RLS permission errors during valid flows.
+- [ ] No fake/mock placeholder content or dead-looking interactive controls remain.
+- [ ] Loading/disabled states make destructive or duplicate submissions difficult.
 
 ---
 
 # Deployment readiness checklist
 
-Run through this before considering a V1 deploy production-ready.
+Before considering V1 production-ready:
 
-- [ ] CI passes on `main` (`.github/workflows/ci.yml` — lint + build).
-- [ ] Supabase schema applied (`supabase/schema.sql`).
-- [ ] Supabase grants applied (`supabase/grants.sql`).
-- [ ] Supabase RPC applied (`supabase/household-rpc.sql`) — also drops the
-      legacy direct-INSERT policy on `households` on already-provisioned
-      projects.
-- [ ] Supabase invitations SQL applied (`supabase/household-invitations.sql`)
-      — `household_invitations` table + invitation RPCs.
-- [ ] Row Level Security (RLS) enabled on all tables (verified in
-      `supabase/schema.sql` — `households`, `household_members`,
-      `shopping_items`, `tasks`, `events`, and other app tables).
-- [ ] Vercel environment variables configured (see
-      [docs/deployment.md](deployment.md)): `NEXT_PUBLIC_SUPABASE_URL`,
-      `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`.
-- [ ] Supabase Auth redirect URLs configured for the deployed domain(s), if
-      not already set.
-- [ ] Manual QA checklist above passed.
+- [ ] `main` CI passes (`npm run lint` + `npm run build` from `apps/web`).
+- [ ] Supabase fresh-project SQL order is documented and, for the target environment, all required migrations are applied:
+  1. `schema.sql`
+  2. `grants.sql`
+  3. `household-rpc.sql`
+  4. `household-invitations.sql`
+  5. `budget.sql`
+  6. `budget_recurring_expenses.sql`
+  7. `budget_recurring_series_management.sql`
+  8. `budget_shares.sql`
+  9. `budget_monthly_targets.sql`
+- [ ] `budget_recurring_series_management_fix.sql` is **not** applied on a fresh project; it is only the historical corrective migration for databases that received the older faulty management migration.
+- [ ] RLS is enabled on all household-scoped core, invitation and Budget tables.
+- [ ] Required household/invitation/Budget RPCs exist and are callable only in the intended security context.
+- [ ] Vercel Root Directory is `apps/web`.
+- [ ] Vercel has exactly the required public Supabase configuration: `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`.
+- [ ] `SUPABASE_SERVICE_ROLE_KEY` (or equivalent privileged secret) is absent from frontend/public Vercel configuration and committed files.
+- [ ] Supabase Auth Site URL / allowed redirect URLs match the deployed domain(s).
+- [ ] Manual functional, Budget, multi-account, RLS and mobile QA above has passed or every remaining issue is explicitly tracked.

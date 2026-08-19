@@ -1,148 +1,144 @@
-# Deployment (Vercel)
-
-## Project structure
-
-This repo is **not** an npm-workspaces monorepo — `apps/web` is a self-contained
-Next.js app with its own `package.json` and `package-lock.json`. The root
-`package.json` only proxies scripts (`npm --prefix apps/web run <script>`).
-
-`.github/workflows/ci.yml` already builds the project this way: it runs
-`npm ci` / `npm run lint` / `npm run build` with `working-directory: apps/web`
-on Node 24. Vercel should mirror that.
+# Deployment (Vercel + Supabase)
 
 ## Vercel project setup
 
-1. Import `matchls/casahub` into Vercel.
-2. **Framework Preset:** Next.js (auto-detected).
-3. **Root Directory:** `apps/web`
-   This is the key monorepo setting. It tells Vercel to install and build
-   inside `apps/web`, using that directory's own lockfile — matching CI
-   exactly. Do not point Root Directory at the repo root.
-4. With Root Directory set to `apps/web`, leave the install/build/output
-   settings on the Next.js preset defaults:
-   - **Install Command:** `npm ci` (default, since a lockfile is present)
-   - **Build Command:** `npm run build` (`next build`)
-   - **Output:** managed automatically by the Next.js Vercel builder — no
-     manual output directory needed.
-5. **Node.js version:** 24, to match `.github/workflows/ci.yml`. Set this in
-   Project Settings → General if the Vercel default differs.
+Kasaly's production application lives in `apps/web`. The repository root only proxies scripts into that directory.
 
-No `vercel.json` exists or is required for this setup.
+Configure Vercel with:
+
+1. Import `matchls/casahub`.
+2. **Framework Preset:** Next.js.
+3. **Root Directory:** `apps/web`.
+4. Keep the Next.js defaults for install/build/output:
+   - Install: `npm ci`
+   - Build: `npm run build`
+   - Output: managed by Vercel's Next.js builder
+5. Use **Node.js 24** to match `.github/workflows/ci.yml`.
+
+No `vercel.json` is required for the current setup.
 
 ## Required environment variables
 
-Configure these in Vercel → Project Settings → Environment Variables, for
-Production, Preview, and Development:
+Configure these for Production and Preview (and Development when useful):
 
 | Variable | Required | Notes |
 |---|---|---|
-| `NEXT_PUBLIC_SUPABASE_URL` | Yes | Supabase project URL. Public — safe to expose to the browser. |
-| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Yes | Supabase publishable (anon) key. Public — safe to expose to the browser. |
+| `NEXT_PUBLIC_SUPABASE_URL` | Yes | Supabase project URL; public browser configuration. |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Yes | Supabase publishable/anon key; public browser configuration. |
 
-These are the only two environment variables read by the app today
-(`apps/web/src/lib/supabase/client.ts`, `server.ts`, and `proxy.ts`).
+These are the only Supabase environment variables the frontend needs.
 
-**Do not** add the Supabase `service_role` / secret key to Vercel or to any
-file in this repository. No server-side code in this project currently
-requires it — all data access goes through the publishable key plus Row
-Level Security policies (see `supabase/schema.sql`).
+**Never add `SUPABASE_SERVICE_ROLE_KEY`, a Supabase secret key, or another privileged database credential to Vercel/public frontend configuration.** Household isolation and privileged mutations are enforced through RLS and narrowly scoped database RPCs.
 
-For local development, copy `apps/web/.env.local.example` to
-`apps/web/.env.local` and fill in real values (never commit `.env.local`).
+For local development, copy `apps/web/.env.local.example` to `apps/web/.env.local` and provide the same two public values. Never commit `.env.local`.
 
 ## Supabase SQL setup
 
-Apply these files **in order**, via the Supabase SQL Editor, on a fresh
-project (see [README.md](../README.md#supabase-setup) for the per-file
-description):
+### Fresh project
+
+Apply the migrations in the following order through the Supabase SQL Editor:
 
 1. `supabase/schema.sql`
+   - Core tables (`households`, `household_members`, shopping, tasks, events, notes, useful links)
+   - Shared `handle_updated_at()` trigger helper
+   - Membership/admin helpers and core RLS policies
 2. `supabase/grants.sql`
+   - Core table privileges for `authenticated`
 3. `supabase/household-rpc.sql`
+   - One-household-per-user unique index
+   - Removes legacy direct household INSERT policy
+   - `create_household_with_member`
 4. `supabase/household-invitations.sql`
+   - Invitation table with deny-by-default direct access
+   - `create_household_invitation`, `get_household_invitation`, `accept_household_invitation`
+5. `supabase/budget.sql`
+   - `budget_categories`, `budget_entries`
+   - Budget RLS and default-category seeding RPC
+6. `supabase/budget_recurring_expenses.sql`
+   - `budget_recurring_expenses`, `budget_recurring_expense_skips`
+   - `budget_entries.recurring_expense_id`
+   - Idempotent monthly materialization, single-occurrence deletion and concurrency safeguards
+7. `supabase/budget_recurring_series_management.sql`
+   - `budget_recurring_expenses.end_month`
+   - Whole-series edit (`Ce mois et les suivants`) and stop (`Arrêter à partir de ce mois`)
+8. `supabase/budget_shares.sql`
+   - `households.budget_share_count`
+   - `set_household_budget_share_count`
+9. `supabase/budget_monthly_targets.sql`
+   - `budget_monthly_targets`
+   - Planned amount per main category and month
 
-Re-running this same order is also how an already-provisioned project picks
-up later hardening (e.g. `household-rpc.sql` dropping the legacy direct-INSERT
-policy on `households`).
+### Legacy corrective migration
 
-### Post-SQL checklist
+`supabase/budget_recurring_series_management_fix.sql` is **not applied on a fresh database**.
 
-- [ ] **RLS enabled** — Row Level Security is on for every table
-      (`households`, `household_members`, `shopping_items`, `tasks`,
-      `events`, `notes`, `useful_links`, `household_invitations`).
-- [ ] **RPCs available** — `create_household_with_member` exists and is
-      callable (onboarding depends on it).
-- [ ] **Direct household insert policy removed** — there is no RLS policy
-      allowing a direct `INSERT` into `households`; only the RPC above can
-      create one.
-- [ ] **Invitation RPCs available** — `create_household_invitation`,
-      `get_household_invitation`, and `accept_household_invitation` all
-      exist and are callable.
-- [ ] **No `service_role` frontend usage** — the app only ever uses the
-      publishable/anon key; `service_role` is not present in `.env.local`,
-      Vercel env vars, or any committed file.
+It exists only for a database that had already received the earlier version of `budget_recurring_series_management.sql` before its two review fixes were folded back into that main migration. A fresh project only needs the nine files above.
+
+Do not apply database migrations automatically from frontend code or a public Vercel environment. For normal Kasaly feature work, review the migration in the PR first, apply it manually in Supabase when required, verify it, and only then merge the application code that depends on it.
+
+## Post-SQL verification
+
+Before treating a Supabase project as ready:
+
+- [ ] Core tables exist: `households`, `household_members`, `shopping_items`, `tasks`, `events`, `notes`, `useful_links`.
+- [ ] `household_invitations` exists and direct authenticated CRUD is denied.
+- [ ] Budget tables exist: `budget_categories`, `budget_entries`, `budget_recurring_expenses`, `budget_recurring_expense_skips`, `budget_monthly_targets`.
+- [ ] `households.budget_share_count` exists.
+- [ ] `budget_entries.recurring_expense_id` exists.
+- [ ] `budget_recurring_expenses.end_month` exists.
+- [ ] RLS is enabled on every household-scoped application table.
+- [ ] `create_household_with_member` works and direct authenticated `INSERT` into `households` is rejected.
+- [ ] Invitation RPCs exist and enforce admin creation, expiry/one-time-use, and the one-household-per-user rule.
+- [ ] `ensure_default_budget_categories` exists.
+- [ ] Recurrence RPCs exist, including `ensure_budget_recurring_occurrences`, occurrence deletion, series edit and series stop.
+- [ ] `set_household_budget_share_count` exists.
+- [ ] Monthly targets can only reference a main category belonging to the same household.
+- [ ] No `SUPABASE_SERVICE_ROLE_KEY` or equivalent privileged key is present in Vercel or committed env files.
 
 ## Supabase Auth redirect URLs
 
-Supabase Auth email confirmation is enabled for this project (see
-[docs/qa-v1.md](qa-v1.md)), so Supabase needs to know which URLs are allowed
-to complete a confirmation link. Configure these under Supabase →
-Authentication → URL Configuration once a Vercel deployment URL exists.
-Don't guess the final domain — use placeholders until it's assigned:
+Supabase email confirmation is enabled for the current project. Configure Authentication → URL Configuration using the real deployed domains.
 
-- **Site URL:** `https://your-vercel-domain.vercel.app` (swap for
-  `https://your-custom-domain.com` once a custom domain is attached). This
-  is the base URL Supabase uses to build confirmation-email links.
-- **Redirect URLs:** add the same domain(s) (e.g.
-  `https://your-vercel-domain.vercel.app/**`). Only add preview-deployment
-  URLs here if confirmation emails need to work against per-PR preview
-  links — each preview gets its own `*.vercel.app` URL, and this isn't
-  required for the production QA pass.
+Typical production setup:
 
-These two settings only control where the **confirmation-email link** (and
-any future OAuth callback) land. They're unrelated to the app's own `next=`
-query param described below, which is pure client-side routing and needs no
-Supabase configuration.
+- **Site URL:** `https://kasaly.vercel.app`
+- **Redirect URLs:** include the production domain pattern required for confirmation flows, and only add Preview URLs when confirmation must be tested on PR previews.
 
-### Login / signup flow and the `next=` param
+The app's `next=` parameter is application routing, not a Supabase redirect setting. Login/signup sanitize and preserve the intended internal path where possible.
 
-`apps/web/src/proxy.ts` redirects any signed-out visitor hitting a
-non-public route to `/login?next=<original-path>`. `LoginForm` and
-`SignupForm` (`apps/web/src/features/auth/`) both read that value (sanitized
-by `sanitizeNextPath` in `apps/web/src/lib/utils.ts`):
+### Invite flow
 
-- On successful login: `router.push(next || "/")`.
-- On successful signup **with an immediate session** (email confirmation
-  disabled): `router.push(next || "/onboarding")`.
-- On signup **without an immediate session** (email confirmation enabled —
-  the current project setting), no redirect happens yet: the user sees a
-  "check your email" message and must confirm, then log in separately. The
-  `next` value is not preserved through the confirmation email itself.
-- The `/login` ↔ `/signup` links on each form forward `next` to each other,
-  so switching forms mid-flow doesn't lose the return path.
+`/invite/[token]` is guest-accessible. A signed-out visitor can choose login/signup and return to the invite path after authentication.
 
-### Invite flow (`/invite/[token]`)
+With email confirmation enabled, a brand-new signup has no immediate session. The tester must confirm the email and then return to the invite link (or log in with that path as `next`) before accepting the invitation.
 
-`/invite/[token]` is allowlisted in `proxy.ts` (`isGuestAllowed`), so
-signed-out visitors land on the invite page itself instead of being bounced
-to `/login`. That page then:
+See [qa-v1.md](qa-v1.md) for the end-to-end invitation test.
 
-- Shows its own "Se connecter" / "Créer un compte" links, each pointing to
-  `/login?next=/invite/<token>` / `/signup?next=/invite/<token>`.
-- Relies on the login/signup flow above to return the user to
-  `/invite/<token>` after authenticating.
-- Because email confirmation is enabled, a **brand-new signup** from this
-  screen does not auto-return to the invite page (no session exists yet) —
-  the tester must confirm the email, then open the invite link again (or log
-  in with `next` pointing at it) to accept. This is expected behavior, not a
-  bug — see the invitation flow checklist in [docs/qa-v1.md](qa-v1.md).
+## CI and deployment readiness
 
-No extra Supabase Auth URL configuration is needed for `/invite/[token]`
-specifically — it's handled entirely by the app's own routing once Site URL
-/ Redirect URLs above are set for the deployment domain.
+GitHub Actions runs from `apps/web` and must pass:
 
-## Out of scope here
+```bash
+npm run lint
+npm run build
+```
 
-- No manual deploy is triggered by this change — deployment happens via
-  Vercel's Git integration (push/PR) or is performed by a project owner.
-- No secrets are added anywhere in this repo as part of this change.
+For functional or visual changes, CI is necessary but not sufficient: use Vercel Preview for human QA before merge when relevant.
+
+For a migration-dependent PR, the safe order is:
+
+1. Review the exact PR code and SQL.
+2. Validate CI.
+3. Apply the required migration manually in Supabase.
+4. Perform migration/application QA.
+5. Re-check the exact PR head.
+6. Merge manually.
+7. Verify the production deployment.
+
+## Security reminders
+
+- Keep the Vercel Root Directory on `apps/web`.
+- Keep frontend env configuration limited to the two public `NEXT_PUBLIC_SUPABASE_*` variables.
+- RLS is part of the application's security boundary; do not replace it with client-side filtering.
+- `SECURITY DEFINER` RPCs must stay narrowly scoped, validate the caller/household explicitly, and set a safe `search_path`.
+- Never expose a Supabase service-role/secret key to the browser.
